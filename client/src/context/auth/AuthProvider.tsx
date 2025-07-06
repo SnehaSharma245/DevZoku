@@ -24,18 +24,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       setLoading(true);
-      console.log("Fetching user data...");
 
       // Only actually fetch if we're not on a public route
       if (!isPublicRoute) {
         const response = await api.get("/users/current-user");
         const userData = response.data.data;
-        console.log("User data fetched:", userData);
+
         setUser(userData);
         setError(null); // clear error if success
       } else {
         // On public routes, just mark as initialized without fetching
-        console.log("Skipping user fetch on public route");
       }
     } catch (error: any) {
       console.error("Error fetching user:", error?.response?.status || error);
