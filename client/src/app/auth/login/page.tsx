@@ -15,6 +15,16 @@ const Login = () => {
 
   const { user } = useAuth();
 
+  if (user) {
+    if (user.role === "developer") {
+      window.location.href = "/developer/dashboard";
+      return null;
+    } else {
+      window.location.href = "/organizer/dashboard";
+      return null;
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
