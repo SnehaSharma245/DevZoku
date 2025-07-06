@@ -17,9 +17,11 @@ import { useForm } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Alert } from "./ui/alert";
 
 export {
   Input,
+  Alert,
   Textarea,
   Button,
   Switch,

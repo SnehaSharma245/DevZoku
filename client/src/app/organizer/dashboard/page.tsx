@@ -1,12 +1,20 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { withAuth } from "@/utils/withAuth";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { Popup } from "@/components/completeProfilePopup";
 
 const OrganizerDashboard = () => {
   const { user, handleLogout } = useAuth();
   const profile = user?.profile;
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+
+  useEffect(() => {
+    if (user && user.isProfileComplete === false) {
+      setShowIncompleteModal(true); // ✨ show popup automatically
+    }
+  }, [user]);
 
   console.log("Organizer Dashboard Rendered", { user, profile });
 
@@ -22,6 +30,7 @@ const OrganizerDashboard = () => {
 
   return (
     <>
+      <Popup open={showIncompleteModal} onOpenChange={setShowIncompleteModal} />
       <div className="min-h-screen bg-gray-50 py-10 px-4">
         <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
           <h1 className="text-2xl font-bold mb-4">🏢 Organization Profile</h1>
