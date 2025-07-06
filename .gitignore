@@ -1,0 +1,52 @@
+# === General ===
+node_modules/
+.env
+.env.* 
+.DS_Store
+Thumbs.db
+
+# === Client (Next.js) ===
+client/.next/
+client/out/
+client/node_modules/
+client/.env.local
+client/.env.development
+client/.env.production
+
+# === Server (Express + Drizzle) ===
+server/node_modules/
+server/dist/
+server/build/
+server/.env
+server/.env.*
+
+# === Database (Docker) ===
+database/data/
+database/.env
+database/.DS_Store
+database/*.pid
+database/*.sock
+database/tmp/
+database/logs/
+
+# === Logs and Temp ===
+logs
+*.log
+*.tmp
+*.swp
+
+# === Editor/IDE Folders ===
+.vscode/
+.idea/
+
+# === Coverage/Test Outputs ===
+coverage/
+*.lcov
+
+# === OS Specific ===
+ehthumbs.db
+Icon?
+
+DevZoku.txt
+server/drizzle
+database/*
