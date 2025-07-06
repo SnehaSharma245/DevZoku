@@ -139,8 +139,6 @@ function OrganizerCompleteProfileForm() {
         isVerified: data.isVerified ?? false,
       };
 
-      console.log("Submitting organizer profile:", formattedData);
-
       const response = await axios.post(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
