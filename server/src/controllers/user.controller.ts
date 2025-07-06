@@ -191,25 +191,27 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
     sameSite: "lax" as const,
   };
 
-  if (existingUsers.length === 0) {
-    if (userObj?.isProfileComplete) {
-      redirectPath =
-        role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
-    } else {
-      redirectPath =
-        role === "developer"
-          ? "/developer/complete-profile"
-          : "/organizer/complete-profile";
-    }
-    role === "developer"
-      ? "/developer/complete-profile"
-      : "/organizer/complete-profile";
-  } else {
-    // If user already exists, redirect to dashboard
-    redirectPath =
-      role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
-  }
+  // if (existingUsers.length === 0) {
+  //   if (userObj?.isProfileComplete) {
+  //     redirectPath =
+  //       role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
+  //   } else {
+  //     redirectPath =
+  //       role === "developer"
+  //         ? "/developer/complete-profile"
+  //         : "/organizer/complete-profile";
+  //   }
+  //   role === "developer"
+  //     ? "/developer/complete-profile"
+  //     : "/organizer/complete-profile";
+  // } else {
+  //   // If user already exists, redirect to dashboard
+  //   redirectPath =
+  //     role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
+  // }
 
+  redirectPath =
+    role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
   // Construct full redirect URL
   const fullRedirectUrl = `${
     process.env.CLIENT_URL || "http://localhost:3000"
