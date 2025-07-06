@@ -224,8 +224,6 @@ function CompleteProfileForm() {
           })),
       };
 
-      console.log("Submitting developer profile:", formattedData);
-
       const response = await axios.post(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
