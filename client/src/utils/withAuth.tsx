@@ -18,15 +18,11 @@ export const withAuth = (
       if (!authChecked) {
         // If we're done loading and there's no user, redirect to login
         if (!loading && !user && !isPublicRoute) {
-          console.log("No user found, redirecting to login");
           router.push("/auth/login");
         }
 
         // If role checking is required and user has wrong role
         if (!loading && user && requiredRole && user.role !== requiredRole) {
-          console.log(
-            `User role ${user.role} doesn't match required role ${requiredRole}`
-          );
           router.push("/");
         }
 
