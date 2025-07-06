@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { withAuth } from "@/utils/withAuth";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
-import { Popup } from "@/components/completeProfilePopup";
+import { Popup } from "@/components/CompleteProfilePopup";
 
 const OrganizerDashboard = () => {
   const { user, handleLogout } = useAuth();
@@ -15,8 +15,6 @@ const OrganizerDashboard = () => {
       setShowIncompleteModal(true); // ✨ show popup automatically
     }
   }, [user]);
-
-  console.log("Organizer Dashboard Rendered", { user, profile });
 
   if (!user) {
     window.location.href = "/auth/login";
