@@ -77,7 +77,7 @@ const initialProject = {
 };
 
 function CompleteProfileForm() {
-  const { user, refreshUserData } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -234,7 +234,6 @@ function CompleteProfileForm() {
 
       if (response.status === 200) {
         toast.success("Profile updated successfully!");
-        await refreshUserData();
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -253,16 +252,7 @@ function CompleteProfileForm() {
     }
   };
 
-  // Security checks
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
-        Please log in to complete your profile.
-      </div>
-    );
-  }
-
-  if (user.role !== "developer") {
+  if (user?.role !== "developer") {
     return (
       <div className="min-h-screen flex items-center justify-center text-xl">
         This page is only for developers.
