@@ -31,11 +31,11 @@ export const teams = pgTable(
     skillsNeeded: varchar("skills_needed", { length: 500 }),
   },
   (t) => [
-    index("idx_accepting_invites").on(t.isAcceptingInvites),
-    index("idx_skills_needed").on(t.skillsNeeded),
-    index("idx_captain_id").on(t.captainId),
-    index("idx_created_by").on(t.createdBy),
-    index("idx_created_at").on(t.createdAt),
+    index("idx_teams_accepting_invites").on(t.isAcceptingInvites),
+    index("idx_teams_skills_needed").on(t.skillsNeeded),
+    index("idx_teams_captain_id").on(t.captainId),
+    index("idx_teams_created_by").on(t.createdBy),
+    index("idx_teams_created_at").on(t.createdAt),
   ]
 );
 
@@ -52,7 +52,7 @@ export const teamMembers = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.teamId, t.userId] }),
-    index("idx_team_id").on(t.teamId),
-    index("idx_user_id").on(t.userId),
+    index("idx_team_members_team_id").on(t.teamId),
+    index("idx_team_members_user_id").on(t.userId),
   ]
 );

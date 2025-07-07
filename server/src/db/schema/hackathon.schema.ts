@@ -34,10 +34,10 @@ export const hackathons = pgTable(
     }),
   },
   (t) => [
-    index("idx_status").on(t.status),
-    index("idx_created_by").on(t.createdBy),
-    index("idx_start_time").on(t.startTime),
-    index("idx_end_time").on(t.endTime),
+    index("idx_hackathons_status").on(t.status),
+    index("idx_hackathons_created_by").on(t.createdBy),
+    index("idx_hackathons_start_time").on(t.startTime),
+    index("idx_hackathons_end_time").on(t.endTime),
   ]
 );
 
@@ -57,9 +57,9 @@ export const teamHackathons = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.teamId, t.hackathonId] }),
-    index("idx_team_id").on(t.teamId),
-    index("idx_hackathon_id").on(t.hackathonId),
-    index("idx_score").on(t.score),
-    index("idx_is_winner").on(t.isWinner),
+    index("idx_team_hackathons_team_id").on(t.teamId),
+    index("idx_team_hackathons_hackathon_id").on(t.hackathonId),
+    index("idx_team_hackathons_score").on(t.score),
+    index("idx_team_hackathons_is_winner").on(t.isWinner),
   ]
 );
