@@ -9,7 +9,7 @@ export const withAuth = (
   requiredRole?: "developer" | "organizer"
 ) => {
   const AuthenticatedComponent = (props: any) => {
-    const { user, loading, error, isPublicRoute } = useAuth();
+    const { user, loading, error } = useAuth();
     const router = useRouter();
     const [authChecked, setAuthChecked] = useState(false);
 
@@ -17,7 +17,7 @@ export const withAuth = (
       // Only run this effect once
       if (!authChecked) {
         // If we're done loading and there's no user, redirect to login
-        if (!loading && !user && !isPublicRoute) {
+        if (!loading && !user) {
           router.push("/auth/login");
         }
 
@@ -28,7 +28,7 @@ export const withAuth = (
 
         setAuthChecked(true);
       }
-    }, [loading, user, router, authChecked, isPublicRoute]);
+    }, [loading, user, router, authChecked]);
 
     if (loading) {
       return (
@@ -39,7 +39,7 @@ export const withAuth = (
     }
 
     // Show error message if any
-    if (error && !isPublicRoute) {
+    if (error) {
       return (
         <div className="min-h-screen flex justify-center items-center">
           <p className="text-red-500">{error}</p>
@@ -54,15 +54,6 @@ export const withAuth = (
           <p className="text-red-500">
             You don't have permission to access this page
           </p>
-        </div>
-      );
-    }
-
-    // If we're on a protected route with no user, show message
-    if (!user && !isPublicRoute) {
-      return (
-        <div className="min-h-screen flex justify-center items-center">
-          <p>Please log in to access this page</p>
         </div>
       );
     }
