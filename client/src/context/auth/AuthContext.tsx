@@ -8,8 +8,6 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   handleLogout: () => Promise<void>;
-  refreshUserData: () => Promise<void>;
-  isPublicRoute: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -18,8 +16,6 @@ export const AuthContext = createContext<AuthContextType>({
   loading: false,
   error: null,
   handleLogout: async () => {},
-  refreshUserData: async () => {},
-  isPublicRoute: true,
 });
 
 export const useAuth = () => useContext(AuthContext);
