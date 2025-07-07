@@ -52,7 +52,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 function OrganizerCompleteProfileForm() {
-  const { user, refreshUserData } = useAuth();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormData>({
@@ -149,7 +149,6 @@ function OrganizerCompleteProfileForm() {
 
       if (response.status === 200) {
         toast.success("Organization profile updated successfully!");
-        await refreshUserData();
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -168,16 +167,7 @@ function OrganizerCompleteProfileForm() {
     }
   };
 
-  // Security checks
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
-        Please log in to complete your profile.
-      </div>
-    );
-  }
-
-  if (user.role !== "organizer") {
+  if (user?.role !== "organizer") {
     return (
       <div className="min-h-screen flex items-center justify-center text-xl">
         This page is only for organizers.
