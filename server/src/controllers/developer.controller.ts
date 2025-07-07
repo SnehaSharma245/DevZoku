@@ -1,18 +1,18 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { developers } from "../db/schema/developer.schema";
-import { users } from "../db/schema/user.schema";
 import { ApiResponse } from "../utils/ApiResponse";
 import { completeDeveloperProfileSchema } from "../zod-schema/developer.schema";
 import type { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
+import { teams } from "../db/schema/team.schema";
 
+// Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { user } = req;
-      const { body } = req;
+      const { user, body } = req;
 
       if (!user) {
         throw new ApiError(401, "User not authenticated");
@@ -101,4 +101,96 @@ const completeDeveloperProfile = asyncHandler(
   }
 );
 
-export { completeDeveloperProfile };
+// Controller to create a team
+const createTeam = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { user, body } = req;
+
+    if (!user) {
+      throw new ApiError(401, "User not authenticated");
+    }
+
+    if (user?.role !== "developer") {
+      throw new ApiError(
+        403,
+        "Access denied. Only developers can create teams."
+      );
+    }
+
+    //check if the team name is unique or not
+    const existingTeam = await db
+      .select()
+      .from(teams)
+      .where(eq(teams.name, body.name))
+      .limit(1)
+      .execute();
+
+    if (existingTeam.length > 0) {
+      throw new ApiError(400, "Team name must be unique");
+    }
+
+    // Create the team
+    const newTeam = await db
+      .insert(teams)
+      .values({
+        name: body.name,
+        description: body.description,
+        teamSize: body.teamSize,
+        isAcceptingInvites: body.isAcceptingInvites ?? true,
+        createdBy: user.id,
+        skillsNeeded: body.skillsNeeded || "",
+        captainId: user.id,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return res
+      .status(201)
+      .json(new ApiResponse(201, newTeam[0], "Team created successfully"));
+  } catch (error: any) {
+    console.error("Error creating team:", error);
+
+    throw new ApiError(
+      error.statusCode || 500,
+      error.message || "Something went wrong while creating the team"
+    );
+  }
+});
+
+const checkTeamNameUnique = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { teamName } = req.query;
+    console.log("Checking team name:", teamName);
+
+    if (
+      !teamName ||
+      typeof teamName !== "string" ||
+      teamName.trim() === "" ||
+      teamName.length < 3
+    ) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { isUnique: false }, "Invalid Team Name"));
+    }
+
+    // Check if the team name is unique
+    const existingTeam = await db
+      .select()
+      .from(teams)
+      .where(eq(teams.name, teamName))
+      .limit(1)
+      .execute();
+
+    if (existingTeam.length > 0) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { isUnique: false }, "Team name is taken"));
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { isUnique: true }, "Team name is available"));
+  }
+);
+
+export { completeDeveloperProfile, createTeam, checkTeamNameUnique };
