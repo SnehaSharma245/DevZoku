@@ -163,7 +163,9 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
       });
     }
   } else {
-    // User already exists, use the first match
+    if (existingUsers[0] && existingUsers[0].role !== role) {
+      throw new ApiError(403, "User already exists with a different role");
+    }
     userObj = existingUsers[0];
   }
 
@@ -190,25 +192,6 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
   };
-
-  // if (existingUsers.length === 0) {
-  //   if (userObj?.isProfileComplete) {
-  //     redirectPath =
-  //       role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
-  //   } else {
-  //     redirectPath =
-  //       role === "developer"
-  //         ? "/developer/complete-profile"
-  //         : "/organizer/complete-profile";
-  //   }
-  //   role === "developer"
-  //     ? "/developer/complete-profile"
-  //     : "/organizer/complete-profile";
-  // } else {
-  //   // If user already exists, redirect to dashboard
-  //   redirectPath =
-  //     role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
-  // }
 
   redirectPath =
     role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
