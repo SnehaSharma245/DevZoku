@@ -14,7 +14,6 @@ const Login = () => {
   };
 
   const { user } = useAuth();
-  console.log(user);
 
   if (user) {
     if (user.role === "developer") {

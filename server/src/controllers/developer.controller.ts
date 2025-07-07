@@ -160,7 +160,6 @@ const createTeam = asyncHandler(async (req: Request, res: Response) => {
 const checkTeamNameUnique = asyncHandler(
   async (req: Request, res: Response) => {
     const { teamName } = req.query;
-    console.log("Checking team name:", teamName);
 
     if (
       !teamName ||

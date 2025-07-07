@@ -117,8 +117,6 @@ function CreateTeamForm() {
     try {
       setIsSubmitting(true);
 
-      console.log("Creating team with data:", data);
-
       const response = await api.post(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -126,8 +124,6 @@ function CreateTeamForm() {
         data,
         { withCredentials: true }
       );
-
-      console.log("Team created response:", response.data);
 
       if (response.status === 200) {
         toast.success("Team created successfully!");
