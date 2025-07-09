@@ -145,6 +145,22 @@ const createTeam = asyncHandler(async (req: Request, res: Response) => {
       })
       .returning();
 
+    if (newTeam.length === 0) {
+      throw new ApiError(500, "Failed to create the team");
+    }
+
+    if (!newTeam[0]?.id) {
+      throw new ApiError(500, "Failed to create the team");
+    }
+
+    const addIntoTeamMember = await db
+      .insert(teamMembers)
+      .values({
+        teamId: newTeam[0]?.id,
+        userId: user.id,
+      })
+      .execute();
+
     return res
       .status(201)
       .json(new ApiResponse(201, newTeam[0], "Team created successfully"));
@@ -203,7 +219,7 @@ const getJoinedTeams = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const joinedTeams = await db
-    .select({ team: teams })
+    .select()
     .from(teamMembers)
     .innerJoin(teams, eq(teams.id, teamMembers.teamId))
     .where(eq(teamMembers.userId, user.id))
@@ -256,6 +272,7 @@ const viewAllTeams = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, allTeams, "All teams fetched successfully"));
 });
 
+// controller for joining a team via invitation
 const joinInvitation = asyncHandler(async (req: Request, res: Response) => {
   const { user } = req;
   const { teamId } = req.body;

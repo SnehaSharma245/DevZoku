@@ -29,6 +29,7 @@ export const teams = pgTable(
     teamSize: integer("team_size").default(1),
     isAcceptingInvites: boolean("is_accepting_invites").default(true),
     skillsNeeded: varchar("skills_needed", { length: 500 }),
+    pendingInvitesFromUsers: uuid("pending_invites_from_users").array(),
   },
   (t) => [
     index("idx_teams_accepting_invites").on(t.isAcceptingInvites),

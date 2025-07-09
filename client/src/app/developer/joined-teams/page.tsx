@@ -5,6 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 
+interface TeamMember {
+  userId: string;
+  teamId: string;
+}
+
 interface Team {
   id: string;
   name: string;
@@ -12,8 +17,13 @@ interface Team {
   teamSize: number;
 }
 
+interface JoinedTeamData {
+  team_members: TeamMember;
+  teams: Team;
+}
+
 function JoinedTeamsPage() {
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [joinedTeams, setJoinedTeams] = useState<JoinedTeamData[]>([]);
 
   useEffect(() => {
     const fetchJoinedTeams = async () => {
@@ -26,7 +36,7 @@ function JoinedTeamsPage() {
             withCredentials: true,
           }
         );
-        setTeams(res?.data?.data || []);
+        setJoinedTeams(res?.data?.data || []);
       } catch (err: any) {
         toast.error(
           err?.response?.data?.message || "Failed to fetch joined teams"
@@ -37,7 +47,7 @@ function JoinedTeamsPage() {
 
     fetchJoinedTeams();
   }, []);
-
+  console.log("Joined Teams:", joinedTeams);
   const handleTeamNameClick = (e: React.MouseEvent<HTMLHeadingElement>) => {
     const teamName = e.currentTarget.textContent;
     if (teamName) {
@@ -49,26 +59,29 @@ function JoinedTeamsPage() {
     <div className="max-w-4xl mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold mb-6 text-center">Joined Teams</h1>
 
-      {teams.length === 0 ? (
+      {joinedTeams.length === 0 ? (
         <p className="text-center text-gray-500 text-lg">
           You haven't joined any teams yet.
         </p>
       ) : (
         <div className="space-y-4">
-          {teams.map((team) => (
-            <Card key={team.id}>
+          {joinedTeams.map((item) => (
+            <Card
+              key={`${item.team_members.userId}-${item.teams.id}`}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardContent className="p-4">
                 <h2
-                  className="text-xl font-semibold"
+                  className="text-xl font-semibold cursor-pointer hover:text-blue-600"
                   onClick={handleTeamNameClick}
                 >
-                  {team.name}
+                  {item.teams.name}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  {team.description || "No description provided."}
+                  {item.teams.description || "No description provided."}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Team Size: {team.teamSize}
+                  Team Size: {item.teams.teamSize}
                 </p>
               </CardContent>
             </Card>
