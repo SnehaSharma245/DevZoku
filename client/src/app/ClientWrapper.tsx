@@ -24,7 +24,9 @@ export default function ClientWrapper({
   return (
     <>
       {!isPageWithoutNavbarAndFooter && <Header />}
-      <main>{children || <p>No children to render</p>}</main>
+      <main className="flex-grow">
+        {children || <p>No children to render</p>}
+      </main>
       {!isPageWithoutNavbarAndFooter && <Footer />}
     </>
   );
