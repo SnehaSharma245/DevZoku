@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.route";
 import developerRoutes from "./routes/developer.route";
 import organizerRoutes from "./routes/organizer.route";
+import errorMiddleware from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -27,5 +28,7 @@ app.use("/api/v1/users", userRoutes);
 
 app.use("/api/v1/developer", developerRoutes);
 app.use("/api/v1/organizer", organizerRoutes);
+
+app.use(errorMiddleware);
 
 export { app };
