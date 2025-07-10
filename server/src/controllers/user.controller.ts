@@ -204,13 +204,13 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
     .cookie("AccessToken", accessToken, {
       ...options,
       maxAge: process.env.ACCESS_TOKEN_EXPIRY
-        ? parseInt(process.env.ACCESS_TOKEN_EXPIRY) * 60 * 60 * 1000
+        ? parseInt(process.env.ACCESS_TOKEN_EXPIRY) * 1000
         : 15 * 60 * 60 * 1000,
     })
     .cookie("RefreshToken", refreshToken, {
       ...options,
       maxAge: process.env.REFRESH_TOKEN_EXPIRY
-        ? parseInt(process.env.REFRESH_TOKEN_EXPIRY) * 24 * 60 * 60 * 1000
+        ? parseInt(process.env.REFRESH_TOKEN_EXPIRY) * 1000
         : 1 * 24 * 60 * 60 * 1000,
     })
     .redirect(fullRedirectUrl);
@@ -336,13 +336,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .cookie("AccessToken", accessToken, {
         ...options,
         maxAge: process.env.ACCESS_TOKEN_EXPIRY
-          ? parseInt(process.env.ACCESS_TOKEN_EXPIRY) * 60 * 60 * 1000
+          ? parseInt(process.env.ACCESS_TOKEN_EXPIRY) * 1000
           : 15 * 60 * 60 * 1000,
       })
       .cookie("RefreshToken", newRefreshToken, {
         ...options,
         maxAge: process.env.REFRESH_TOKEN_EXPIRY
-          ? parseInt(process.env.REFRESH_TOKEN_EXPIRY) * 24 * 60 * 60 * 1000
+          ? parseInt(process.env.REFRESH_TOKEN_EXPIRY) * 1000
           : 1 * 24 * 60 * 60 * 1000,
       })
       .json(
