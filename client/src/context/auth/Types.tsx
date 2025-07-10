@@ -86,6 +86,14 @@ interface User {
   updatedAt: string;
 }
 
+export interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  teamId?: string;
+  createdAt: string;
+}
+
 export type AppUser =
   | (User & { role: "developer"; profile: Developer })
   | (User & { role: "organizer"; profile: Organizer });

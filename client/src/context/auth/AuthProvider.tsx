@@ -5,10 +5,14 @@ import { AuthContext } from "./AuthContext";
 import api from "@/utils/api";
 import type { AppUser } from "./Types";
 import LoadingScreen from "@/components/LoadingScreen";
+import { socket } from "@/utils/socket";
+import { toast } from "sonner";
+import type { Notification } from "./Types";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchUser = async () => {
@@ -17,13 +21,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await api.get("/users/current-user");
       const userData = response.data.data;
       setUser(userData);
-      setError(null); // clear error if success
+      setError(null);
     } catch (error: any) {
       console.error("Error fetching user:", error?.response?.status || error);
       if (error?.response?.status === 401) {
         setUser(null);
       } else {
-        // For non-401 errors, only show on protected routes
+        setError("An error occurred while fetching user data.");
       }
     } finally {
       setLoading(false);
@@ -47,6 +51,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    if (user && user.id) {
+      socket.emit("join", user.id);
+      if (user.role === "developer") {
+        socket.on("invitation-accepted", (notification: Notification) => {
+          toast(notification.message);
+          setNotifications((prev) => [...prev, notification]);
+        });
+
+        socket.on("new-invitation", (notification: Notification) => {
+          toast(notification.message);
+          setNotifications((prev) => [...prev, notification]);
+        });
+      }
+    }
+  }, [user]);
+
   return loading ? (
     <LoadingScreen />
   ) : (
@@ -57,6 +78,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading: loading,
         error: error,
         handleLogout,
+        notifications,
+        setNotifications,
       }}
     >
       {children}

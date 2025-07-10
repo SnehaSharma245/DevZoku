@@ -8,6 +8,8 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   handleLogout: () => Promise<void>;
+  notifications?: any[];
+  setNotifications?: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
