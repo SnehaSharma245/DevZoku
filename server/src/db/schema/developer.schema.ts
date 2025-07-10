@@ -63,6 +63,19 @@ export const developers = pgTable("developers", {
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+
+  notifications: json("notifications")
+    .$type<
+      | {
+          id: string;
+          type: "invitation-sent" | "invitation-accepted";
+          message: string;
+          createdAt: string;
+          teamId?: string; // Optional, only for invite notifications
+        }[]
+      | null
+    >()
+    .default(null),
 });
 
 export type Developer = typeof developers.$inferSelect;
