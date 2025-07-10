@@ -12,8 +12,8 @@ import {
 import { useState } from "react";
 
 const Header = () => {
-  const { user, handleLogout } = useAuth();
-  const [open, setOpen] = useState(false); // sidebar open state
+  const { user, handleLogout, redBadge, setRedBadge } = useAuth();
+  const [open, setOpen] = useState(false);
 
   const getInitial = () =>
     (user?.role === "developer"
@@ -71,7 +71,7 @@ const Header = () => {
                       📊 Dashboard
                     </Link>
                     <Link
-                      href="/developer/teams"
+                      href="/developer/joined-teams"
                       onClick={() => setOpen(false)}
                     >
                       👥 Joined Teams
@@ -84,6 +84,28 @@ const Header = () => {
                     </Link>
                     <Link href="/hackathons" onClick={() => setOpen(false)}>
                       🚀 Hackathons
+                    </Link>
+                    <Link
+                      href="/developer/view-all-teams"
+                      onClick={() => setOpen(false)}
+                    >
+                      🧩 View All Teams
+                    </Link>
+                    <Link
+                      href="/developer/notifications"
+                      onClick={() => {
+                        setOpen(false);
+                        setRedBadge(false); // badge ko hide kar do
+                      }}
+                      className="relative"
+                    >
+                      🔔 Notifications
+                      {redBadge && (
+                        <span
+                          className="absolute -top-1 -right-2 h-3 w-3 rounded-full bg-red-500 border-2 border-white"
+                          title="New notification"
+                        />
+                      )}
                     </Link>
                   </>
                 ) : (
