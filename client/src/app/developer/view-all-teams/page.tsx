@@ -23,6 +23,7 @@ interface TeamBrief {
 function ViewAllTeams() {
   const { user } = useAuth();
   const [teams, setTeams] = useState<TeamBrief[]>([]);
+  const [invitationSent, setInvitationSent] = useState<boolean>(false);
 
   const fetchAllTeams = async () => {
     try {
@@ -30,10 +31,8 @@ function ViewAllTeams() {
         withCredentials: true,
       });
 
-      console.log(response);
       setTeams(response.data.data || []);
     } catch (error: any) {
-      console.log(error);
       toast.error(
         error?.response?.data?.message || "Failed to fetch all teams"
       );
@@ -50,19 +49,25 @@ function ViewAllTeams() {
       const response = await api.post(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/join-invitation`,
+        }/api/v1/developer/send-invitation`,
         { teamId: id },
         { withCredentials: true }
       );
-      toast.success(response.data.message || "Invitation sent successfully");
+      setInvitationSent(true);
+      toast.success(
+        response.data.data.message || "Invitation sent successfully"
+      );
     } catch (error: any) {
-      console.log(error);
       toast.error(
         error?.response?.data?.message || "Failed to send invitation"
       );
       console.error("Error sending invitation:", error);
     }
   };
+
+  if (!teams) {
+    return <p className="text-center text-gray-500 text-lg">Loading...</p>;
+  }
 
   {
     teams.length === 0 && (
@@ -85,6 +90,9 @@ function ViewAllTeams() {
           </p>
           <Button
             disabled={!team.team.isAcceptingInvites}
+            className={`${
+              invitationSent ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             onClick={() => handleSendingInvite(team.team.id)}
           >
             Send Invitation To Join
