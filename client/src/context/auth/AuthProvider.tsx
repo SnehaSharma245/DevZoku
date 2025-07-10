@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [redBadge, setRedBadge] = useState<boolean>(false);
 
   const fetchUser = async () => {
     try {
@@ -57,11 +58,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user.role === "developer") {
         socket.on("invitation-accepted", (notification: Notification) => {
           toast(notification.message);
+          setRedBadge(true);
           setNotifications((prev) => [...prev, notification]);
         });
 
         socket.on("new-invitation", (notification: Notification) => {
           toast(notification.message);
+          setRedBadge(true);
           setNotifications((prev) => [...prev, notification]);
         });
       }
@@ -80,6 +83,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         handleLogout,
         notifications,
         setNotifications,
+        redBadge,
+        setRedBadge,
       }}
     >
       {children}

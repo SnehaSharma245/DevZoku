@@ -10,6 +10,8 @@ interface AuthContextType {
   handleLogout: () => Promise<void>;
   notifications?: any[];
   setNotifications?: React.Dispatch<React.SetStateAction<any[]>>;
+  redBadge: boolean;
+  setRedBadge: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -18,6 +20,10 @@ export const AuthContext = createContext<AuthContextType>({
   loading: false,
   error: null,
   handleLogout: async () => {},
+  notifications: [],
+  setNotifications: () => {},
+  redBadge: false,
+  setRedBadge: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
