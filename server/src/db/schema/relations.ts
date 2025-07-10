@@ -2,7 +2,7 @@ import { relations } from "drizzle-orm";
 import { users } from "./user.schema";
 import { teams } from "./team.schema";
 import { teamMembers } from "./team.schema";
-import { hackathons } from "./hackathon.schema";
+import { hackathonPhases, hackathons } from "./hackathon.schema";
 import { teamHackathons } from "./hackathon.schema";
 
 // ✅ Team ↔ TeamMembers
@@ -31,6 +31,7 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
 // ✅ Hackathons ↔ TeamHackathons
 export const hackathonRelations = relations(hackathons, ({ many }) => ({
   participants: many(teamHackathons),
+  phases: many(hackathonPhases),
 }));
 
 // ✅ TeamHackathons ↔ both sides
