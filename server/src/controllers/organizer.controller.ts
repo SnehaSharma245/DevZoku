@@ -7,6 +7,7 @@ import { completeOrganizerProfileSchema } from "../zod-schema/organizer.schema";
 import type { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
+import { hackathonPhases, hackathons } from "../db/schema/hackathon.schema";
 
 const completeOrganizerProfile = asyncHandler(
   async (req: Request, res: Response) => {
@@ -70,4 +71,94 @@ const completeOrganizerProfile = asyncHandler(
   }
 );
 
-export { completeOrganizerProfile };
+// controller for creating hackathon
+const createHackathon = asyncHandler(async (req: Request, res: Response) => {
+  const { user, body } = req;
+
+  if (!user) throw new ApiError(401, "User not authenticated");
+  if (user.role !== "organizer")
+    throw new ApiError(
+      403,
+      "Access denied. Only organizers can create hackathons."
+    );
+
+  //existing hackathon check
+  const existingHackathon = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.title, body.title))
+    .then((results) => results[0]);
+
+  if (existingHackathon) {
+    throw new ApiError(400, "Hackathon with this title already exists");
+  }
+
+  // Validate hackathon times
+  const hackStart = new Date(body.startTime);
+  const hackEnd = new Date(body.endTime);
+  const now = new Date();
+
+  if (hackStart >= hackEnd)
+    throw new ApiError(400, "Start time must be before end time");
+  if (hackStart < now || hackEnd < now)
+    throw new ApiError(400, "Start time and end time must be in the future");
+
+  // Transaction for hackathon + phases
+  const result = await db.transaction(async (tx) => {
+    const [newHackathon] = await tx
+      .insert(hackathons)
+      .values({
+        title: body.title,
+        description: body.description,
+        startTime: hackStart,
+        endTime: hackEnd,
+        createdBy: user.id,
+        createdAt: now,
+        status: "upcoming",
+      })
+      .returning();
+
+    if (!newHackathon) throw new ApiError(500, "Failed to create hackathon");
+
+    // If phases provided, validate and insert
+    if (Array.isArray(body.phases) && body.phases.length > 0) {
+      const phases = body.phases.map((phase: any) => ({
+        hackathonId: newHackathon.id,
+        name: phase.name,
+        description: phase.description,
+        startTime: new Date(phase.startTime),
+        endTime: new Date(phase.endTime),
+        order: phase.order,
+        createdAt: now,
+      }));
+
+      // Phase validations
+      for (const phase of phases) {
+        if (phase.startTime >= phase.endTime)
+          throw new ApiError(400, "Phase start time must be before end time");
+        if (phase.startTime < now || phase.endTime < now)
+          throw new ApiError(
+            400,
+            "Phase start time or end time must be in the future"
+          );
+        if (phase.startTime < hackStart || phase.endTime > hackEnd)
+          throw new ApiError(
+            400,
+            "Each phase's start and end time must be within the hackathon's start and end time"
+          );
+      }
+
+      const phaseInsertion = await tx.insert(hackathonPhases).values(phases);
+      if (!phaseInsertion)
+        throw new ApiError(500, "Failed to create hackathon phases");
+    }
+
+    // Return the newly created hackathon
+    return newHackathon;
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, result, "Hackathon created successfully ✅"));
+});
+export { completeOrganizerProfile, createHackathon };
