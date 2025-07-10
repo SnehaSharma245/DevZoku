@@ -8,6 +8,7 @@ import LoadingScreen from "@/components/LoadingScreen";
 import { socket } from "@/utils/socket";
 import { toast } from "sonner";
 import type { Notification } from "./Types";
+import { usePathname } from "next/navigation";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -15,12 +16,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [redBadge, setRedBadge] = useState<boolean>(false);
+  const pathname = usePathname();
 
   const fetchUser = async () => {
     try {
       setLoading(true);
       const response = await api.get("/users/current-user");
       const userData = response.data.data;
+
       setUser(userData);
       setError(null);
     } catch (error: any) {
@@ -52,6 +55,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchUser();
   }, []);
 
+  const isUnauthorized =
+    !loading &&
+    user &&
+    ((user.role === "developer" && pathname.includes("/organizer")) ||
+      (user.role === "organizer" && pathname.includes("/developer")));
+
+  useEffect(() => {
+    if (isUnauthorized) {
+      window.location.href = "/unauthorized";
+    }
+  }, [isUnauthorized]);
+
   useEffect(() => {
     if (user && user.id) {
       socket.emit("join", user.id);
@@ -70,6 +85,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
   }, [user]);
+
+  if (loading || isUnauthorized) {
+    return <LoadingScreen />;
+  }
 
   return loading ? (
     <LoadingScreen />
