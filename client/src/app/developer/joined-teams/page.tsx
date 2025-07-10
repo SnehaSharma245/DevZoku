@@ -4,6 +4,8 @@ import api from "@/utils/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
+import Link from "next/link";
+import { join } from "path";
 
 interface TeamMember {
   userId: string;
@@ -47,13 +49,6 @@ function JoinedTeamsPage() {
 
     fetchJoinedTeams();
   }, []);
-  console.log("Joined Teams:", joinedTeams);
-  const handleTeamNameClick = (e: React.MouseEvent<HTMLHeadingElement>) => {
-    const teamName = e.currentTarget.textContent;
-    if (teamName) {
-      window.location.href = `/teams/${teamName}`;
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
@@ -71,18 +66,21 @@ function JoinedTeamsPage() {
               className="hover:shadow-lg transition-shadow"
             >
               <CardContent className="p-4">
-                <h2
-                  className="text-xl font-semibold cursor-pointer hover:text-blue-600"
-                  onClick={handleTeamNameClick}
-                >
-                  {item.teams.name}
-                </h2>
+                <Link href={`view-all-teams/${item.teams.id}`}>
+                  <h2 className="text-xl font-semibold cursor-pointer hover:text-blue-600">
+                    {item.teams.name}
+                  </h2>
+                </Link>
+
                 <p className="text-sm text-gray-600">
                   {item.teams.description || "No description provided."}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   Team Size: {item.teams.teamSize}
                 </p>
+                <Link href={`/developer/joined-teams/${item.teams.id}`}>
+                  View Pending Invites
+                </Link>
               </CardContent>
             </Card>
           ))}
