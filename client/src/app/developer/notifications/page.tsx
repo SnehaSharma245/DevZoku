@@ -18,7 +18,9 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const fetchNotifications = async () => {
     try {
-      const res = await api.get("/developer/notifications");
+      const res = await api.get("/developer/notifications", {
+        withCredentials: true,
+      });
 
       setNotifications(res.data.data || []);
     } catch (error: any) {
