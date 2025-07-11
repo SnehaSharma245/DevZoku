@@ -22,9 +22,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUser = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/users/current-user");
+      const response = await api.get("/users/current-user", {
+        withCredentials: true,
+      });
       const userData = response.data.data;
-      console.log(response);
+
       if (response.status === 200) {
         setUser(userData);
         setIsAuthenticated(true);
