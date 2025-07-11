@@ -12,10 +12,11 @@ import { usePathname } from "next/navigation";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [redBadge, setRedBadge] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const pathname = usePathname();
 
   const fetchUser = async () => {
@@ -23,15 +24,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       const response = await api.get("/users/current-user");
       const userData = response.data.data;
-
-      setUser(userData);
-      setError(null);
+      console.log(response);
+      if (response.status === 200) {
+        setUser(userData);
+        setIsAuthenticated(true);
+      }
     } catch (error: any) {
       console.error("Error fetching user:", error?.response?.status || error);
       if (error?.response?.status === 401) {
         setUser(null);
       } else {
-        setError("An error occurred while fetching user data.");
       }
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isUnauthorized) {
       window.location.href = "/unauthorized";
     }
-  }, [isUnauthorized]);
+  }, []);
 
   useEffect(() => {
     if (user && user.id) {
@@ -86,10 +88,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user]);
 
-  if (loading || isUnauthorized) {
-    return <LoadingScreen />;
-  }
-
   return loading ? (
     <LoadingScreen />
   ) : (
@@ -98,7 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         setUser,
         loading: loading,
-        error: error,
+        isAuthenticated,
         handleLogout,
         notifications,
         setNotifications,
