@@ -225,9 +225,7 @@ function CompleteProfileForm() {
       };
 
       const response = await axios.post(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/complete-profile`,
+        `/developer/complete-profile`,
         formattedData,
         { withCredentials: true }
       );

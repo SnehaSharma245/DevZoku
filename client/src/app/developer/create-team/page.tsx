@@ -72,9 +72,7 @@ function CreateTeamForm() {
 
     try {
       const response = await api.get(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/check-teamName-unique?teamName=${encodeURIComponent(
+        `/developer/check-teamName-unique?teamName=${encodeURIComponent(
           teamName
         )}`,
         { withCredentials: true }
@@ -117,13 +115,9 @@ function CreateTeamForm() {
     try {
       setIsSubmitting(true);
 
-      const response = await api.post(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/create-team`,
-        data,
-        { withCredentials: true }
-      );
+      const response = await api.post(`/developer/create-team`, data, {
+        withCredentials: true,
+      });
 
       if (response.status === 200) {
         toast.success("Team created successfully!");

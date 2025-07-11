@@ -83,7 +83,6 @@ export default function CreateHackathonPage() {
       toast.error(
         error?.response?.data?.message || "Failed to create hackathon"
       );
-      console.log("Error creating hackathon:", error);
     }
   };
 

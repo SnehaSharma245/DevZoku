@@ -4,13 +4,12 @@ import { withAuth } from "@/utils/withAuth";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
-import { useRouter } from "next/navigation";
 import { Popup } from "@/components/CompleteProfilePopup";
 
 const DeveloperProfile = () => {
   const { user, handleLogout } = useAuth();
   const profile = user?.profile;
-  const router = useRouter();
+
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
 
   useEffect(() => {

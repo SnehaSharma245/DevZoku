@@ -37,14 +37,10 @@ function TeamDetailPage() {
 
   const fetchTeamDetails = async () => {
     try {
-      const response = await api.get(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/view-all-teams/${id}`,
-        { withCredentials: true }
-      );
+      const response = await api.get(`/developer/view-all-teams/${id}`, {
+        withCredentials: true,
+      });
       setTeamDetails(response.data.data);
-      console.log(response);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch team details"

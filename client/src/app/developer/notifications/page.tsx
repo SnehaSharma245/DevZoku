@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       const res = await api.get("/developer/notifications");
-      console.log(res);
+
       setNotifications(res.data.data || []);
     } catch (error: any) {
       toast.error(

@@ -19,7 +19,7 @@ function SentInvitation() {
       const res = await api.get(`/developer/sent-invitations`, {
         withCredentials: true,
       });
-      console.log(res);
+
       setSentInvitations(res.data.data);
     } catch (error) {
       console.error("Error fetching sent invitations:", error);
@@ -29,8 +29,6 @@ function SentInvitation() {
   useEffect(() => {
     fetchSentInvitations();
   }, []);
-
-  console.log("Sent Invitations:", sentInvitations);
 
   if (sentInvitations.length === 0) {
     return <div>No sent invitations found.</div>;

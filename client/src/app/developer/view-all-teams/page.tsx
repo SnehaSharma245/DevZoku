@@ -47,9 +47,7 @@ function ViewAllTeams() {
   const handleSendingInvite = async (id: string) => {
     try {
       const response = await api.post(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/v1/developer/send-invitation`,
+        `/developer/send-invitation`,
         { teamId: id },
         { withCredentials: true }
       );

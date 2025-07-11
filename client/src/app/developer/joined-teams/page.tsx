@@ -30,14 +30,9 @@ function JoinedTeamsPage() {
   useEffect(() => {
     const fetchJoinedTeams = async () => {
       try {
-        const res = await api.get(
-          `${
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-          }/api/v1/developer/joined-teams`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await api.get(`/developer/joined-teams`, {
+          withCredentials: true,
+        });
         setJoinedTeams(res?.data?.data || []);
       } catch (err: any) {
         toast.error(
