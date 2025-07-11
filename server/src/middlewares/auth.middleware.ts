@@ -71,12 +71,8 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError && req.cookies?.RefreshToken) {
-      return await refreshAccessToken(req, res, next);
-    }
-    console.error("JWT verification error:", error);
-    throw new ApiError(401, "Invalid access token");
+  } catch (error: any) {
+    throw new ApiError(401, error?.message || "Invalid access token");
   }
 });
 

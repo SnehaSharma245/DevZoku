@@ -43,8 +43,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await api.post(`/users/refresh-token`, {}, { withCredentials: true });
-        console.log("Retrying original request", originalRequest.url);
+        const res = await api.post(
+          `/users/refresh-token`,
+          {},
+          { withCredentials: true }
+        );
 
         return api(originalRequest);
       } catch (refreshError) {
