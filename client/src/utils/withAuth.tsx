@@ -9,7 +9,7 @@ export const withAuth = (
   requiredRole?: "developer" | "organizer"
 ) => {
   const AuthenticatedComponent = (props: any) => {
-    const { user, loading, error } = useAuth();
+    const { user, loading, isAuthenticated } = useAuth();
     const router = useRouter();
     const [authChecked, setAuthChecked] = useState(false);
 
@@ -28,7 +28,7 @@ export const withAuth = (
 
         setAuthChecked(true);
       }
-    }, [loading, user, router, authChecked]);
+    }, [loading, user, router, authChecked, isAuthenticated]);
 
     if (loading) {
       return (
@@ -38,13 +38,8 @@ export const withAuth = (
       );
     }
 
-    // Show error message if any
-    if (error) {
-      return (
-        <div className="min-h-screen flex justify-center items-center">
-          <p className="text-red-500">{error}</p>
-        </div>
-      );
+    if (!isAuthenticated) {
+      return null;
     }
 
     // If we need a specific role and user doesn't have it
