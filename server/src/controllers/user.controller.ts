@@ -8,10 +8,7 @@ import { organizers } from "../db/schema/organizer.schema";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
-import {
-  refreshAccessTokenForRole,
-  generateTokensForGoogleUser,
-} from "../utils/TokenGeneration";
+import { generateTokens } from "../utils/TokenGeneration";
 import { users } from "../db/schema/user.schema";
 
 // Extend Express Request interface
@@ -174,10 +171,7 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
   }
 
   // Generate our app tokens
-  const { accessToken, refreshToken } = await generateTokensForGoogleUser(
-    userObj,
-    role
-  );
+  const { accessToken, refreshToken } = await generateTokens(userObj, role);
 
   //update user in db with refresh token
   await db
@@ -218,11 +212,16 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
 
 // Get current user - handles both roles
 const getCurrentUser = asyncHandler(async (req, res) => {
-  if (!req.user || !req.user.role) {
+  console.log("Fetching current user...");
+
+  if (!req.user) {
     throw new ApiError(401, "User not authenticated");
   }
 
   const { role, id } = req.user;
+
+  console.log("Current user role:", role);
+  console.log("Current user ID:", id);
 
   // Fetch from users table
   const userResult = await db.select().from(users).where(eq(users.id, id));
@@ -246,6 +245,8 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   }
 
   const { password, refreshToken, ...safeUser } = user;
+  console.log("Current user:", safeUser);
+  console.log("Profile:", profile);
 
   return res.status(200).json(
     new ApiResponse(
@@ -322,8 +323,20 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } =
-      await refreshAccessTokenForRole(id, role);
+    const { accessToken, refreshToken: newRefreshToken } = await generateTokens(
+      user,
+      role
+    );
+
+    //save new refresh token in db
+    const savedRefreshToken = await db
+      .update(users)
+      .set({ refreshToken: newRefreshToken })
+      .where(eq(users.id, id));
+
+    if (!savedRefreshToken) {
+      throw new ApiError(500, "Failed to update refresh token in database");
+    }
 
     // Set cookies
     const options = {
@@ -331,6 +344,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
     };
+
+    console.log("New access token generated:", accessToken);
+    console.log(process.env.ACCESS_TOKEN_EXPIRY);
 
     res
       .cookie("AccessToken", accessToken, {

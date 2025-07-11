@@ -77,7 +77,9 @@ export const generateAccessToken = (
     payload,
     process.env.ACCESS_TOKEN_SECRET as string,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        ? parseInt(process.env.ACCESS_TOKEN_EXPIRY)
+        : 15 * 60, // default to 15 hours in seconds
     } as SignOptions
   );
 };
@@ -95,12 +97,14 @@ export const generateRefreshToken = (
     payload,
     process.env.REFRESH_TOKEN_SECRET as string,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        ? parseInt(process.env.REFRESH_TOKEN_EXPIRY)
+        : 1 * 24 * 60 * 60, // default to 1 day in seconds
     } as SignOptions
   );
 };
 
-const generateTokensForGoogleUser = async (
+const generateTokens = async (
   userObj: DbUser,
   role: "developer" | "organizer"
 ): Promise<{
@@ -122,47 +126,8 @@ const generateTokensForGoogleUser = async (
   }
 };
 
-const refreshAccessTokenForRole = async (
-  userId: string,
-  role: "developer" | "organizer"
-): Promise<{ accessToken: string; refreshToken: string }> => {
-  try {
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (user.length === 0) {
-      throw new ApiError(404, "User not found");
-    }
-
-    const userObj = user[0];
-    if (!userObj) {
-      throw new ApiError(404, "User not found");
-    }
-
-    const accessToken: string = generateAccessToken(
-      userObj as Developer | Organizer,
-      role
-    );
-    const refreshToken: string = generateRefreshToken(
-      userObj as Developer | Organizer,
-      role
-    );
-
-    // Update refresh token in database
-    await db.update(users).set({ refreshToken }).where(eq(users.id, userId));
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    throw new ApiError(500, "Something went wrong while refreshing tokens");
-  }
-};
-
 export {
-  generateTokensForGoogleUser,
-  refreshAccessTokenForRole,
+  generateTokens,
   type Developer,
   type Organizer,
   type TokenPayload,
