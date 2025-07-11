@@ -2,7 +2,7 @@ import axios, {
   AxiosInstance,
   AxiosResponse,
   AxiosError,
-  InternalAxiosRequestConfig,
+  AxiosRequestConfig,
 } from "axios";
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
@@ -11,60 +11,49 @@ const API_BASE_URL = "http://localhost:8000/api/v1";
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
+const PUBLIC_ROUTES = ["/auth/login", "/auth/register", "/"];
+
+const isPublicRoute = (path: string): boolean => {
+  return PUBLIC_ROUTES.includes(path);
+};
+
+const getCurrentPath = () => {
+  if (typeof window === "undefined") return "";
+  return window.location.pathname;
+};
 // Add TypeScript declaration for _retry
-declare module "axios" {
-  export interface AxiosRequestConfig {
-    _retry?: boolean;
-  }
+interface InternalAxiosRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
 }
 
 // Response interceptor to handle token refresh logic
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    };
-
+    const originalRequest = error.config as InternalAxiosRequestConfig;
     const isRefreshUrl = originalRequest?.url?.includes("refresh-token");
-    const isUnauthorized = error.response?.status === 401;
 
-    // Don’t retry if refresh-token itself failed
-    if (isRefreshUrl && isUnauthorized) {
-      return Promise.reject(error);
-    }
-
-    // Handle 401 error and prevent infinite retry loop
-    if (isUnauthorized && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !isRefreshUrl &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       try {
-        // Attempt to refresh the token
-        const res = await axios.post(
-          `${API_BASE_URL}/users/refresh-token`,
-          {},
-          {
-            withCredentials: true,
-          }
-        );
+        await api.post(`/users/refresh-token`, {}, { withCredentials: true });
+        console.log("Retrying original request", originalRequest.url);
 
-        if (res.status === 200) {
-          // Retry the original request
-          return api(originalRequest);
-        }
+        return api(originalRequest);
       } catch (refreshError) {
-        if (
-          window.location.pathname !== "/" &&
-          window.location.pathname !== "/auth/login"
-        ) {
-          window.location.href = "/";
+        console.error("Token refresh failed:", refreshError);
+        if (!isPublicRoute(getCurrentPath()) && typeof window !== "undefined") {
+          console.error("🔁 Refresh token failed:", refreshError);
+
+          window.location.href = "/auth/login";
         }
-        return Promise.reject(refreshError);
       }
     }
 
