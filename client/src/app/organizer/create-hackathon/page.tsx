@@ -1,6 +1,5 @@
-// filepath: [page.tsx](http://_vscodecontentref_/1)
 "use client";
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,6 +14,8 @@ import {
 import { Input, Textarea, Button } from "@/components/index";
 import api from "@/utils/api";
 import { toast } from "sonner";
+import { Upload, Sparkles, RotateCcw, Trash, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const phaseSchema = z.object({
   name: z.string().min(1, "Phase name is required"),
@@ -41,6 +42,9 @@ const createHackathonSchema = z.object({
     message: "End time must be a valid date",
   }),
   tags: z.array(z.string()).optional(),
+  minTeamSize: z.number().min(1, "Minimum team size must be at least 1"),
+  maxTeamSize: z.number().min(1, "Maximum team size must be at least 1"),
+  mode: z.enum(["online", "offline"]).optional(),
   phases: z.array(phaseSchema).optional(),
 });
 
@@ -54,18 +58,23 @@ export default function CreateHackathonPage() {
       description: "",
       startTime: "",
       endTime: "",
+      minTeamSize: 1,
+      maxTeamSize: 1,
+      mode: "online",
       tags: [],
     },
   });
-
+  const [poster, setPoster] = useState<File | null>(null);
+  const [creatingHackathon, setCreatingHackathon] = useState(false);
+  const posterInputRef = useRef<HTMLInputElement>(null);
   const { control, handleSubmit, watch, setValue } = form;
-  const [newTag, setNewTag] = React.useState(""); // <-- Add this state
+  const [newTag, setNewTag] = useState("");
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "phases",
   });
-  // Manage tags as a simple array of strings using useState and setValue
+
   const tags = watch("tags") || [];
 
   const handleAddTag = () => {
@@ -89,28 +98,136 @@ export default function CreateHackathonPage() {
       order: idx + 1,
     }));
 
-    const payload = {
-      ...data,
-      phases: phasesWithOrder,
-    };
+    if (poster && poster.size > 3 * 1024 * 1024) {
+      toast.error("File size exceeds 3MB limit. Please select a smaller file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("description", data.description || "");
+    formData.append("startTime", data.startTime);
+    formData.append("endTime", data.endTime);
+    formData.append("tags", JSON.stringify(data.tags || []));
+    formData.append("phases", JSON.stringify(phasesWithOrder));
+    formData.append("minTeamSize", data.minTeamSize.toString());
+    formData.append("maxTeamSize", data.maxTeamSize.toString());
+    formData.append("mode", data.mode || "online");
+    if (poster) formData.append("poster", poster);
 
     try {
-      const res = await api.post("/organizer/create-hackathon", payload);
+      setCreatingHackathon(true);
+      const res = await api.post("/organizer/create-hackathon", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       toast.success(
         res?.data?.data?.message || "Hackathon created successfully!"
       );
-      // form.reset();
+      form.reset();
+
+      setPoster(null);
+      if (posterInputRef.current) {
+        posterInputRef.current.value = "";
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to create hackathon"
       );
+    } finally {
+      setCreatingHackathon(false);
     }
+  };
+
+  const handleReset = () => {
+    form.reset();
+    setPoster(null);
+    if (posterInputRef.current) {
+      posterInputRef.current.value = "";
+    }
+    setNewTag("");
+    form.setValue("phases", []);
   };
 
   return (
     <div className="max-w-2xl mx-auto py-8">
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <Button type="button" onClick={handleReset} variant="outline">
+              Handle Reset
+            </Button>
+          </div>
+          {/* Poster Upload + AI + Reset */}
+          <div>
+            <FormLabel className="mb-2 block">Poster</FormLabel>
+            {/* File Info Box */}
+            {poster && (
+              <div className="flex items-center max-w-md justify-between text-gray-300 mb-4 bg-[#0A0A0A]/50 p-3 rounded-lg border border-yellow-400/10">
+                {/* File Info */}
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-yellow-400" />
+                  <span className="text-sm">
+                    Selected:{" "}
+                    <span className="font-medium text-yellow-400">
+                      {poster.name}
+                    </span>
+                  </span>
+                  <button
+                    title="Remove File"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPoster(null);
+                      if (posterInputRef.current) {
+                        posterInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    <Trash
+                      size={17}
+                      className="text-white hover:text-gray-400 ml-auto cursor-pointer transition-all duration-200"
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              id="poster-upload"
+              accept="image/*"
+              ref={posterInputRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && file.size > 3 * 1024 * 1024) {
+                  toast.error(
+                    "File size exceeds 3MB limit. Please select a smaller file."
+                  );
+                  return;
+                }
+                setPoster(file || null);
+              }}
+              className="hidden"
+              disabled={form.formState.isSubmitting}
+            />
+
+            {/* Custom Upload Button */}
+            <label
+              htmlFor="poster-upload"
+              className={`flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg cursor-pointer transition-all duration-300 shadow ${
+                form.formState.isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              tabIndex={0}
+            >
+              <Upload className="h-5 w-5" />
+              <span>{poster ? "Change Poster" : "Upload Poster"}</span>
+            </label>
+          </div>
+
+          {/* Title */}
           <FormField
             control={control}
             name="title"
@@ -124,6 +241,8 @@ export default function CreateHackathonPage() {
               </FormItem>
             )}
           />
+
+          {/* Description */}
           <FormField
             control={control}
             name="description"
@@ -137,6 +256,89 @@ export default function CreateHackathonPage() {
               </FormItem>
             )}
           />
+
+          {/*Team Size*/}
+          <FormField
+            control={control}
+            name="minTeamSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimum Team Size</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    placeholder="Minimum team size"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="maxTeamSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Maximum Team Size</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    placeholder="Maximum team size"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Mode Selection (shadcn checkbox) */}
+          <div>
+            <FormLabel className="mb-2 block">Mode</FormLabel>
+            <div className="flex gap-6">
+              <FormField
+                control={control}
+                name="mode"
+                render={() => (
+                  <FormItem className="flex flex-row items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={watch("mode") === "online"}
+                        onCheckedChange={() => setValue("mode", "online")}
+                        id="mode-online"
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="mode-online" className="font-normal">
+                      Online
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mode"
+                render={() => (
+                  <FormItem className="flex flex-row items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={watch("mode") === "offline"}
+                        onCheckedChange={() => setValue("mode", "offline")}
+                        id="mode-offline"
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="mode-offline" className="font-normal">
+                      Offline
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Start/End Time */}
           <div className="flex gap-4">
             <FormField
               control={control}
@@ -165,6 +367,8 @@ export default function CreateHackathonPage() {
               )}
             />
           </div>
+
+          {/* Phases */}
           <div>
             <FormLabel className="mb-2 block">Phases</FormLabel>
             {fields.map((field, idx) => (
@@ -226,7 +430,7 @@ export default function CreateHackathonPage() {
                     </FormItem>
                   )}
                 />
-                {fields.length > 1 && (
+                {fields.length >= 1 && (
                   <button
                     type="button"
                     onClick={() => remove(idx)}
@@ -253,7 +457,8 @@ export default function CreateHackathonPage() {
               + Add Phase
             </Button>
           </div>
-          {/* Tags Section */}
+
+          {/* Tags */}
           <div>
             <FormLabel className="mb-2 block">Tags</FormLabel>
             <div className="flex flex-wrap gap-2 mb-2">
@@ -291,7 +496,13 @@ export default function CreateHackathonPage() {
               </Button>
             </div>
           </div>
-          <Button type="submit" className="w-full mt-4">
+
+          {/* Submit */}
+          <Button
+            type="submit"
+            className="w-full mt-4"
+            disabled={creatingHackathon}
+          >
             Create Hackathon
           </Button>
         </form>
