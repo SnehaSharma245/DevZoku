@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq, not } from "drizzle-orm";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 
@@ -10,6 +10,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { generateTokens } from "../utils/TokenGeneration";
 import { users } from "../db/schema/user.schema";
+import { hackathons } from "../db/schema/hackathon.schema";
 
 // Extend Express Request interface
 declare module "express" {
@@ -362,6 +363,22 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     console.error("Refresh token error:", error.message);
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
+});
+
+// View all Hackathons
+const viewAllHackathons = asyncHandler(async (req, res) => {
+  const allHackathons = await db
+    .select()
+    .from(hackathons)
+    .where(not(eq(hackathons.status, "completed")))
+    .orderBy(desc(hackathons.startTime))
+    .execute();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, allHackathons, "Hackathons fetched successfully")
+    );
 });
 
 export {

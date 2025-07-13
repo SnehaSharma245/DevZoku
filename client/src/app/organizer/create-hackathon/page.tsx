@@ -25,6 +25,7 @@ const phaseSchema = z.object({
   endTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Phase end time must be a valid date",
   }),
+  tags: z.array(z.string()).optional(),
 });
 
 const createHackathonSchema = z.object({
@@ -39,6 +40,7 @@ const createHackathonSchema = z.object({
   endTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "End time must be a valid date",
   }),
+  tags: z.array(z.string()).optional(),
   phases: z.array(phaseSchema).optional(),
 });
 
@@ -52,15 +54,34 @@ export default function CreateHackathonPage() {
       description: "",
       startTime: "",
       endTime: "",
+      tags: [],
     },
   });
 
-  const { control, handleSubmit } = form;
+  const { control, handleSubmit, watch, setValue } = form;
+  const [newTag, setNewTag] = React.useState(""); // <-- Add this state
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "phases",
   });
+  // Manage tags as a simple array of strings using useState and setValue
+  const tags = watch("tags") || [];
+
+  const handleAddTag = () => {
+    const trimmedTag = newTag.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setValue("tags", [...tags, trimmedTag]);
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (idx: number) => {
+    setValue(
+      "tags",
+      tags.filter((_, i) => i !== idx)
+    );
+  };
 
   const onSubmit = async (data: HackathonForm) => {
     const phasesWithOrder = (data.phases || []).map((phase, idx) => ({
@@ -231,6 +252,44 @@ export default function CreateHackathonPage() {
             >
               + Add Phase
             </Button>
+          </div>
+          {/* Tags Section */}
+          <div>
+            <FormLabel className="mb-2 block">Tags</FormLabel>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag, idx) => (
+                <div
+                  key={tag + idx}
+                  className="flex items-center gap-1 bg-blue-100 border border-blue-300 rounded-md px-2 py-1"
+                >
+                  <span className="text-sm font-medium">{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(idx)}
+                    className="text-red-500 hover:text-red-700 ml-1 text-lg font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type a tag and press Enter"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button type="button" onClick={handleAddTag} variant="outline">
+                Add
+              </Button>
+            </div>
           </div>
           <Button type="submit" className="w-full mt-4">
             Create Hackathon

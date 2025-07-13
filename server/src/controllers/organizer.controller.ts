@@ -115,6 +115,7 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
         createdBy: user.id,
         createdAt: now,
         status: "upcoming",
+        tags: body.tags || [],
       })
       .returning();
 

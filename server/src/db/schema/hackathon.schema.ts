@@ -31,6 +31,7 @@ export const hackathons = pgTable(
       length: 20,
       enum: statusSchemaEnum,
     }),
+    tags: varchar("tags", { length: 100 }).array().$type<string[]>(),
   },
   (t) => [
     index("idx_hackathons_status").on(t.status),
