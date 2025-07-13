@@ -5,6 +5,8 @@ import {
   getCurrentUser,
   logoutUser,
   refreshAccessToken,
+  viewAllHackathons,
+  deleteCompletedHackathons,
 } from "../controllers/user.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -15,6 +17,8 @@ const router = Router();
 router.get("/auth/google", googleAuth);
 router.get("/auth/google/callback", signUpWithGoogle);
 router.post("/refresh-token", refreshAccessToken);
+router.get("/view-all-hackathons", viewAllHackathons);
+router.delete("/delete-completed-hackathons", deleteCompletedHackathons);
 
 // Protected routes
 router.get("/current-user", verifyJWT, getCurrentUser);
