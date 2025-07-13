@@ -1,4 +1,4 @@
-import { desc, eq, not } from "drizzle-orm";
+import { desc, eq, inArray, not } from "drizzle-orm";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 
@@ -10,7 +10,11 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { generateTokens } from "../utils/TokenGeneration";
 import { users } from "../db/schema/user.schema";
-import { hackathons } from "../db/schema/hackathon.schema";
+import { hackathons, teamHackathons } from "../db/schema/hackathon.schema";
+import {
+  organizerHackathonHistory,
+  teamHackathonHistory,
+} from "../db/schema/archiveTable.schema";
 
 // Extend Express Request interface
 declare module "express" {
@@ -381,10 +385,92 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     );
 });
 
+// delete completed hackathons and save them in archive
+const deleteCompletedHackathons = asyncHandler(async (req, res) => {
+  await db.transaction(async (tx) => {
+    const hackathonsToBeDeleted = await tx
+      .select()
+      .from(hackathons)
+      .where(eq(hackathons.status, "completed"))
+      .execute();
+
+    if (hackathonsToBeDeleted.length === 0) {
+      return res
+        .status(404)
+        .json(
+          new ApiResponse(404, {}, "No completed hackathons found to delete")
+        );
+    }
+
+    //store them in archive
+    const archiveRows = hackathonsToBeDeleted.map((h) => ({
+      hackathonId: h.id,
+      title: h.title,
+      dateCompleted: h.endTime,
+      organizerId: h.createdBy,
+    }));
+
+    await tx.insert(organizerHackathonHistory).values(archiveRows);
+
+    const hackathonIds = hackathonsToBeDeleted.map((h) => h.id);
+
+    const teamsToArchive = await tx
+      .select()
+      .from(teamHackathons)
+      .where(inArray(teamHackathons.hackathonId, hackathonIds))
+      .execute();
+
+    if (teamsToArchive.length === 0) {
+      return res
+        .status(404)
+        .json(
+          new ApiResponse(
+            404,
+            {},
+            "No completed team hackathons found to delete"
+          )
+        );
+    }
+
+    const teamArchiveRows = teamsToArchive.map((t) => ({
+      teamId: t.teamId,
+      hackathonId: t.hackathonId,
+      submittedAt: t.submittedAt,
+      score: t.score,
+      isWinner: t.isWinner,
+      dateCompleted: t.submittedAt,
+      rank: 0,
+    }));
+
+    if (teamArchiveRows.length > 0) {
+      await tx.insert(teamHackathonHistory).values(teamArchiveRows);
+    }
+
+    // Delete completed hackathons
+    await tx
+      .delete(teamHackathons)
+      .where(inArray(teamHackathons.hackathonId, hackathonIds));
+
+    await tx.delete(hackathons).where(inArray(hackathons.id, hackathonIds));
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {},
+          "Completed hackathons archived and deleted successfully"
+        )
+      );
+  });
+});
+
 export {
   googleAuth,
   signUpWithGoogle,
   getCurrentUser,
   logoutUser,
   refreshAccessToken,
+  viewAllHackathons,
+  deleteCompletedHackathons,
 };
