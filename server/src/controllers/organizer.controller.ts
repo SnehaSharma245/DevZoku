@@ -74,6 +74,7 @@ const completeOrganizerProfile = asyncHandler(
 // controller for creating hackathon
 const createHackathon = asyncHandler(async (req: Request, res: Response) => {
   const { user, body } = req;
+  const posterUrl = req.file?.path || "";
 
   if (!user) throw new ApiError(401, "User not authenticated");
   if (user.role !== "organizer")
@@ -105,6 +106,16 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
 
   // Transaction for hackathon + phases
   const result = await db.transaction(async (tx) => {
+    let tags = req.body.tags;
+    if (typeof tags === "string") {
+      try {
+        tags = JSON.parse(tags);
+      } catch {
+        tags = [];
+      }
+    }
+    if (!Array.isArray(tags)) tags = [];
+
     const [newHackathon] = await tx
       .insert(hackathons)
       .values({
@@ -115,7 +126,11 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
         createdBy: user.id,
         createdAt: now,
         status: "upcoming",
-        tags: body.tags || [],
+        tags: tags,
+        poster: posterUrl,
+        minTeamSize: body.minTeamSize,
+        maxTeamSize: body.maxTeamSize,
+        mode: body.mode,
       })
       .returning();
 
