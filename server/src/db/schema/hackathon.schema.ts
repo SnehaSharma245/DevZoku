@@ -13,6 +13,7 @@ import { teams } from "./team.schema";
 import { users } from "./user.schema";
 
 const statusSchemaEnum = ["upcoming", "ongoing", "completed"] as const;
+const modeSchemaEnum = ["online", "offline"] as const;
 
 //HACKATHONS table with indexes
 export const hackathons = pgTable(
@@ -32,6 +33,10 @@ export const hackathons = pgTable(
       enum: statusSchemaEnum,
     }),
     tags: varchar("tags", { length: 100 }).array().$type<string[]>(),
+    poster: varchar("poster", { length: 500 }),
+    minTeamSize: integer("min_team_size").notNull(),
+    maxTeamSize: integer("max_team_size").notNull(),
+    mode: varchar("mode", { length: 20, enum: modeSchemaEnum }).notNull(),
   },
   (t) => [
     index("idx_hackathons_status").on(t.status),
