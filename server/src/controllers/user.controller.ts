@@ -212,16 +212,11 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
 
 // Get current user - handles both roles
 const getCurrentUser = asyncHandler(async (req, res) => {
-  console.log("Fetching current user...");
-
   if (!req.user) {
     throw new ApiError(401, "User not authenticated");
   }
 
   const { role, id } = req.user;
-
-  console.log("Current user role:", role);
-  console.log("Current user ID:", id);
 
   // Fetch from users table
   const userResult = await db.select().from(users).where(eq(users.id, id));
@@ -245,8 +240,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   }
 
   const { password, refreshToken, ...safeUser } = user;
-  console.log("Current user:", safeUser);
-  console.log("Profile:", profile);
 
   return res.status(200).json(
     new ApiResponse(
@@ -344,9 +337,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
     };
-
-    console.log("New access token generated:", accessToken);
-    console.log(process.env.ACCESS_TOKEN_EXPIRY);
 
     res
       .cookie("AccessToken", accessToken, {
