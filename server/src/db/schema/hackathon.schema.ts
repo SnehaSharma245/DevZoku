@@ -22,6 +22,8 @@ export const hackathons = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: varchar("title", { length: 255 }).notNull().unique(),
     description: varchar("description", { length: 1000 }),
+    registrationStart: timestamp("registration_start", { withTimezone: true }),
+    registrationEnd: timestamp("registration_end", { withTimezone: true }),
     startTime: timestamp("start_time", { withTimezone: true }).notNull(),
     endTime: timestamp("end_time", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at").defaultNow(),
@@ -56,15 +58,12 @@ export const teamHackathons = pgTable(
     hackathonId: uuid("hackathon_id")
       .notNull()
       .references(() => hackathons.id, { onDelete: "cascade" }),
-    submittedAt: timestamp("submitted_at").defaultNow(),
-    score: integer("score").default(0),
     isWinner: boolean("is_winner").default(false),
   },
   (t) => [
     primaryKey({ columns: [t.teamId, t.hackathonId] }),
     index("idx_team_hackathons_team_id").on(t.teamId),
     index("idx_team_hackathons_hackathon_id").on(t.hackathonId),
-    index("idx_team_hackathons_score").on(t.score),
     index("idx_team_hackathons_is_winner").on(t.isWinner),
   ]
 );
