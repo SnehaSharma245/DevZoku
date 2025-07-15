@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import {
   Input,
@@ -25,6 +24,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
+import api from "@/utils/api";
 
 // Client-side validation schema
 // Make all fields optional except for project fields if a project exists
@@ -224,7 +224,7 @@ function CompleteProfileForm() {
           })),
       };
 
-      const response = await axios.post(
+      const response = await api.post(
         `/developer/complete-profile`,
         formattedData,
         { withCredentials: true }
@@ -233,18 +233,10 @@ function CompleteProfileForm() {
       if (response.status === 200) {
         toast.success("Profile updated successfully!");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
 
-      if (axios.isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.message || "Failed to update profile"
-        );
-        console.error("API error:", error.response?.data);
-      } else {
-        toast.error("An unexpected error occurred");
-        console.error("Unexpected error:", error);
-      }
+      toast.error(error?.response?.data?.message || "Failed to update profile");
     } finally {
       setIsSubmitting(false);
     }
