@@ -17,10 +17,10 @@ const Login = () => {
 
   if (user) {
     if (user.role === "developer") {
-      window.location.href = "/developer/dashboard";
+      window.location.href = "/developer/profile/" + user.id;
       return null;
     } else {
-      window.location.href = "/organizer/dashboard";
+      window.location.href = "/organizer/profile/" + user.id;
       return null;
     }
   }
