@@ -16,6 +16,7 @@ interface Team {
   id: string;
   name: string;
   description?: string;
+  currentMemberCount: number;
   teamSize: number;
 }
 
@@ -71,7 +72,10 @@ function JoinedTeamsPage() {
                   {item.teams.description || "No description provided."}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Team Size: {item.teams.teamSize}
+                  Required Team Size: {item.teams.teamSize}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Current Member Count: {item.teams.currentMemberCount}
                 </p>
                 <Link href={`/developer/joined-teams/${item.teams.id}`}>
                   View Pending Invites
