@@ -61,7 +61,10 @@ const Header = () => {
               <nav className="mt-6 flex flex-col gap-4 text-gray-700 text-sm font-medium">
                 {user?.role === "developer" ? (
                   <>
-                    <Link href="/profile" onClick={() => setOpen(false)}>
+                    <Link
+                      href={`/developer/profile/${user.id}`}
+                      onClick={() => setOpen(false)}
+                    >
                       👤 Show Profile
                     </Link>
                     <Link
@@ -82,7 +85,10 @@ const Header = () => {
                     >
                       ➕ Create a Team
                     </Link>
-                    <Link href="/hackathons" onClick={() => setOpen(false)}>
+                    <Link
+                      href="/view-all-hackathons"
+                      onClick={() => setOpen(false)}
+                    >
                       🚀 Hackathons
                     </Link>
                     <Link
@@ -90,6 +96,12 @@ const Header = () => {
                       onClick={() => setOpen(false)}
                     >
                       🧩 View All Teams
+                    </Link>
+                    <Link
+                      href="/developer/complete-profile"
+                      onClick={() => setOpen(false)}
+                    >
+                      🧩 Complete Profile
                     </Link>
                     <Link
                       href="/developer/notifications"
@@ -110,7 +122,10 @@ const Header = () => {
                   </>
                 ) : (
                   <>
-                    <Link href="/profile" onClick={() => setOpen(false)}>
+                    <Link
+                      href={"/organizer/profile/" + user.id}
+                      onClick={() => setOpen(false)}
+                    >
                       🏢 Show Profile
                     </Link>
                     <Link
@@ -124,6 +139,12 @@ const Header = () => {
                       onClick={() => setOpen(false)}
                     >
                       ➕ Create Hackathon
+                    </Link>
+                    <Link
+                      href="/organizer/complete-profile"
+                      onClick={() => setOpen(false)}
+                    >
+                      📅 Complete Profile
                     </Link>
                   </>
                 )}
