@@ -9,6 +9,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { teamMembers, teams } from "../db/schema/team.schema";
 import { users } from "../db/schema/user.schema";
 import { io } from "..";
+import { hackathons, teamHackathons } from "../db/schema/hackathon.schema";
 
 // Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(
@@ -100,6 +101,40 @@ const completeDeveloperProfile = asyncHandler(
         error.message || "Something went wrong while updating the profile"
       );
     }
+  }
+);
+
+// controller to fetch profile of a developer by ID
+const fetchDeveloperProfile = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { user } = req;
+    const { id } = req.params;
+
+    if (!id) {
+      throw new ApiError(400, "Developer ID is required");
+    }
+
+    // Fetch the developer profile by ID
+    const developerProfile = await db
+      .select()
+      .from(developers)
+      .where(eq(developers.userId, id as string))
+      .limit(1)
+      .execute();
+
+    if (developerProfile.length === 0) {
+      throw new ApiError(404, "Developer profile not found");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          developerProfile[0],
+          "Profile fetched successfully"
+        )
+      );
   }
 );
 
@@ -219,17 +254,58 @@ const getJoinedTeams = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(401, "User not authenticated");
   }
 
+  // Get all teams the user is a member of
   const joinedTeams = await db
-    .select()
+    .select({
+      teams: {
+        ...teams,
+        currentMemberCount: sql<number>`(
+        SELECT COUNT(*) FROM ${teamMembers}
+        WHERE ${teamMembers.teamId} = ${teams.id}
+      )`,
+      },
+    })
     .from(teamMembers)
     .innerJoin(teams, eq(teams.id, teamMembers.teamId))
     .where(eq(teamMembers.userId, user.id))
     .execute();
 
+  // fetch the team IDs for further use if needed
+  const teamIds = joinedTeams.map((jt) => jt.teams.id);
+
+  const allMembers = await db
+    .select({
+      userId: teamMembers.userId,
+      teamId: teamMembers.teamId,
+      name: sql<string>`"users"."first_name" || ' ' || "users"."last_name"`,
+      email: users.email,
+    })
+    .from(teamMembers)
+    .innerJoin(users, eq(users.id, teamMembers.userId))
+    .where(inArray(teamMembers.teamId, teamIds))
+    .execute();
+
+  const membersByTeam: Record<string, any[]> = {};
+  allMembers.forEach((member) => {
+    if (!membersByTeam[member.teamId]) {
+      membersByTeam[member.teamId] = [];
+    }
+    (membersByTeam[member.teamId] ??= []).push(member);
+  });
+
+  const joinedTeamsWithMembers = joinedTeams.map((jt) => ({
+    ...jt,
+    team_members: membersByTeam[jt.teams.id] || [],
+  }));
+
   return res
     .status(200)
     .json(
-      new ApiResponse(200, joinedTeams, "Joined teams fetched successfully")
+      new ApiResponse(
+        200,
+        joinedTeamsWithMembers,
+        "Joined teams fetched successfully"
+      )
     );
 });
 
@@ -547,6 +623,7 @@ const fetchSentInvitations = asyncHandler(
   }
 );
 
+// controller for handling notifications
 const notificationHandling = asyncHandler(
   async (req: Request, res: Response) => {
     const { user } = req;
@@ -602,8 +679,128 @@ const notificationHandling = asyncHandler(
   }
 );
 
+// controller for applying to a hackathon with a team
+const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
+  const { user } = req;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  const { hackathonId, teamId, userIds } = req.body;
+
+  if (!hackathonId || !teamId) {
+    throw new ApiError(400, "Hackathon ID and Team ID are required");
+  }
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, "User IDs must be an array and cannot be empty");
+  }
+
+  // Check if the hackathon exists
+  const hackathon = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.id, hackathonId))
+    .limit(1)
+    .execute();
+
+  if (hackathon.length === 0) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  // Check if the team exists
+  const team = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1)
+    .execute();
+
+  if (team.length === 0) {
+    throw new ApiError(404, "Team not found");
+  }
+
+  // check the member count of the team if it exceeds the limit
+  const teamMemberCount = userIds.length;
+
+  if (
+    !teamMemberCount ||
+    !hackathon[0] ||
+    teamMemberCount < hackathon[0].minTeamSize ||
+    teamMemberCount > hackathon[0].maxTeamSize
+  ) {
+    throw new ApiError(400, "Team member limit not matching or data missing");
+  }
+
+  // Check if the team is already applied to the hackathon
+  const existingApplication = await db
+    .select()
+    .from(teamHackathons)
+    .where(
+      and(
+        eq(teamHackathons.teamId, teamId),
+        eq(teamHackathons.hackathonId, hackathonId)
+      )
+    )
+    .limit(1)
+    .execute();
+
+  if (existingApplication.length > 0) {
+    throw new ApiError(400, "Team has already applied to this hackathon");
+  }
+
+  // check if the user is captain of the team
+  const isCaptain = await db
+    .select()
+    .from(teams)
+    .where(and(eq(teams.id, teamId), eq(teams.captainId, user.id)))
+    .limit(1)
+    .execute();
+
+  if (isCaptain.length === 0) {
+    throw new ApiError(403, "User is not the captain of the team");
+  }
+
+  // if any of the userIds are already applied to the hackathon, we will throw an error
+  const teamMembersAlreadyApplied = await db
+    .select()
+    .from(teamHackathons)
+    .innerJoin(teamMembers, eq(teamHackathons.teamId, teamMembers.teamId))
+    .where(
+      and(
+        eq(teamHackathons.hackathonId, hackathonId),
+        inArray(teamMembers.userId, userIds)
+      )
+    )
+    .execute();
+
+  if (teamMembersAlreadyApplied.length > 0) {
+    throw new ApiError(
+      400,
+      "Team members have already applied to this hackathon"
+    );
+  }
+
+  // Insert the team into the hackathon
+  const newApplication = await db
+    .insert(teamHackathons)
+    .values({ teamId, hackathonId })
+    .execute();
+
+  if (!newApplication) {
+    throw new ApiError(500, "Failed to apply to hackathon");
+  }
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, newApplication, "Applied to hackathon successfully")
+    );
+});
+
 export {
   completeDeveloperProfile,
+  fetchDeveloperProfile,
   createTeam,
   checkTeamNameUnique,
   getJoinedTeams,
@@ -612,4 +809,5 @@ export {
   fetchPendingInvitesAndAcceptThem,
   fetchSentInvitations,
   notificationHandling,
+  applyToHackathon,
 };
