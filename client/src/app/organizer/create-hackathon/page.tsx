@@ -35,6 +35,12 @@ const createHackathonSchema = z.object({
     .string()
     .max(1000, "Description must be under 1000 characters")
     .optional(),
+  registrationStart: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Registration start time must be a valid date",
+  }),
+  registrationEnd: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Registration end time must be a valid date",
+  }),
   startTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Start time must be a valid date",
   }),
@@ -56,6 +62,8 @@ export default function CreateHackathonPage() {
     defaultValues: {
       title: "",
       description: "",
+      registrationStart: "",
+      registrationEnd: "",
       startTime: "",
       endTime: "",
       minTeamSize: 1,
@@ -106,6 +114,8 @@ export default function CreateHackathonPage() {
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("description", data.description || "");
+    formData.append("registrationStart", data.registrationStart);
+    formData.append("registrationEnd", data.registrationEnd);
     formData.append("startTime", data.startTime);
     formData.append("endTime", data.endTime);
     formData.append("tags", JSON.stringify(data.tags || []));
@@ -339,6 +349,35 @@ export default function CreateHackathonPage() {
           </div>
 
           {/* Start/End Time */}
+          <div className="flex gap-4">
+            <FormField
+              control={control}
+              name="registrationStart"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Registration Start</FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="registrationEnd"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Registration End</FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <div className="flex gap-4">
             <FormField
               control={control}
