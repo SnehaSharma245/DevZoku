@@ -9,6 +9,8 @@ import {
   fetchPendingInvitesAndAcceptThem,
   fetchSentInvitations,
   notificationHandling,
+  applyToHackathon,
+  fetchDeveloperProfile,
 } from "../controllers/developer.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -31,3 +33,5 @@ router.get("/sent-invitations", verifyJWT, fetchSentInvitations);
 export default router;
 router.get("/notifications", verifyJWT, notificationHandling);
 router.delete("/notifications/:id", verifyJWT, notificationHandling);
+router.post("/apply-to-hackathon", verifyJWT, applyToHackathon);
+router.get("/developer-profile/:id", fetchDeveloperProfile);

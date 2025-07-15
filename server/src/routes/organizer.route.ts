@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   completeOrganizerProfile,
   createHackathon,
+  fetchOrganizerProfile,
 } from "../controllers/organizer.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -16,5 +17,6 @@ router.post(
   upload.single("poster"),
   createHackathon
 );
+router.get("/profile/:id", fetchOrganizerProfile);
 
 export default router;

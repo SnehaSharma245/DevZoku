@@ -7,6 +7,7 @@ import {
   refreshAccessToken,
   viewAllHackathons,
   deleteCompletedHackathons,
+  viewHackathonById,
 } from "../controllers/user.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -18,6 +19,7 @@ router.get("/auth/google", googleAuth);
 router.get("/auth/google/callback", signUpWithGoogle);
 router.post("/refresh-token", refreshAccessToken);
 router.get("/view-all-hackathons", viewAllHackathons);
+router.get("/hackathon/:id", viewHackathonById);
 router.delete("/delete-completed-hackathons", deleteCompletedHackathons);
 
 // Protected routes
