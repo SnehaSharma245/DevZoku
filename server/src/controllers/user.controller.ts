@@ -1,4 +1,4 @@
-import { desc, eq, inArray, not } from "drizzle-orm";
+import { and, not, eq, ilike, desc, sql, or, inArray } from "drizzle-orm";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 
@@ -10,7 +10,11 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { generateTokens } from "../utils/TokenGeneration";
 import { users } from "../db/schema/user.schema";
-import { hackathons, teamHackathons } from "../db/schema/hackathon.schema";
+import {
+  hackathonPhases,
+  hackathons,
+  teamHackathons,
+} from "../db/schema/hackathon.schema";
 import {
   organizerHackathonHistory,
   teamHackathonHistory,
@@ -193,7 +197,9 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
   };
 
   redirectPath =
-    role === "developer" ? "/developer/dashboard" : "/organizer/dashboard";
+    role === "developer"
+      ? "/developer/complete-profile"
+      : "/organizer/complete-profile";
   // Construct full redirect URL
   const fullRedirectUrl = `${
     process.env.CLIENT_URL || "http://localhost:3000"
@@ -371,10 +377,66 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // View all Hackathons
 const viewAllHackathons = asyncHandler(async (req, res) => {
+  const { tags, duration, startDate, endDate, status, mode } = req.query;
+
+  let whereClauses = [];
+
+  // Always exclude completed
+  if (!status || status === "all") {
+    // "all" means upcoming + ongoing
+    whereClauses.push(
+      or(eq(hackathons.status, "upcoming"), eq(hackathons.status, "ongoing"))
+    );
+  } else if (status === "upcoming" || status === "ongoing") {
+    whereClauses.push(eq(hackathons.status, status));
+  }
+
+  // Tag filter (comma separated, matches ANY tag)
+  if (tags) {
+    const tagArr = String(tags)
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    if (tagArr.length > 0) {
+      whereClauses.push(
+        sql`${hackathons.tags} && ARRAY[${sql.join(
+          tagArr.map((t) => sql`${t}`),
+          ","
+        )}]`
+      );
+    }
+  }
+
+  // Duration filter (in hours)
+  if (duration) {
+    whereClauses.push(
+      sql`EXTRACT(EPOCH FROM (${hackathons.endTime} - ${
+        hackathons.startTime
+      }))/3600 = ${Number(duration)}`
+    );
+  }
+
+  // Start date filter
+  if (startDate) {
+    whereClauses.push(sql`${hackathons.startTime} >= ${startDate}`);
+  }
+
+  // End date filter
+  if (endDate) {
+    whereClauses.push(sql`${hackathons.endTime} <= ${endDate}`);
+  }
+
+  const allowedStatuses = ["upcoming", "ongoing"] as const;
+  if (status && allowedStatuses.includes(status as any)) {
+    whereClauses.push(
+      eq(hackathons.status, status as (typeof allowedStatuses)[number])
+    );
+  }
+
   const allHackathons = await db
     .select()
     .from(hackathons)
-    .where(not(eq(hackathons.status, "completed")))
+    .where(and(...whereClauses))
     .orderBy(desc(hackathons.startTime))
     .execute();
 
@@ -435,10 +497,8 @@ const deleteCompletedHackathons = asyncHandler(async (req, res) => {
     const teamArchiveRows = teamsToArchive.map((t) => ({
       teamId: t.teamId,
       hackathonId: t.hackathonId,
-      submittedAt: t.submittedAt,
-      score: t.score,
+
       isWinner: t.isWinner,
-      dateCompleted: t.submittedAt,
       rank: 0,
     }));
 
@@ -465,6 +525,80 @@ const deleteCompletedHackathons = asyncHandler(async (req, res) => {
   });
 });
 
+// view hackathon by id
+const viewHackathonById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError(400, "Hackathon ID is required");
+  }
+
+  const hackathonArr = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.id, id))
+    .execute();
+
+  if (hackathonArr.length === 0) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  const hackathon = hackathonArr[0];
+
+  if (!hackathon) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  if (hackathon.status === "completed") {
+    // fetch from archive
+    const archivedHackathon = await db
+      .select()
+      .from(organizerHackathonHistory)
+      .where(eq(organizerHackathonHistory.hackathonId, id))
+      .execute();
+    if (archivedHackathon.length === 0) {
+      throw new ApiError(404, "Archived hackathon not found");
+    }
+    const completedHackathon = archivedHackathon[0];
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, completedHackathon, "Archived hackathon fetched")
+      );
+  }
+
+  const phases = await db
+    .select()
+    .from(hackathonPhases)
+    .where(eq(hackathonPhases.hackathonId, hackathon?.id))
+    .orderBy(hackathonPhases.order)
+    .execute();
+
+  const organizer = await db
+    .select({
+      organizationName: organizers.organizationName,
+      userId: organizers.userId,
+    })
+    .from(organizers)
+    .where(eq(organizers.userId, hackathon.createdBy))
+    .execute();
+
+  if (organizer.length === 0) {
+    throw new ApiError(404, "Organizer not found for this hackathon");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { ...hackathon, organizer: organizer[0], phases },
+        "Hackathon fetched successfully"
+      )
+    );
+});
+
 export {
   googleAuth,
   signUpWithGoogle,
@@ -473,4 +607,5 @@ export {
   refreshAccessToken,
   viewAllHackathons,
   deleteCompletedHackathons,
+  viewHackathonById,
 };
