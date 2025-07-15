@@ -9,6 +9,7 @@ import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { hackathonPhases, hackathons } from "../db/schema/hackathon.schema";
 
+// Controller for completing organizer profile
 const completeOrganizerProfile = asyncHandler(
   async (req: Request, res: Response) => {
     try {
@@ -71,6 +72,39 @@ const completeOrganizerProfile = asyncHandler(
   }
 );
 
+// controller for fetching organizer profile
+const fetchOrganizerProfile = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { user } = req;
+
+    const { id } = req.params;
+
+    if (!id) {
+      throw new ApiError(400, "Organizer ID is required");
+    }
+
+    const organizerProfile = await db
+      .select()
+      .from(organizers)
+      .where(eq(organizers.userId, id))
+      .then((results) => results[0]);
+
+    if (!organizerProfile) {
+      throw new ApiError(404, "Organizer profile not found");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          organizerProfile,
+          "Organizer profile fetched successfully"
+        )
+      );
+  }
+);
+
 // controller for creating hackathon
 const createHackathon = asyncHandler(async (req: Request, res: Response) => {
   const { user, body } = req;
@@ -97,12 +131,28 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
   // Validate hackathon times
   const hackStart = new Date(body.startTime);
   const hackEnd = new Date(body.endTime);
+  const hackRegStart = new Date(body.registrationStart);
+  const hackRegEnd = new Date(body.registrationEnd);
+
   const now = new Date();
 
   if (hackStart >= hackEnd)
     throw new ApiError(400, "Start time must be before end time");
   if (hackStart < now || hackEnd < now)
     throw new ApiError(400, "Start time and end time must be in the future");
+
+  if (hackRegStart >= hackRegEnd)
+    throw new ApiError(400, "Registration start time must be before end time");
+  if (hackRegStart < now || hackRegEnd < now)
+    throw new ApiError(400, "Registration times must be in the future");
+
+  // 6. Registration window must be before hackathon window
+  if (hackRegStart > hackStart) {
+    throw new ApiError(400, "Registration cannot start after hackathon starts");
+  }
+  if (hackRegEnd > hackStart) {
+    throw new ApiError(400, "Registration should end before hackathon starts");
+  }
 
   // Transaction for hackathon + phases
   const result = await db.transaction(async (tx) => {
@@ -131,6 +181,8 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
         minTeamSize: body.minTeamSize,
         maxTeamSize: body.maxTeamSize,
         mode: body.mode,
+        registrationStart: hackRegStart,
+        registrationEnd: hackRegEnd,
       })
       .returning();
 
@@ -177,4 +229,4 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
     .status(201)
     .json(new ApiResponse(201, result, "Hackathon created successfully ✅"));
 });
-export { completeOrganizerProfile, createHackathon };
+export { completeOrganizerProfile, createHackathon, fetchOrganizerProfile };
