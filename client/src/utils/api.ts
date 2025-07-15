@@ -13,7 +13,12 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
-const PUBLIC_ROUTES = ["/auth/login", "/auth/register", "/"];
+const PUBLIC_ROUTES = [
+  "/auth/login",
+  "/view-all-hackathons",
+  "/developer/profile/*",
+  "/organizer/profile/*",
+];
 
 const isPublicRoute = (path: string): boolean => {
   return PUBLIC_ROUTES.includes(path);
