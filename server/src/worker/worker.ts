@@ -4,7 +4,6 @@ import transporter from "../utils/nodemailerUtility";
 const hackathonTeamEmailWorker = new Worker(
   "team-hackathon-registration-emails",
   async (job) => {
-    console.log("Worker started for job:", job.id);
     const {
       email,
       memberName,
@@ -28,12 +27,11 @@ const hackathonTeamEmailWorker = new Worker(
 
     await transporter(
       organizationEmail,
+      organizationName || "DevZoku",
       email,
       `Team Registration Confirmation for ${teamName} at ${hackathonName}`,
       message
-    ).then((info) => {
-      console.log(`Email sent to ${email} with info:`, info);
-    });
+    );
   },
   {
     concurrency: 100,
