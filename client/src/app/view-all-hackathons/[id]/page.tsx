@@ -141,6 +141,7 @@ function ParticularHackathon() {
         userIds: selectedMembers,
       });
       toast.success("Applied successfully with this team!");
+      router.push("/email/team-registration-in-hackathon");
       setIsJoinedTeamsDialogOpen(false);
       setSelectedMembers([]);
       setOpenDropdownTeamId(null);
