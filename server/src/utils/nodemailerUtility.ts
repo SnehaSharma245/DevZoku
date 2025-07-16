@@ -13,14 +13,15 @@ const transporter = nodemailer.createTransport({
 
 // Utility function for sending emails
 const sendEmail = async (
-  from: string,
-  email: string,
+  fromEmail: string,
+  fromName: string,
+  toEmail: string,
   subject: string,
   message: string
 ) => {
   const mailOptions = {
-    from: `"DevZoku" <${from}>`,
-    to: email,
+    from: `"${fromName}" <${fromEmail}>`,
+    to: toEmail,
     subject: subject,
     html: message, // HTML version
   };
