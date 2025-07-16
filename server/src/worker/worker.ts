@@ -3,8 +3,6 @@ import { teamRegToHackathonTemplate } from "../templates/teamRegToHackathon";
 import transporter from "../utils/nodemailerUtility";
 import { connection } from "../queues/queue";
 
-console.log(connection.options);
-
 const hackathonTeamEmailWorker = new Worker(
   "team-hackathon-registration-emails",
   async (job) => {
