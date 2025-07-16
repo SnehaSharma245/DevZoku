@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray, sql } from "drizzle-orm";
+import { eq, desc, and, inArray, sql, name } from "drizzle-orm";
 import { db } from "../db";
 import { developers } from "../db/schema/developer.schema";
 import { ApiResponse } from "../utils/ApiResponse";
@@ -10,6 +10,9 @@ import { teamMembers, teams } from "../db/schema/team.schema";
 import { users } from "../db/schema/user.schema";
 import { io } from "..";
 import { hackathons, teamHackathons } from "../db/schema/hackathon.schema";
+import { hackathonTeamEmailQueue } from "../queues/queue";
+import formatDate from "../utils/formatDate";
+import { organizers } from "../db/schema/organizer.schema";
 
 // Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(
@@ -720,6 +723,33 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, "Team not found");
   }
 
+  const now = new Date();
+
+  // Registration window check
+  const regStart = hackathon[0]?.registrationStart
+    ? new Date(hackathon[0].registrationStart)
+    : null;
+  const regEnd = hackathon[0]?.registrationEnd
+    ? new Date(hackathon[0].registrationEnd)
+    : null;
+
+  if (regStart && now < regStart) {
+    throw new ApiError(400, "Registration has not started yet.");
+  }
+  if (regEnd && now > regEnd) {
+    throw new ApiError(400, "Registration period is over.");
+  }
+
+  // Hackathon window check (optional, usually registration is before hackathon)
+  const hackStart = hackathon[0]?.startTime
+    ? new Date(hackathon[0].startTime)
+    : null;
+  const hackEnd = hackathon[0]?.endTime ? new Date(hackathon[0].endTime) : null;
+
+  if (hackStart && hackEnd && now > hackEnd) {
+    throw new ApiError(400, "Hackathon is already over.");
+  }
+
   // check the member count of the team if it exceeds the limit
   const teamMemberCount = userIds.length;
 
@@ -790,6 +820,42 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
   if (!newApplication) {
     throw new ApiError(500, "Failed to apply to hackathon");
   }
+
+  // Notify the team members about the application by email
+  const emails = await db
+    .select({ email: users.email, name: users.firstName })
+    .from(users)
+    .where(inArray(users.id, userIds))
+    .execute();
+
+  const organizer = await db
+    .select({
+      email: organizers.companyEmail,
+      name: organizers.organizationName,
+    })
+    .from(organizers)
+    .where(eq(organizers.userId, hackathon[0].createdBy))
+    .limit(1)
+    .execute();
+
+  emails.forEach((member) => {
+    hackathonTeamEmailQueue.add("send-hackathon-registration-email", {
+      email: member.email,
+      memberName: member.name,
+      teamName: team[0]?.name,
+      hackathonName: hackathon[0]?.title,
+      hackathonStartDate: formatDate(
+        hackathon[0]?.startTime
+          ? hackathon[0].startTime.toISOString()
+          : undefined
+      ),
+      hackathonEndDate: formatDate(
+        hackathon[0]?.endTime ? hackathon[0].endTime.toISOString() : undefined
+      ),
+      organizationName: organizer[0]?.name,
+      organizationEmail: organizer[0]?.email,
+    });
+  });
 
   return res
     .status(201)
