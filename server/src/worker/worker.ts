@@ -1,6 +1,10 @@
 import { Worker } from "bullmq";
 import { teamRegToHackathonTemplate } from "../templates/teamRegToHackathon";
 import transporter from "../utils/nodemailerUtility";
+import { connection } from "../queues/queue";
+
+console.log(connection.options);
+
 const hackathonTeamEmailWorker = new Worker(
   "team-hackathon-registration-emails",
   async (job) => {
@@ -35,10 +39,7 @@ const hackathonTeamEmailWorker = new Worker(
   },
   {
     concurrency: 100,
-    connection: {
-      host: "localhost",
-      port: 6379,
-    },
+    connection: connection,
   }
 );
 export { hackathonTeamEmailWorker };
