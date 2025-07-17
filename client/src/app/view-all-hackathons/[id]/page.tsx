@@ -61,7 +61,6 @@ interface Team {
 }
 
 interface JoinedTeamData {
-  team_members: TeamMember[];
   teams: Team[];
 }
 
@@ -76,7 +75,6 @@ function ParticularHackathon() {
   const [openDropdownTeamId, setOpenDropdownTeamId] = useState<string | null>(
     null
   );
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const { id } = useParams();
   const router = useRouter();
 
@@ -95,21 +93,6 @@ function ParticularHackathon() {
     };
     if (id) fetchHackathonDetails();
   }, [id]);
-
-  // Dropdown open/close handler
-  const handleChooseMembersClick = (teamId: string) => {
-    setOpenDropdownTeamId((prev) => (prev === teamId ? null : teamId));
-    setSelectedMembers([]);
-  };
-
-  // Checkbox handler
-  const handleMemberCheckbox = (userId: string) => {
-    setSelectedMembers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
 
   // Fetch joined teams
   const handleRegistration = async () => {
@@ -138,12 +121,12 @@ function ParticularHackathon() {
       const res = await api.post(`/developer/apply-to-hackathon`, {
         hackathonId: hackathonDetails?.id,
         teamId,
-        userIds: selectedMembers,
       });
-      toast.success("Applied successfully with this team!");
+      toast.success(
+        res?.data?.data?.message || "Successfully applied with the team"
+      );
       router.push("/email/team-registration-in-hackathon");
       setIsJoinedTeamsDialogOpen(false);
-      setSelectedMembers([]);
       setOpenDropdownTeamId(null);
     } catch (error: any) {
       toast.error(
@@ -151,7 +134,6 @@ function ParticularHackathon() {
       );
     } finally {
       setIsLoading(false);
-      setSelectedMembers([]);
       setOpenDropdownTeamId(null);
     }
   };
@@ -338,7 +320,6 @@ function ParticularHackathon() {
                         "id" in jt.teams &&
                         (jt.teams as Team).id === team.id
                   );
-                  const members = teamData?.team_members || [];
 
                   return (
                     <div
@@ -355,12 +336,7 @@ function ParticularHackathon() {
                             Current Member Count: {team.currentMemberCount}
                           </div>
                         </div>
-                        <Button
-                          onClick={() => handleChooseMembersClick(team.id)}
-                          className="mt-2"
-                        >
-                          Choose Members
-                        </Button>
+
                         <Button
                           onClick={() => handleApplyByTeam(team.id)}
                           disabled={isLoading}
@@ -369,46 +345,6 @@ function ParticularHackathon() {
                           Apply by this
                         </Button>
                       </div>
-                      {/* Dropdown as block inside card */}
-                      {openDropdownTeamId === team.id && (
-                        <div className="w-full bg-gray-50 border rounded mt-3 p-3">
-                          {members.length === 0 ? (
-                            <div className="text-xs text-gray-500">
-                              No members
-                            </div>
-                          ) : (
-                            members.map((member) => (
-                              <div
-                                key={member.userId}
-                                className="flex items-center gap-2 py-1"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedMembers.includes(
-                                    member.userId
-                                  )}
-                                  onChange={() =>
-                                    handleMemberCheckbox(member.userId)
-                                  }
-                                  id={`${team.id}-${member.userId}`}
-                                />
-                                <label htmlFor={`${team.id}-${member.userId}`}>
-                                  <Link
-                                    href={`/developer/profile/${encodeURIComponent(
-                                      member.userId
-                                    )}`}
-                                  >
-                                    {member.name || member.userId}
-                                  </Link>
-                                  <span className="text-xs text-gray-500 ml-2">
-                                    {member.email}
-                                  </span>
-                                </label>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
