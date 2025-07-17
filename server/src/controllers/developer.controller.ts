@@ -280,7 +280,7 @@ const getJoinedTeams = asyncHandler(async (req: Request, res: Response) => {
     .select({
       userId: teamMembers.userId,
       teamId: teamMembers.teamId,
-      name: sql<string>`"users"."first_name" || ' ' || "users"."last_name"`,
+      name: sql<string>`"users"."first_name" || ' ' || COALESCE("users"."last_name", '')`,
       email: users.email,
     })
     .from(teamMembers)
@@ -689,14 +689,10 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(401, "User not authenticated");
   }
 
-  const { hackathonId, teamId, userIds } = req.body;
+  const { hackathonId, teamId } = req.body;
 
   if (!hackathonId || !teamId) {
     throw new ApiError(400, "Hackathon ID and Team ID are required");
-  }
-
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    throw new ApiError(400, "User IDs must be an array and cannot be empty");
   }
 
   // Check if the hackathon exists
@@ -751,13 +747,17 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // check the member count of the team if it exceeds the limit
-  const teamMemberCount = userIds.length;
+  const teamMember = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.teamId, teamId))
+    .execute();
 
   if (
-    !teamMemberCount ||
+    !teamMember.length ||
     !hackathon[0] ||
-    teamMemberCount < hackathon[0].minTeamSize ||
-    teamMemberCount > hackathon[0].maxTeamSize
+    teamMember.length < hackathon[0].minTeamSize ||
+    teamMember.length > hackathon[0].maxTeamSize
   ) {
     throw new ApiError(400, "Team member limit not matching or data missing");
   }
@@ -791,26 +791,6 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(403, "User is not the captain of the team");
   }
 
-  // if any of the userIds are already applied to the hackathon, we will throw an error
-  const teamMembersAlreadyApplied = await db
-    .select()
-    .from(teamHackathons)
-    .innerJoin(teamMembers, eq(teamHackathons.teamId, teamMembers.teamId))
-    .where(
-      and(
-        eq(teamHackathons.hackathonId, hackathonId),
-        inArray(teamMembers.userId, userIds)
-      )
-    )
-    .execute();
-
-  if (teamMembersAlreadyApplied.length > 0) {
-    throw new ApiError(
-      400,
-      "Team members have already applied to this hackathon"
-    );
-  }
-
   // Insert the team into the hackathon
   const newApplication = await db
     .insert(teamHackathons)
@@ -822,11 +802,17 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Notify the team members about the application by email
+
+  //fetch emails from all the team members
+  const userIds = teamMember.map((member) => member.userId);
+
   const emails = await db
     .select({ email: users.email, name: users.firstName })
     .from(users)
     .where(inArray(users.id, userIds))
     .execute();
+
+  console.log(emails);
 
   const organizer = await db
     .select({
@@ -864,6 +850,63 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+// controller to leave the team
+const leaveTeam = asyncHandler(async (req: Request, res: Response) => {
+  const { user } = req;
+
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  const { teamId } = req.body;
+
+  if (!teamId) {
+    throw new ApiError(400, "Team ID is required");
+  }
+
+  const existingMember = await db
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.userId, user.id), eq(teamMembers.teamId, teamId)))
+    .limit(1)
+    .execute();
+
+  if (existingMember.length === 0) {
+    throw new ApiError(404, "User is not a member of this team");
+  }
+
+  // if the team and user is currently the part of active hackathon, we will not allow them to leave the team
+  const userInActiveHackathon = await db
+    .select()
+    .from(teamHackathons)
+    .where(and(eq(teamHackathons.teamId, teamId)))
+    .limit(1)
+    .execute();
+
+  console.log("userInActiveHackathon", userInActiveHackathon);
+
+  if (userInActiveHackathon.length > 0) {
+    throw new ApiError(
+      400,
+      "You cannot leave the team while participating in an active hackathon"
+    );
+  }
+
+  // Remove the user from the team
+  const deletedMember = await db
+    .delete(teamMembers)
+    .where(and(eq(teamMembers.userId, user.id), eq(teamMembers.teamId, teamId)))
+    .execute();
+
+  if (!deletedMember) {
+    throw new ApiError(500, "Failed to leave the team");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Left team successfully"));
+});
+
 export {
   completeDeveloperProfile,
   fetchDeveloperProfile,
@@ -876,4 +919,5 @@ export {
   fetchSentInvitations,
   notificationHandling,
   applyToHackathon,
+  leaveTeam,
 };

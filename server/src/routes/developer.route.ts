@@ -11,6 +11,7 @@ import {
   notificationHandling,
   applyToHackathon,
   fetchDeveloperProfile,
+  leaveTeam,
 } from "../controllers/developer.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -35,3 +36,4 @@ router.get("/notifications", verifyJWT, notificationHandling);
 router.delete("/notifications/:id", verifyJWT, notificationHandling);
 router.post("/apply-to-hackathon", verifyJWT, applyToHackathon);
 router.get("/developer-profile/:id", fetchDeveloperProfile);
+router.delete("/leave-team", verifyJWT, leaveTeam);
