@@ -1,8 +1,10 @@
 "use client";
 import React, { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import api from "@/utils/api";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { withAuth } from "@/utils/withAuth";
 
 export interface TeamDetail {
   team: {
@@ -32,15 +34,22 @@ export interface TeamDetail {
 }
 
 function TeamDetailPage() {
+  const { user } = useAuth();
+
   const { id } = useParams();
   const [teamDetails, setTeamDetails] = React.useState<TeamDetail | null>(null);
 
   const fetchTeamDetails = async () => {
     try {
-      const response = await api.get(`/developer/view-all-teams/${id}`, {
+      const response = await api.get(`/team/view-all-teams/${id}`, {
         withCredentials: true,
       });
-      setTeamDetails(response.data.data);
+
+      const { status, data, message } = response.data;
+
+      if (status === 200) {
+        setTeamDetails(data);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch team details"
@@ -92,4 +101,4 @@ function TeamDetailPage() {
   );
 }
 
-export default TeamDetailPage;
+export default withAuth(TeamDetailPage, "developer");

@@ -241,7 +241,7 @@ function DeveloperDashboard() {
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        router.push(`/view-all-hackathons/${hack.id}`)
+                        router.push(`hackathon/view-all-hackathons/${hack.id}`)
                       }
                     >
                       View Hackathon

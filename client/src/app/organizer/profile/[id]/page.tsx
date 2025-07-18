@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import { Button, Card, CardContent } from "@/components";
@@ -37,7 +36,6 @@ interface OrganizerProfile {
 
 export default function OrganizerProfilePage() {
   const { user } = useAuth();
-  const router = useRouter();
 
   const [profile, setProfile] = useState<OrganizerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,8 +51,12 @@ export default function OrganizerProfilePage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const profileRes = await api.get(`/organizer/profile/${user?.id}`);
-        setProfile(profileRes.data.data);
+        const res = await api.get(`/organizer/profile/${user?.id}`);
+        const { status, data, message } = res.data;
+
+        if (status === 200) {
+          setProfile(data);
+        }
       } catch (error: any) {
         toast.error(
           error?.response?.data?.message || "Failed to load organizer profile"
@@ -212,15 +214,6 @@ export default function OrganizerProfilePage() {
                   <span className="text-gray-400">Not set</span>
                 )}
               </div>
-            </div>
-            <div className="flex justify-end mt-4">
-              <Button
-                onClick={() => router.push("/organizer/complete-profile")}
-                variant="outline"
-                size="sm"
-              >
-                Edit Profile
-              </Button>
             </div>
           </CardContent>
         </Card>

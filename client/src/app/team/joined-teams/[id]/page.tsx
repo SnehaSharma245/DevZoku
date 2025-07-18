@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import api from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components";
+import { withAuth } from "@/utils/withAuth";
 
 export interface PendingInvites {
   id: string;
@@ -23,14 +24,15 @@ function TeamDetailPage() {
   const [inviteAccepted, setInviteAccepted] = useState<boolean>(false);
   const fetchPendingInvites = async () => {
     try {
-      const response = await api.post(
-        `developer/fetch-invites-and-accept/${id}`,
-        {
-          withCredentials: true,
-        }
-      );
-      setPendingInvites(response.data.data.pendingUsers);
-      setTeamName(response.data.data.teamName);
+      const response = await api.post(`team/fetch-invites-and-accept/${id}`, {
+        withCredentials: true,
+      });
+
+      const { status, data, message } = response.data;
+      if (status === 200) {
+        setPendingInvites(data.pendingUsers);
+        setTeamName(data.teamName);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch pending invites"
@@ -50,11 +52,15 @@ function TeamDetailPage() {
   const handleAcceptInvite = async (pendingUserId: string) => {
     try {
       const res = await api.post(
-        `/developer/fetch-invites-and-accept/${id}?pendingUserId=${pendingUserId}`,
+        `/team/fetch-invites-and-accept/${id}?pendingUserId=${pendingUserId}`,
         { withCredentials: true }
       );
-      toast.success(res.data.data.message || "Invite accepted successfully");
-      setInviteAccepted(true);
+
+      const { status, data, message } = res.data;
+      if (status === 200) {
+        toast.success(res.data.data.message || "Invite accepted successfully");
+        setInviteAccepted(true);
+      }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to accept invite");
       console.error("Error accepting invite:", error);
@@ -94,4 +100,4 @@ function TeamDetailPage() {
   );
 }
 
-export default TeamDetailPage;
+export default withAuth(TeamDetailPage, "developer");

@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 import Link from "next/link";
-import { join } from "path";
 import { Button } from "@/components";
 import LeaveTeamPopup from "@/components/popups/LeaveTeamPopup";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TeamMember {
   userId: string;
@@ -28,6 +28,8 @@ interface JoinedTeamData {
 }
 
 function JoinedTeamsPage() {
+  const { user } = useAuth();
+
   const [joinedTeams, setJoinedTeams] = useState<JoinedTeamData[]>([]);
   const [isLeaveTimeDialogOpen, setIsLeaveTimeDialogOpen] =
     useState<boolean>(false);
@@ -36,10 +38,15 @@ function JoinedTeamsPage() {
   useEffect(() => {
     const fetchJoinedTeams = async () => {
       try {
-        const res = await api.get(`/developer/joined-teams`, {
+        const res = await api.get(`/team/joined-teams`, {
           withCredentials: true,
         });
-        setJoinedTeams(res?.data?.data || []);
+
+        const { status, data, message } = res.data;
+
+        if (status === 200) {
+          setJoinedTeams(data || []);
+        }
       } catch (err: any) {
         toast.error(
           err?.response?.data?.message || "Failed to fetch joined teams"
@@ -53,12 +60,19 @@ function JoinedTeamsPage() {
 
   const handleLeavingTeam = async (teamId: string) => {
     try {
-      const res = await api.delete(`/developer/leave-team`, {
+      const res = await api.delete(`/team/leave-team`, {
         data: { teamId },
         withCredentials: true,
       });
-      toast.success(res?.data?.message || "Successfully left the team");
-      setJoinedTeams((prev) => prev.filter((item) => item.teams.id !== teamId));
+
+      const { status, data, message } = res.data;
+
+      if (status === 200) {
+        toast.success(message || "Successfully left the team");
+        setJoinedTeams((prev) =>
+          prev.filter((item) => item.teams.id !== teamId)
+        );
+      }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to leave the team");
       console.error("Error leaving team:", error);
@@ -92,7 +106,7 @@ function JoinedTeamsPage() {
               <div key={`${item.team_members.userId}-${item.teams.id}`}>
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
-                    <Link href={`view-all-teams/${item.teams.id}`}>
+                    <Link href={`/team/view-all-teams/${item.teams.id}`}>
                       <h2 className="text-xl font-semibold cursor-pointer hover:text-blue-600">
                         {item.teams.name}
                       </h2>
@@ -109,7 +123,7 @@ function JoinedTeamsPage() {
                     </p>
                     <div className="flex gap-4 items-center mt-3">
                       <Button>
-                        <Link href={`/developer/joined-teams/${item.teams.id}`}>
+                        <Link href={`/team/joined-teams/${item.teams.id}`}>
                           View Pending Invites
                         </Link>
                       </Button>

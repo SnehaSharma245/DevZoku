@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { withAuth } from "@/utils/withAuth";
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -47,4 +48,4 @@ function RegistrationSuccess() {
   );
 }
 
-export default RegistrationSuccess;
+export default withAuth(RegistrationSuccess, "developer");

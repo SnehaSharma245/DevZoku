@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import api from "@/utils/api";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { withAuth } from "@/utils/withAuth";
 const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`);
 
 interface Notification {
@@ -14,7 +15,7 @@ interface Notification {
   createdAt: string;
 }
 
-export default function NotificationsPage() {
+function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const fetchNotifications = async () => {
     try {
@@ -22,7 +23,11 @@ export default function NotificationsPage() {
         withCredentials: true,
       });
 
-      setNotifications(res.data.data || []);
+      const { status, data, message } = res.data;
+
+      if (status === 200) {
+        setNotifications(data || []);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch notifications"
@@ -36,9 +41,14 @@ export default function NotificationsPage() {
 
   const handleDeleteNotification = async (id: string) => {
     try {
-      await api.delete(`/developer/notifications/${id}`);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      toast.success("Notification deleted successfully");
+      const res = await api.delete(`/developer/notifications/${id}`);
+
+      const { status, data, message } = res.data;
+
+      if (status === 200) {
+        toast.success(message || "Notification deleted successfully");
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to delete notification"
@@ -61,3 +71,5 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+export default withAuth(NotificationsPage, "developer");

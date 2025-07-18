@@ -2,7 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import { formatDateTime } from "@/utils/formattedDate";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ export interface Hackathon {
 
 function AllHackathons() {
   const { user } = useAuth();
-  const router = useRouter();
+
   const [fetchedHackathons, setFetchedHackathons] = useState<Hackathon[]>([]);
   const [search, setSearch] = useState("");
   const [tagSearch, setTagSearch] = useState("");
@@ -37,9 +37,15 @@ function AllHackathons() {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const res = await api.get("/users/view-all-hackathons");
+        const res = await api.get("/hackathon/view-all-hackathons");
 
-        setFetchedHackathons(res.data.data);
+        const { status, data, message } = res.data;
+
+        if (status === 200) {
+          setFetchedHackathons(data);
+        } else {
+          toast.error(message || "Failed to fetch hackathons");
+        }
       } catch (error: any) {
         toast.error(
           error?.response?.data?.message || "Failed to fetch hackathons"
@@ -51,10 +57,6 @@ function AllHackathons() {
     };
     fetchAll();
   }, []);
-
-  const handleViewDetails = (hackathonId: string) => {
-    router.push(`/view-all-hackathons/${hackathonId}`);
-  };
 
   // 2. Tag search par sirf button click par fetch karo
   const handleTagSearch = async () => {
@@ -70,7 +72,7 @@ function AllHackathons() {
       if (mode) params.mode = mode; // Add mode to params if it's set
       const query = new URLSearchParams(params).toString();
       const res = await api.get(
-        `/users/view-all-hackathons${query ? "?" + query : ""}`
+        `/hackathon/view-all-hackathons${query ? "?" + query : ""}`
       );
       setFetchedHackathons(res.data.data);
     } catch (error: any) {
@@ -221,9 +223,9 @@ function AllHackathons() {
                 </span>
               ))}
             </div>
-            <button onClick={() => handleViewDetails(hackathon.id)}>
+            <Link href={`/hackathon/view-all-hackathons/${hackathon.id}`}>
               View Details
-            </button>
+            </Link>
           </div>
         </div>
       ))}

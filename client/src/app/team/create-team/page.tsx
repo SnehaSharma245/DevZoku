@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { Input, Textarea, Button, Switch } from "@/components/index";
 import {
   Form,
@@ -13,7 +12,6 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 import api from "@/utils/api";
@@ -35,8 +33,6 @@ const createTeamFormSchema = z.object({
 type TeamFormData = z.infer<typeof createTeamFormSchema>;
 
 function CreateTeamForm() {
-  const { user } = useAuth();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamNameStatus, setTeamNameStatus] = useState({
     isChecking: false,
@@ -71,17 +67,17 @@ function CreateTeamForm() {
     }
 
     try {
-      const response = await api.get(
-        `/developer/check-teamName-unique?teamName=${encodeURIComponent(
-          teamName
-        )}`,
+      const res = await api.get(
+        `/team/check-teamName-unique?teamName=${encodeURIComponent(teamName)}`,
         { withCredentials: true }
       );
 
+      const { status, data, message } = res.data;
+
       setTeamNameStatus({
         isChecking: false,
-        isAvailable: response.data.data.isUnique, // <-- yeh sahi hai
-        message: response.data.message,
+        isAvailable: data.isUnique,
+        message: message,
       });
     } catch (error: any) {
       setTeamNameStatus({
@@ -111,24 +107,28 @@ function CreateTeamForm() {
     };
   }, []);
 
-  const onSubmit = async (data: TeamFormData) => {
+  const onSubmit = async (formData: TeamFormData) => {
     try {
       setIsSubmitting(true);
 
-      const response = await api.post(`/developer/create-team`, data, {
+      const res = await api.post(`/team/create-team`, formData, {
         withCredentials: true,
       });
 
-      if (response.status === 200) {
-        toast.success("Team created successfully!");
-        router.push("/teams");
+      const { status, data, message } = res.data;
+
+      if (status === 201) {
+        toast.success(message || "Team created successfully");
+        form.reset();
+        setTeamNameStatus({
+          isChecking: false,
+          isAvailable: true,
+          message: "",
+        });
       }
     } catch (error: any) {
       console.error("Error creating team:", error);
-      toast.error(
-        "Failed to create team",
-        error ? error.message : "Unknown error"
-      );
+      toast.error(error?.response?.data?.message || "Failed to create team");
     } finally {
       setIsSubmitting(false);
     }

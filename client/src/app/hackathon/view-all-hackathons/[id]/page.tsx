@@ -82,8 +82,11 @@ function ParticularHackathon() {
   useEffect(() => {
     const fetchHackathonDetails = async () => {
       try {
-        const res = await api.get(`/users/hackathon/${id}`);
-        setHackathonDetails(res.data.data);
+        const res = await api.get(`/hackathon/hackathon/${id}`);
+        const { status, data, message } = res.data;
+        if (status === 200) {
+          setHackathonDetails(data);
+        }
       } catch (error: any) {
         toast.error(
           error?.response?.data?.message || "Failed to fetch hackathon details"
@@ -103,8 +106,11 @@ function ParticularHackathon() {
     try {
       setIsLoading(true);
       setIsJoinedTeamsDialogOpen(true);
-      const res = await api.get(`/developer/joined-teams`);
-      setJoinedTeams(res.data.data || []);
+      const res = await api.get(`/team/joined-teams`);
+      const { status, data, message } = res.data;
+      if (status === 200) {
+        setJoinedTeams(data);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch joined teams"
@@ -118,16 +124,18 @@ function ParticularHackathon() {
   // Team apply handler
   const handleApplyByTeam = async (teamId: string) => {
     try {
-      const res = await api.post(`/developer/apply-to-hackathon`, {
+      const res = await api.post(`/hackathon/apply-to-hackathon`, {
         hackathonId: hackathonDetails?.id,
         teamId,
       });
-      toast.success(
-        res?.data?.data?.message || "Successfully applied with the team"
-      );
-      router.push("/email/team-registration-in-hackathon");
-      setIsJoinedTeamsDialogOpen(false);
-      setOpenDropdownTeamId(null);
+      const { status, data, message } = res.data;
+
+      if (status === 201) {
+        toast.success(message || "Successfully applied with the team");
+        router.push("/email/team-registration-in-hackathon");
+        setIsJoinedTeamsDialogOpen(false);
+        setOpenDropdownTeamId(null);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to apply with this team"

@@ -16,6 +16,8 @@ import api from "@/utils/api";
 import { toast } from "sonner";
 import { Upload, Sparkles, RotateCcw, Trash, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/useAuth";
+import { withAuth } from "@/utils/withAuth";
 
 const phaseSchema = z.object({
   name: z.string().min(1, "Phase name is required"),
@@ -56,7 +58,8 @@ const createHackathonSchema = z.object({
 
 type HackathonForm = z.infer<typeof createHackathonSchema>;
 
-export default function CreateHackathonPage() {
+function CreateHackathonPage() {
+  const { user } = useAuth();
   const form = useForm<HackathonForm>({
     resolver: zodResolver(createHackathonSchema),
     defaultValues: {
@@ -127,17 +130,19 @@ export default function CreateHackathonPage() {
 
     try {
       setCreatingHackathon(true);
-      const res = await api.post("/organizer/create-hackathon", formData, {
+
+      const res = await api.post("/hackathon/create-hackathon", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success(
-        res?.data?.data?.message || "Hackathon created successfully!"
-      );
-      form.reset();
 
-      setPoster(null);
-      if (posterInputRef.current) {
-        posterInputRef.current.value = "";
+      const { status, data, message } = res.data;
+      if (status === 201) {
+        toast.success(message || "Hackathon created successfully!");
+        form.reset();
+        setPoster(null);
+        if (posterInputRef.current) {
+          posterInputRef.current.value = "";
+        }
       }
     } catch (error: any) {
       toast.error(
@@ -549,3 +554,5 @@ export default function CreateHackathonPage() {
     </div>
   );
 }
+
+export default withAuth(CreateHackathonPage, "organizer");

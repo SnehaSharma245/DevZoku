@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import React, { useEffect, useState } from "react";
+import { withAuth } from "@/utils/withAuth";
 
 export interface SentInvitationData {
   id: string;
@@ -10,17 +11,22 @@ export interface SentInvitationData {
 
 function SentInvitation() {
   const { user } = useAuth();
+
   const [sentInvitations, setSentInvitations] = useState<SentInvitationData[]>(
     []
   );
 
   const fetchSentInvitations = async () => {
     try {
-      const res = await api.get(`/developer/sent-invitations`, {
+      const res = await api.get(`/team/sent-invitations`, {
         withCredentials: true,
       });
 
-      setSentInvitations(res.data.data);
+      const { status, data, message } = res.data;
+
+      if (status === 200) {
+        setSentInvitations(data || []);
+      }
     } catch (error) {
       console.error("Error fetching sent invitations:", error);
     }
@@ -46,4 +52,4 @@ function SentInvitation() {
   );
 }
 
-export default SentInvitation;
+export default withAuth(SentInvitation, "developer");

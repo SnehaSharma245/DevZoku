@@ -79,7 +79,7 @@ function OrganizerCompleteProfileForm() {
     },
   });
 
-  // Load user data once when component mounts
+  // Load user formData once when component mounts
   useEffect(() => {
     if (user?.profile && user.role === "organizer") {
       const profile = user.profile;
@@ -110,33 +110,33 @@ function OrganizerCompleteProfileForm() {
     }
   }, [user, form]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       setIsSubmitting(true);
 
-      // Format data to match API expectations
+      // Format formData to match API expectations
       const formattedData = {
-        organizationName: data.organizationName.trim(),
-        bio: data.bio?.trim(),
-        website: data.website?.trim() || "",
-        companyEmail: data.companyEmail.trim(),
-        phoneNumber: data.phoneNumber.trim(),
+        organizationName: formData.organizationName.trim(),
+        bio: formData.bio?.trim(),
+        website: formData.website?.trim() || "",
+        companyEmail: formData.companyEmail.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
 
         socialLinks: Object.fromEntries(
-          Object.entries(data.socialLinks)
+          Object.entries(formData.socialLinks)
             .filter(([_, value]) => value && value.trim() !== "")
             .map(([key, value]) => [key, value?.trim()])
         ),
 
         location: {
-          country: data.location.country.trim(),
-          state: data.location.state.trim(),
-          city: data.location.city.trim(),
-          address: data.location.address.trim(),
+          country: formData.location.country.trim(),
+          state: formData.location.state.trim(),
+          city: formData.location.city.trim(),
+          address: formData.location.address.trim(),
         },
 
         isProfileComplete: true,
-        isVerified: data.isVerified ?? false,
+        isVerified: formData.isVerified ?? false,
       };
 
       const response = await api.post(
@@ -145,7 +145,9 @@ function OrganizerCompleteProfileForm() {
         { withCredentials: true }
       );
 
-      if (response.status === 200) {
+      const { status, data, message } = response.data;
+
+      if (status === 200) {
         toast.success("Organization profile updated successfully!");
       }
     } catch (error: any) {
@@ -158,14 +160,6 @@ function OrganizerCompleteProfileForm() {
       setIsSubmitting(false);
     }
   };
-
-  if (user?.role !== "organizer") {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
-        This page is only for organizers.
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">

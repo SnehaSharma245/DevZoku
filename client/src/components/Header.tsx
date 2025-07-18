@@ -67,32 +67,29 @@ const Header = () => {
                     >
                       👤 Show Profile
                     </Link>
+
                     <Link
-                      href="/developer/dashboard"
-                      onClick={() => setOpen(false)}
-                    >
-                      📊 Dashboard
-                    </Link>
-                    <Link
-                      href="/developer/joined-teams"
+                      href="/team/joined-teams"
                       onClick={() => setOpen(false)}
                     >
                       👥 Joined Teams
                     </Link>
+
                     <Link
-                      href="/developer/create-team"
+                      href="/team/create-team"
                       onClick={() => setOpen(false)}
                     >
                       ➕ Create a Team
                     </Link>
+
                     <Link
-                      href="/view-all-hackathons"
+                      href="/hackathon/view-all-hackathons"
                       onClick={() => setOpen(false)}
                     >
                       🚀 Hackathons
                     </Link>
                     <Link
-                      href="/developer/view-all-teams"
+                      href="/team/view-all-teams"
                       onClick={() => setOpen(false)}
                     >
                       🧩 View All Teams
@@ -129,13 +126,13 @@ const Header = () => {
                       🏢 Show Profile
                     </Link>
                     <Link
-                      href="/organizer/hackathons"
+                      href="/hackathon/view-all-hackathons"
                       onClick={() => setOpen(false)}
                     >
                       📅 Show Hackathons
                     </Link>
                     <Link
-                      href="/organizer/create-hackathon"
+                      href="/hackathon/create-hackathon"
                       onClick={() => setOpen(false)}
                     >
                       ➕ Create Hackathon

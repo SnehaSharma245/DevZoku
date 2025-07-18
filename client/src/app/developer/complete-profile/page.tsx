@@ -166,13 +166,13 @@ function CompleteProfileForm() {
     }
   }, [user, reset]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       setIsSubmitting(true);
 
       // Check if any project is incomplete
-      if (data.projects && data.projects.length > 0) {
-        const hasIncompleteProject = data.projects.some(
+      if (formData.projects && formData.projects.length > 0) {
+        const hasIncompleteProject = formData.projects.some(
           (project) =>
             !project.title || !project.description || !project.techStack
         );
@@ -186,33 +186,33 @@ function CompleteProfileForm() {
 
       // Format data to match API expectations
       const formattedData = {
-        title: data.title?.trim(),
-        bio: data.bio?.trim(),
-        skills: data.skills
-          ? data.skills
+        title: formData.title?.trim(),
+        bio: formData.bio?.trim(),
+        skills: formData.skills
+          ? formData.skills
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean)
           : [],
-        isAvailable: data.isAvailable ?? false,
+        isAvailable: formData.isAvailable ?? false,
 
-        location: data.location && {
-          city: data.location.city?.trim() || "",
-          state: data.location.state?.trim(),
-          country: data.location.country?.trim() || "",
+        location: formData.location && {
+          city: formData.location.city?.trim() || "",
+          state: formData.location.state?.trim(),
+          country: formData.location.country?.trim() || "",
         },
 
         socialLinks:
-          data.socialLinks &&
+          formData.socialLinks &&
           Object.fromEntries(
-            Object.entries(data.socialLinks)
+            Object.entries(formData.socialLinks)
               .filter(([_, value]) => value && value.trim() !== "")
               .map(([key, value]) => [key, value?.trim()])
           ),
 
         projects:
-          data.projects &&
-          data.projects.map((proj) => ({
+          formData.projects &&
+          formData.projects.map((proj) => ({
             title: proj.title.trim(),
             description: proj.description.trim(),
             techStack: proj.techStack
@@ -224,18 +224,17 @@ function CompleteProfileForm() {
           })),
       };
 
-      const response = await api.post(
-        `/developer/complete-profile`,
-        formattedData,
-        { withCredentials: true }
-      );
+      const res = await api.post(`/developer/complete-profile`, formattedData, {
+        withCredentials: true,
+      });
 
-      if (response.status === 200) {
-        toast.success("Profile updated successfully!");
+      const { status, data, message } = res.data;
+
+      if (status === 200) {
+        toast.success(message || "Profile updated successfully!");
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
-
       toast.error(error?.response?.data?.message || "Failed to update profile");
     } finally {
       setIsSubmitting(false);

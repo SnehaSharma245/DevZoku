@@ -22,20 +22,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUser = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/users/current-user", {
+      const res = await api.get("/users/current-user", {
         withCredentials: true,
       });
-      const userData = response.data.data;
 
-      if (response.status === 200) {
+      const { status, data, message } = res.data;
+      const userData = data;
+
+      if (res.status === 200) {
         setUser(userData);
         setIsAuthenticated(true);
       }
     } catch (error: any) {
-      console.error("Error fetching user:", error?.response?.status || error);
+      console.error(
+        "Error fetching user:",
+        error?.response?.data?.message || error
+      );
       if (error?.response?.status === 401) {
         setUser(null);
-      } else {
       }
     } finally {
       setLoading(false);

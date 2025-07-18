@@ -2,7 +2,9 @@
 import { Button } from "@/components";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
+import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,16 +24,21 @@ interface TeamBrief {
 
 function ViewAllTeams() {
   const { user } = useAuth();
+
   const [teams, setTeams] = useState<TeamBrief[]>([]);
   const [invitationSent, setInvitationSent] = useState<boolean>(false);
 
   const fetchAllTeams = async () => {
     try {
-      const response = await api.get(`/developer/view-all-teams`, {
+      const response = await api.get(`/team/view-all-teams`, {
         withCredentials: true,
       });
 
-      setTeams(response.data.data || []);
+      const { status, data, message } = response.data;
+
+      if (status === 200) {
+        setTeams(data || []);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch all teams"
@@ -47,14 +54,16 @@ function ViewAllTeams() {
   const handleSendingInvite = async (id: string) => {
     try {
       const response = await api.post(
-        `/developer/send-invitation`,
+        `/team/send-invitation`,
         { teamId: id },
         { withCredentials: true }
       );
-      setInvitationSent(true);
-      toast.success(
-        response.data.data.message || "Invitation sent successfully"
-      );
+
+      const { status, data, message } = response.data;
+      if (status === 200) {
+        setInvitationSent(true);
+        toast.success(message || "Invitation sent successfully");
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to send invitation"
@@ -78,7 +87,7 @@ function ViewAllTeams() {
       {teams.map((team, key) => (
         <div key={team.team.id}>
           <h2 className="text-xl font-semibold cursor-pointer hover:underline">
-            <Link href={`view-all-teams/${team.team.id}`}>
+            <Link href={`/team/view-all-teams/${team.team.id}`}>
               {team.team.name}
             </Link>
           </h2>
@@ -101,4 +110,4 @@ function ViewAllTeams() {
   );
 }
 
-export default ViewAllTeams;
+export default withAuth(ViewAllTeams, "developer");

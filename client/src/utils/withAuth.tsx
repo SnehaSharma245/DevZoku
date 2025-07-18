@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export const withAuth = (
   Component: React.ComponentType,
@@ -19,38 +20,30 @@ export const withAuth = (
         // If we're done loading and there's no user, redirect to login
         if (!loading && !user) {
           router.push("/auth/login");
+          return;
         }
 
         // If role checking is required and user has wrong role
         if (!loading && user && requiredRole && user.role !== requiredRole) {
-          router.push("/");
+          router.push("/unauthorized");
+          return;
         }
 
         setAuthChecked(true);
       }
     }, [loading, user, router, authChecked, isAuthenticated]);
 
-    if (loading) {
-      return (
-        <div className="min-h-screen flex justify-center items-center">
-          <p>Loading...</p>
-        </div>
-      );
+    if (loading || !authChecked) {
+      return <LoadingScreen />;
     }
 
     if (!isAuthenticated) {
       return null;
     }
 
-    // If we need a specific role and user doesn't have it
-    if (user && requiredRole && user.role !== requiredRole) {
-      return (
-        <div className="min-h-screen flex justify-center items-center">
-          <p className="text-red-500">
-            You don't have permission to access this page
-          </p>
-        </div>
-      );
+    // Check role before rendering component
+    if (requiredRole && user?.role !== requiredRole) {
+      return null;
     }
 
     // All good, render the component
