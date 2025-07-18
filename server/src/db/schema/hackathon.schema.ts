@@ -7,12 +7,12 @@ import {
   primaryKey,
   index,
   boolean,
+  json,
 } from "drizzle-orm/pg-core";
 
 import { teams } from "./team.schema";
 import { users } from "./user.schema";
 
-const statusSchemaEnum = ["upcoming", "ongoing", "completed"] as const;
 const modeSchemaEnum = ["online", "offline"] as const;
 
 //HACKATHONS table with indexes
@@ -30,18 +30,18 @@ export const hackathons = pgTable(
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "set null" }),
-    status: varchar("status", {
-      length: 20,
-      enum: statusSchemaEnum,
-    }),
     tags: varchar("tags", { length: 100 }).array().$type<string[]>(),
     poster: varchar("poster", { length: 500 }),
     minTeamSize: integer("min_team_size").notNull(),
     maxTeamSize: integer("max_team_size").notNull(),
     mode: varchar("mode", { length: 20, enum: modeSchemaEnum }).notNull(),
+    positionHolders: json("position_holders").$type<{
+      1: { teamId: string };
+      2: { teamId: string };
+      3: { teamId: string };
+    }>(),
   },
   (t) => [
-    index("idx_hackathons_status").on(t.status),
     index("idx_hackathons_created_by").on(t.createdBy),
     index("idx_hackathons_start_time").on(t.startTime),
     index("idx_hackathons_end_time").on(t.endTime),

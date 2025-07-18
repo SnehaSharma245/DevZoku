@@ -1,0 +1,451 @@
+import { eq, and, inArray, sql, desc } from "drizzle-orm";
+import { db } from "../db";
+import { ApiResponse } from "../utils/ApiResponse";
+import type { Request, Response } from "express";
+import { ApiError } from "../utils/ApiError";
+import { asyncHandler } from "../utils/asyncHandler";
+import { teamMembers, teams } from "../db/schema/team.schema";
+import { users } from "../db/schema/user.schema";
+import { io } from "..";
+import {
+  hackathonPhases,
+  hackathons,
+  teamHackathons,
+} from "../db/schema/hackathon.schema";
+import { hackathonTeamEmailQueue } from "../queues/queue";
+import formatDate from "../utils/formatDate";
+import { organizers } from "../db/schema/organizer.schema";
+
+// controller for applying to a hackathon with a team
+const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
+  const { user } = req;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  const { hackathonId, teamId } = req.body;
+
+  if (!hackathonId || !teamId) {
+    throw new ApiError(400, "Hackathon ID and Team ID are required");
+  }
+
+  // Check if the hackathon exists
+  const hackathon = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.id, hackathonId))
+    .limit(1)
+    .execute();
+
+  if (hackathon.length === 0) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  // Check if the team exists
+  const team = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1)
+    .execute();
+
+  if (team.length === 0) {
+    throw new ApiError(404, "Team not found");
+  }
+
+  const now = new Date();
+
+  // Registration window check
+  const regStart = hackathon[0]?.registrationStart
+    ? new Date(hackathon[0].registrationStart)
+    : null;
+  const regEnd = hackathon[0]?.registrationEnd
+    ? new Date(hackathon[0].registrationEnd)
+    : null;
+
+  if (regStart && now < regStart) {
+    throw new ApiError(400, "Registration has not started yet.");
+  }
+  if (regEnd && now > regEnd) {
+    throw new ApiError(400, "Registration period is over.");
+  }
+
+  // Hackathon window check (optional, usually registration is before hackathon)
+  const hackStart = hackathon[0]?.startTime
+    ? new Date(hackathon[0].startTime)
+    : null;
+  const hackEnd = hackathon[0]?.endTime ? new Date(hackathon[0].endTime) : null;
+
+  if (hackStart && hackEnd && now > hackEnd) {
+    throw new ApiError(400, "Hackathon is already over.");
+  }
+
+  // check the member count of the team if it exceeds the limit
+  const teamMember = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.teamId, teamId))
+    .execute();
+
+  if (
+    !teamMember.length ||
+    !hackathon[0] ||
+    teamMember.length < hackathon[0].minTeamSize ||
+    teamMember.length > hackathon[0].maxTeamSize
+  ) {
+    throw new ApiError(400, "Team member limit not matching or data missing");
+  }
+
+  // Check if the team is already applied to the hackathon
+  const existingApplication = await db
+    .select()
+    .from(teamHackathons)
+    .where(
+      and(
+        eq(teamHackathons.teamId, teamId),
+        eq(teamHackathons.hackathonId, hackathonId)
+      )
+    )
+    .limit(1)
+    .execute();
+
+  if (existingApplication.length > 0) {
+    throw new ApiError(400, "Team has already applied to this hackathon");
+  }
+
+  // check if the user is captain of the team
+  const isCaptain = await db
+    .select()
+    .from(teams)
+    .where(and(eq(teams.id, teamId), eq(teams.captainId, user.id)))
+    .limit(1)
+    .execute();
+
+  if (isCaptain.length === 0) {
+    throw new ApiError(403, "User is not the captain of the team");
+  }
+
+  //check if any of the team members have already applied to the hackathon with other team
+  const appliedMembers = await db
+    .select()
+    .from(teamHackathons)
+    .innerJoin(teamMembers, eq(teamHackathons.teamId, teamMembers.teamId))
+    .where(
+      and(
+        eq(teamHackathons.hackathonId, hackathonId),
+        inArray(
+          teamMembers.userId,
+          teamMember.map((m) => m.userId)
+        )
+      )
+    )
+    .execute();
+
+  if (appliedMembers.length > 0) {
+    throw new ApiError(
+      400,
+      "Some team members have already applied to this hackathon with another team"
+    );
+  }
+
+  // Insert the team into the hackathon
+  const newApplication = await db
+    .insert(teamHackathons)
+    .values({ teamId, hackathonId })
+    .execute();
+
+  if (!newApplication) {
+    throw new ApiError(500, "Failed to apply to hackathon");
+  }
+
+  // Notify the team members about the application by email
+
+  //fetch emails from all the team members
+  const userIds = teamMember.map((member) => member.userId);
+
+  const emails = await db
+    .select({ email: users.email, name: users.firstName })
+    .from(users)
+    .where(inArray(users.id, userIds))
+    .execute();
+
+  const organizer = await db
+    .select({
+      email: organizers.companyEmail,
+      name: organizers.organizationName,
+    })
+    .from(organizers)
+    .where(eq(organizers.userId, hackathon[0].createdBy))
+    .limit(1)
+    .execute();
+
+  emails.forEach((member) => {
+    hackathonTeamEmailQueue.add("send-hackathon-registration-email", {
+      email: member.email,
+      memberName: member.name,
+      teamName: team[0]?.name,
+      hackathonName: hackathon[0]?.title,
+      hackathonStartDate: formatDate(
+        hackathon[0]?.startTime
+          ? hackathon[0].startTime.toISOString()
+          : undefined
+      ),
+      hackathonEndDate: formatDate(
+        hackathon[0]?.endTime ? hackathon[0].endTime.toISOString() : undefined
+      ),
+      organizationName: organizer[0]?.name,
+      organizationEmail: organizer[0]?.email,
+    });
+  });
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, newApplication, "Applied to hackathon successfully")
+    );
+});
+
+// View all Hackathons
+const viewAllHackathons = asyncHandler(async (req, res) => {
+  const { tags, duration, startDate, endDate, status, mode } = req.query;
+
+  let whereClauses = [];
+
+  // Tag filter (comma separated, matches ANY tag)
+  if (tags) {
+    const tagArr = String(tags)
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    if (tagArr.length > 0) {
+      whereClauses.push(
+        sql`${hackathons.tags} && ARRAY[${sql.join(
+          tagArr.map((t) => sql`${t}`),
+          ","
+        )}]`
+      );
+    }
+  }
+
+  // Duration filter (in hours)
+  if (duration) {
+    whereClauses.push(
+      sql`EXTRACT(EPOCH FROM (${hackathons.endTime} - ${
+        hackathons.startTime
+      }))/3600 = ${Number(duration)}`
+    );
+  }
+
+  // Start date filter
+  if (startDate) {
+    whereClauses.push(sql`${hackathons.startTime} >= ${startDate}`);
+  }
+
+  // End date filter
+  if (endDate) {
+    whereClauses.push(sql`${hackathons.endTime} <= ${endDate}`);
+  }
+
+  const allHackathons = await db
+    .select()
+    .from(hackathons)
+    .where(and(...whereClauses))
+    .orderBy(desc(hackathons.startTime))
+    .execute();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, allHackathons, "Hackathons fetched successfully")
+    );
+});
+
+// view hackathon by id
+const viewHackathonById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError(400, "Hackathon ID is required");
+  }
+
+  const hackathonArr = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.id, id))
+    .execute();
+
+  if (hackathonArr.length === 0) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  const hackathon = hackathonArr[0];
+
+  if (!hackathon) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  const phases = await db
+    .select()
+    .from(hackathonPhases)
+    .where(eq(hackathonPhases.hackathonId, hackathon?.id))
+    .orderBy(hackathonPhases.order)
+    .execute();
+
+  const organizer = await db
+    .select({
+      organizationName: organizers.organizationName,
+      userId: organizers.userId,
+    })
+    .from(organizers)
+    .where(eq(organizers.userId, hackathon.createdBy))
+    .execute();
+
+  if (organizer.length === 0) {
+    throw new ApiError(404, "Organizer not found for this hackathon");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { ...hackathon, organizer: organizer[0], phases },
+        "Hackathon fetched successfully"
+      )
+    );
+});
+
+// controller for creating hackathon
+const createHackathon = asyncHandler(async (req: Request, res: Response) => {
+  const { user, body } = req;
+  const posterUrl = req.file?.path || "";
+
+  if (!posterUrl) {
+    throw new ApiError(400, "Poster image is required");
+  }
+
+  if (!user) throw new ApiError(401, "User not authenticated");
+  if (user.role !== "organizer")
+    throw new ApiError(
+      403,
+      "Access denied. Only organizers can create hackathons."
+    );
+
+  //existing hackathon check
+  const existingHackathon = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.title, body.title))
+    .then((results) => results[0]);
+
+  if (existingHackathon) {
+    throw new ApiError(400, "Hackathon with this title already exists");
+  }
+
+  // Validate hackathon times
+  const hackStart = new Date(body.startTime);
+  const hackEnd = new Date(body.endTime);
+  const hackRegStart = new Date(body.registrationStart);
+  const hackRegEnd = new Date(body.registrationEnd);
+
+  const now = new Date();
+
+  if (hackStart >= hackEnd)
+    throw new ApiError(400, "Start time must be before end time");
+  if (hackStart < now || hackEnd < now)
+    throw new ApiError(400, "Start time and end time must be in the future");
+
+  if (hackRegStart >= hackRegEnd)
+    throw new ApiError(400, "Registration start time must be before end time");
+  if (hackRegStart < now || hackRegEnd < now)
+    throw new ApiError(400, "Registration times must be in the future");
+
+  // 6. Registration window must be before hackathon window
+  if (hackRegStart > hackStart) {
+    throw new ApiError(400, "Registration cannot start after hackathon starts");
+  }
+  if (hackRegEnd > hackStart) {
+    throw new ApiError(400, "Registration should end before hackathon starts");
+  }
+
+  // Transaction for hackathon + phases
+  const result = await db.transaction(async (tx) => {
+    let tags = req.body.tags;
+    if (typeof tags === "string") {
+      try {
+        tags = JSON.parse(tags);
+      } catch {
+        tags = [];
+      }
+    }
+    if (!Array.isArray(tags)) tags = [];
+
+    const [newHackathon] = await tx
+      .insert(hackathons)
+      .values({
+        title: body.title,
+        description: body.description,
+        startTime: hackStart,
+        endTime: hackEnd,
+        createdBy: user.id,
+        createdAt: now,
+        tags: tags,
+        poster: posterUrl,
+        minTeamSize: body.minTeamSize,
+        maxTeamSize: body.maxTeamSize,
+        mode: body.mode,
+        registrationStart: hackRegStart,
+        registrationEnd: hackRegEnd,
+      })
+      .returning();
+
+    if (!newHackathon) throw new ApiError(500, "Failed to create hackathon");
+
+    // If phases provided, validate and insert
+    if (Array.isArray(body.phases) && body.phases.length > 0) {
+      const phases = body.phases.map((phase: any) => ({
+        hackathonId: newHackathon.id,
+        name: phase.name,
+        description: phase.description,
+        startTime: new Date(phase.startTime),
+        endTime: new Date(phase.endTime),
+        order: phase.order,
+        createdAt: now,
+      }));
+
+      // Phase validations
+      for (const phase of phases) {
+        if (phase.startTime >= phase.endTime)
+          throw new ApiError(400, "Phase start time must be before end time");
+        if (phase.startTime < now || phase.endTime < now)
+          throw new ApiError(
+            400,
+            "Phase start time or end time must be in the future"
+          );
+        if (phase.startTime < hackStart || phase.endTime > hackEnd)
+          throw new ApiError(
+            400,
+            "Each phase's start and end time must be within the hackathon's start and end time"
+          );
+      }
+
+      const phaseInsertion = await tx.insert(hackathonPhases).values(phases);
+      if (!phaseInsertion)
+        throw new ApiError(500, "Failed to create hackathon phases");
+    }
+
+    // Return the newly created hackathon
+    return newHackathon;
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, result, "Hackathon created successfully "));
+});
+
+export {
+  applyToHackathon,
+  viewAllHackathons,
+  viewHackathonById,
+  createHackathon,
+};

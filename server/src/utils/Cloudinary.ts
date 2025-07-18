@@ -11,8 +11,8 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: (req, file) => {
-    const username = req.user?.firstName || "anon";
-    const ext = file.mimetype.split("/")[1]; // png / jpg …
+    const username = req.user?.firstName.split(" ")[0] || "anon";
+    const ext = file.mimetype.split("/")[1];
 
     const public_id = [
       "hackathon_posters",
@@ -26,6 +26,7 @@ const storage = new CloudinaryStorage({
       format: ext,
       allowed_formats: ["jpg", "jpeg", "png", "webp"],
       overwrite: false,
+      resource_type: "image",
     };
   },
 });
