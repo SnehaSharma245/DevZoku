@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, is } from "drizzle-orm";
 import { db } from "../db";
 import { organizers } from "../db/schema/organizer.schema";
 import { users } from "../db/schema/user.schema";
@@ -30,7 +30,7 @@ const completeOrganizerProfile = asyncHandler(
       // Validate the data against schema
       const validatedData = completeOrganizerProfileSchema.parse(body);
 
-      // Check if profile is complete
+      // Check if profile is complete (address ka check hata diya)
       const isProfileComplete =
         !!validatedData.organizationName &&
         !!validatedData.companyEmail &&
@@ -38,10 +38,9 @@ const completeOrganizerProfile = asyncHandler(
         !!validatedData.location &&
         !!validatedData.location.country &&
         !!validatedData.location.state &&
-        !!validatedData.location.city &&
-        !!validatedData.location.address;
+        !!validatedData.location.city;
 
-      // Update the organizer profile
+      // Update the organizer profile (location field hata diya)
       const updatedProfile = await db
         .update(organizers)
         .set({
@@ -51,15 +50,25 @@ const completeOrganizerProfile = asyncHandler(
           companyEmail: validatedData.companyEmail,
           phoneNumber: validatedData.phoneNumber,
           socialLinks: validatedData.socialLinks,
-          location: validatedData.location,
           updatedAt: new Date(),
         })
         .where(eq(organizers.userId, user.id))
         .returning();
 
+      console.log(isProfileComplete);
+
+      // Update user's location (address yahan store hoga)
       await db
         .update(users)
-        .set({ isProfileComplete })
+        .set({
+          isProfileComplete,
+          location: {
+            country: validatedData.location.country,
+            state: validatedData.location.state,
+            city: validatedData.location.city,
+            address: validatedData.location.address || "",
+          },
+        })
         .where(eq(users.id, user.id));
 
       // Return the updated profile

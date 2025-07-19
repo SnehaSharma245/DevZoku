@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray, sql, name } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { developers } from "../db/schema/developer.schema";
 import { ApiResponse } from "../utils/ApiResponse";
@@ -6,13 +6,7 @@ import { completeDeveloperProfileSchema } from "../zod-schema/developer.schema";
 import type { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
-import { teamMembers, teams } from "../db/schema/team.schema";
 import { users } from "../db/schema/user.schema";
-import { io } from "..";
-import { hackathons, teamHackathons } from "../db/schema/hackathon.schema";
-import { hackathonTeamEmailQueue } from "../queues/queue";
-import formatDate from "../utils/formatDate";
-import { organizers } from "../db/schema/organizer.schema";
 
 // Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(
@@ -34,38 +28,6 @@ const completeDeveloperProfile = asyncHandler(
       // Validate the data against schema
       const validatedData = completeDeveloperProfileSchema.parse(body);
 
-      // Check projects validity (if any exist)
-      // Projects are not required, but if provided, each project needs title, description, and techStack
-      const hasValidProjects =
-        !validatedData.projects || // If not provided, valid
-        (Array.isArray(validatedData.projects) &&
-          validatedData.projects.every((project) => {
-            if (!project) return false;
-
-            const titleValid =
-              typeof project.title === "string" && project.title.trim() !== "";
-
-            const descValid =
-              typeof project.description === "string" &&
-              project.description.trim() !== "";
-
-            const techValid =
-              Array.isArray(project.techStack) &&
-              project.techStack.length > 0 &&
-              project.techStack.every(
-                (tech) => typeof tech === "string" && tech.trim() !== ""
-              );
-
-            return titleValid && descValid && techValid;
-          }));
-
-      if (!hasValidProjects) {
-        throw new ApiError(
-          400,
-          "If projects are provided, each project must have a title, description, and tech stack"
-        );
-      }
-
       // Check if profile is complete
       const isProfileComplete =
         !!validatedData.title &&
@@ -74,7 +36,8 @@ const completeDeveloperProfile = asyncHandler(
         !!validatedData.location &&
         !!validatedData.location.city &&
         !!validatedData.location.country &&
-        !!validatedData.location.state;
+        !!validatedData.location.state &&
+        !!validatedData.location.address;
 
       // Update the developer profile
       const updatedProfile = await db
@@ -84,8 +47,6 @@ const completeDeveloperProfile = asyncHandler(
           bio: validatedData.bio,
           skills: validatedData.skills,
           socialLinks: validatedData.socialLinks,
-          projects: validatedData.projects || [],
-          location: validatedData.location,
           updatedAt: new Date(),
         })
         .where(eq(developers.userId, user.id))
@@ -94,7 +55,15 @@ const completeDeveloperProfile = asyncHandler(
       // Update user table's isProfileComplete
       await db
         .update(users)
-        .set({ isProfileComplete })
+        .set({
+          isProfileComplete,
+          location: {
+            country: validatedData.location.country,
+            state: validatedData.location.state,
+            city: validatedData.location.city,
+            address: validatedData.location.address ?? "",
+          }, // location ab yahan store hogi
+        })
         .where(eq(users.id, user.id));
 
       // Return the updated profile
@@ -212,8 +181,96 @@ const notificationHandling = asyncHandler(
   }
 );
 
+// Fetch all projects of the logged-in developer
+const fetchProjects = asyncHandler(async (req: Request, res: Response) => {
+  const { user } = req;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  // Get developer profile
+  const [developer] = await db
+    .select({ projects: developers.projects })
+    .from(developers)
+    .where(eq(developers.userId, user.id))
+    .limit(1)
+    .execute();
+
+  if (!developer) {
+    throw new ApiError(404, "Developer profile not found");
+  }
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        developer.projects || [],
+        "Projects fetched successfully"
+      )
+    );
+});
+
+// Add a new project to the logged-in developer's profile
+const addProject = asyncHandler(async (req: Request, res: Response) => {
+  const { user, body } = req;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  // Validate project fields
+  const { title, description, techStack, repoUrl, demoUrl } = body;
+  if (
+    !title ||
+    !description ||
+    !techStack ||
+    !Array.isArray(techStack) ||
+    techStack.length === 0
+  ) {
+    throw new ApiError(
+      400,
+      "Project must have title, description, and tech stack"
+    );
+  }
+
+  // Get current projects
+  const [developer] = await db
+    .select({ projects: developers.projects })
+    .from(developers)
+    .where(eq(developers.userId, user.id))
+    .limit(1)
+    .execute();
+
+  if (!developer) {
+    throw new ApiError(404, "Developer profile not found");
+  }
+
+  const newProject = {
+    title,
+    description,
+    techStack,
+    repoUrl,
+    demoUrl,
+  };
+
+  const updatedProjects = [...(developer.projects || []), newProject];
+
+  // Update developer's projects
+  await db
+    .update(developers)
+    .set({ projects: updatedProjects, updatedAt: new Date() })
+    .where(eq(developers.userId, user.id))
+    .execute();
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newProject, "Project added successfully"));
+});
+
 export {
   completeDeveloperProfile,
   fetchDeveloperProfile,
   notificationHandling,
+  fetchProjects,
+  addProject,
 };
