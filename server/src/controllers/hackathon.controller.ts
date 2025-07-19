@@ -207,9 +207,58 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
 
 // View all Hackathons
 const viewAllHackathons = asyncHandler(async (req, res) => {
-  const { tags, duration, startDate, endDate, status, mode } = req.query;
+  const {
+    tags,
+    duration,
+    startDate,
+    endDate,
+    status,
+    mode,
+    organizerId,
+    devId,
+  } = {
+    ...req.query,
+    ...req.body,
+  };
 
   let whereClauses = [];
+
+  if (devId) {
+    // 1. Get all teamIds where user is a member
+    const userTeamIds = await db
+      .select({ teamId: teamMembers.teamId })
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, devId));
+    const teamIds = userTeamIds.map((t) => t.teamId);
+
+    if (teamIds.length === 0) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, [], "Hackathons fetched successfully"));
+    }
+
+    // 2. Get all hackathonIds where any of user's teams have applied
+    const hackathonIds = await db
+      .select({ hackathonId: teamHackathons.hackathonId })
+      .from(teamHackathons)
+      .where(inArray(teamHackathons.teamId, teamIds));
+    const hackIds = hackathonIds.map((h) => h.hackathonId);
+
+    if (hackIds.length === 0) {
+      // User has not participated in any hackathon, return empty
+      return res
+        .status(200)
+        .json(new ApiResponse(200, [], "Hackathons fetched successfully"));
+    }
+
+    // Sirf participated hackathons pe hi filters lagao
+    whereClauses.push(inArray(hackathons.id, hackIds));
+  }
+
+  // Baaki filters (ye sab participated hackathons pe hi lagenge agar upar wala block chala)
+  if (organizerId) {
+    whereClauses.push(sql`${hackathons.createdBy} = ${organizerId}`);
+  }
 
   // Tag filter (comma separated, matches ANY tag)
   if (tags) {
@@ -295,7 +344,7 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     );
 });
 
-// view hackathon by id
+// controller for view hackathon by id
 const viewHackathonById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
