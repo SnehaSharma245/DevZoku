@@ -13,37 +13,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"; // apne Dialog component ka import path sahi karein
 import Link from "next/link";
-
-export interface Hackathon {
-  id: string;
-  title: string;
-  description?: string;
-  registrationStart?: string;
-  registrationEnd?: string;
-  createdBy?: string;
-  organizationName?: string;
-  startTime?: string;
-  endTime?: string;
-  participants?: string[];
-  status?: "upcoming" | "ongoing" | "completed";
-  tags?: string[];
-  poster?: string;
-  minTeamSize?: number;
-  maxTeamSize?: number;
-  mode?: "online" | "offline";
-  phases?: Phases[];
-  dateCompleted?: string; // archived field
-}
-
-export interface Phases {
-  id: string;
-  hackathonId: string;
-  title: string;
-  description: string;
-  startTime: string;
-  endTime: string;
-  order: number;
-}
+import type { Hackathon } from "@/types/hackathon.types";
+import type { Phases } from "@/types/hackathon.types";
 
 interface TeamMember {
   userId: string;
@@ -304,67 +275,71 @@ function ParticularHackathon() {
         </div>
       )}
 
-      <Button onClick={handleRegistration}>Apply Now</Button>
-      <Button>Share to Teams</Button>
+      {user && user?.role === "developer" && (
+        <>
+          <Button onClick={handleRegistration}>Apply Now</Button>
+          <Button>Share to Teams</Button>
 
-      {/* Joined Teams Dialog */}
-      {isJoinedTeamsDialogOpen && (
-        <Dialog
-          open={isJoinedTeamsDialogOpen}
-          onOpenChange={setIsJoinedTeamsDialogOpen}
-        >
-          <DialogContent className="max-w-3xl w-full">
-            <DialogTitle>Your Teams</DialogTitle>
-            <DialogDescription>
-              {isLoading
-                ? "Loading..."
-                : teamsArray.length > 0
-                ? "Select a team to apply for this hackathon."
-                : "You have not joined any teams yet."}
-            </DialogDescription>
-            {!isLoading && teamsArray.length > 0 && (
-              <div className="space-y-3 mt-4">
-                {teamsArray.map((team) => {
-                  const teamData = joinedTeams.find((jt) =>
-                    Array.isArray(jt.teams)
-                      ? jt.teams.some((t) => t.id === team.id)
-                      : jt.teams &&
-                        typeof jt.teams === "object" &&
-                        "id" in jt.teams &&
-                        (jt.teams as Team).id === team.id
-                  );
+          {/* Joined Teams Dialog */}
+          {isJoinedTeamsDialogOpen && (
+            <Dialog
+              open={isJoinedTeamsDialogOpen}
+              onOpenChange={setIsJoinedTeamsDialogOpen}
+            >
+              <DialogContent className="max-w-3xl w-full">
+                <DialogTitle>Your Teams</DialogTitle>
+                <DialogDescription>
+                  {isLoading
+                    ? "Loading..."
+                    : teamsArray.length > 0
+                    ? "Select a team to apply for this hackathon."
+                    : "You have not joined any teams yet."}
+                </DialogDescription>
+                {!isLoading && teamsArray.length > 0 && (
+                  <div className="space-y-3 mt-4">
+                    {teamsArray.map((team) => {
+                      const teamData = joinedTeams.find((jt) =>
+                        Array.isArray(jt.teams)
+                          ? jt.teams.some((t) => t.id === team.id)
+                          : jt.teams &&
+                            typeof jt.teams === "object" &&
+                            "id" in jt.teams &&
+                            (jt.teams as Team).id === team.id
+                      );
 
-                  return (
-                    <div
-                      key={team.id}
-                      className="flex flex-col border rounded px-3 py-2 w-full"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold">{team.name}</div>
-                          <div className="text-xs text-gray-500">
-                            Max Team size: {team.teamSize}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Current Member Count: {team.currentMemberCount}
+                      return (
+                        <div
+                          key={team.id}
+                          className="flex flex-col border rounded px-3 py-2 w-full"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold">{team.name}</div>
+                              <div className="text-xs text-gray-500">
+                                Max Team size: {team.teamSize}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Current Member Count: {team.currentMemberCount}
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => handleApplyByTeam(team.id)}
+                              disabled={isLoading}
+                              className="ml-4"
+                            >
+                              Apply by this
+                            </Button>
                           </div>
                         </div>
-
-                        <Button
-                          onClick={() => handleApplyByTeam(team.id)}
-                          disabled={isLoading}
-                          className="ml-4"
-                        >
-                          Apply by this
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+                      );
+                    })}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
+        </>
       )}
     </div>
   );
