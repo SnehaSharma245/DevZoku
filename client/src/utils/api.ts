@@ -15,7 +15,7 @@ const api: AxiosInstance = axios.create({
 
 const PUBLIC_ROUTES = [
   "/auth/login",
-  "/view-all-hackathons",
+  "/hackathon/view-all-hackathons",
   "/developer/profile/*",
   "/organizer/profile/*",
 ];
