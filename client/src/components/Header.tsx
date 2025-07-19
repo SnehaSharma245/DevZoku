@@ -101,6 +101,12 @@ const Header = () => {
                       🧩 Complete Profile
                     </Link>
                     <Link
+                      href="/developer/manage-projects"
+                      onClick={() => setOpen(false)}
+                    >
+                      🧩 Manage Projects
+                    </Link>
+                    <Link
                       href="/developer/notifications"
                       onClick={() => {
                         setOpen(false);
