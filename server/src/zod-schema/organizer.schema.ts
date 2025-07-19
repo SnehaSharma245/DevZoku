@@ -13,7 +13,6 @@ export const completeOrganizerProfileSchema = z.object({
   website: safeUrl.optional(),
   companyEmail: z.string().email("Invalid email address"),
   phoneNumber: z.string().min(7, "Invalid phone number"),
-
   socialLinks: z
     .object({
       linkedin: safeUrl.optional(),
@@ -21,16 +20,10 @@ export const completeOrganizerProfileSchema = z.object({
       instagram: safeUrl.optional(),
     })
     .optional(),
-
-  location: z
-    .object({
-      country: z.string(),
-      state: z.string(),
-      city: z.string(),
-      address: z.string(),
-    })
-    .optional(),
-
-  isProfileComplete: z.boolean().optional(),
-  isVerified: z.boolean().optional(),
+  location: z.object({
+    country: z.string().min(1, "Country is required"),
+    state: z.string().min(1, "State is required"),
+    city: z.string().min(1, "City is required"),
+    address: z.string().min(1, "Address is required"),
+  }),
 });

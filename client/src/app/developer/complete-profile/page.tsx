@@ -37,16 +37,15 @@ const projectSchema = z.object({
 });
 
 const formSchema = z.object({
-  title: z.string().optional(),
+  title: z.string().trim().min(2, "Title is required"),
   bio: z.string().optional(),
-  skills: z.string().optional(),
-  isAvailable: z.boolean().optional(),
+  skills: z.string().min(2, "Skills are required"),
 
   location: z
     .object({
-      city: z.string().optional(),
-      state: z.string().optional(),
-      country: z.string().optional(),
+      city: z.string().min(2, "City is required"),
+      state: z.string().min(2, "State is required"),
+      country: z.string().min(2, "Country is required"),
     })
     .optional(),
 
@@ -87,7 +86,6 @@ function CompleteProfileForm() {
       title: "",
       bio: "",
       skills: "",
-      isAvailable: false,
       location: {
         city: "",
         state: "",
@@ -131,7 +129,6 @@ function CompleteProfileForm() {
         title: profile.title || "",
         bio: profile.bio || "",
         skills: Array.isArray(profile.skills) ? profile.skills.join(", ") : "",
-        isAvailable: profile.isAvailable ?? false,
 
         location: {
           city: profile.location?.city || "",
@@ -194,7 +191,6 @@ function CompleteProfileForm() {
               .map((s) => s.trim())
               .filter(Boolean)
           : [],
-        isAvailable: formData.isAvailable ?? false,
 
         location: formData.location && {
           city: formData.location.city?.trim() || "",
@@ -232,6 +228,7 @@ function CompleteProfileForm() {
 
       if (status === 200) {
         toast.success(message || "Profile updated successfully!");
+        router.push(`/developer/profile/${user?.id}`);
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
@@ -314,25 +311,6 @@ function CompleteProfileForm() {
                     />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Availability */}
-            <FormField
-              control={control}
-              name="isAvailable"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Available for Projects</FormLabel>
-                  </div>
                 </FormItem>
               )}
             />

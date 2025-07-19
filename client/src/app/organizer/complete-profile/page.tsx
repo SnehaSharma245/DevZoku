@@ -3,14 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Input,
-  Textarea,
-  Button,
-  Switch,
-  Card,
-  CardContent,
-} from "@/components/index";
+import { Input, Textarea, Button } from "@/components/index";
 import {
   Form,
   FormField,
@@ -23,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { useRouter } from "next/navigation";
 
 // Client-side validation schema
 const formSchema = z.object({
@@ -31,22 +25,17 @@ const formSchema = z.object({
   website: z.string().url("Enter a valid URL").or(z.literal("")),
   companyEmail: z.string().email("Invalid email address"),
   phoneNumber: z.string().min(7, "Invalid phone number"),
-
   socialLinks: z.object({
     linkedin: z.string().url("Enter a valid URL").or(z.literal("")),
     twitter: z.string().url("Enter a valid URL").or(z.literal("")),
     instagram: z.string().url("Enter a valid URL").or(z.literal("")),
   }),
-
   location: z.object({
     country: z.string().min(1, "Country is required"),
     state: z.string().min(1, "State is required"),
     city: z.string().min(1, "City is required"),
     address: z.string().min(1, "Address is required"),
   }),
-
-  isProfileComplete: z.boolean().optional(),
-  isVerified: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -54,6 +43,7 @@ type FormData = z.infer<typeof formSchema>;
 function OrganizerCompleteProfileForm() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -74,8 +64,6 @@ function OrganizerCompleteProfileForm() {
         city: "",
         address: "",
       },
-      isProfileComplete: true,
-      isVerified: false,
     },
   });
 
@@ -103,9 +91,6 @@ function OrganizerCompleteProfileForm() {
           city: profile.location?.city || "",
           address: profile.location?.address || "",
         },
-
-        isProfileComplete: true,
-        isVerified: profile.isVerified ?? false,
       });
     }
   }, [user, form]);
@@ -134,9 +119,6 @@ function OrganizerCompleteProfileForm() {
           city: formData.location.city.trim(),
           address: formData.location.address.trim(),
         },
-
-        isProfileComplete: true,
-        isVerified: formData.isVerified ?? false,
       };
 
       const response = await api.post(
@@ -149,6 +131,7 @@ function OrganizerCompleteProfileForm() {
 
       if (status === 200) {
         toast.success("Organization profile updated successfully!");
+        router.push(`/organizer/profile/${user?.id}`);
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
@@ -310,31 +293,6 @@ function OrganizerCompleteProfileForm() {
                   )}
                 />
               ))}
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold border-b pb-2">Status</h2>
-            <div className="flex items-center space-x-6">
-              <FormField
-                control={form.control}
-                name="isProfileComplete"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={true} // Always true when submitting profile
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Profile Complete</FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
             </div>
           </div>
 

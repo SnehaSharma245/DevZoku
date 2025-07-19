@@ -94,6 +94,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (
+      !loading &&
+      user &&
+      !user.isProfileComplete &&
+      ((user.role === "developer" &&
+        !pathname.startsWith("/developer/complete-profile")) ||
+        (user.role === "organizer" &&
+          !pathname.startsWith("/organizer/complete-profile")))
+    ) {
+      window.location.href =
+        user.role === "developer"
+          ? "/developer/complete-profile"
+          : "/organizer/complete-profile";
+    }
+  }, [user, loading, pathname]);
+
   return loading ? (
     <LoadingScreen />
   ) : (

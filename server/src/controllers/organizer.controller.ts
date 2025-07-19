@@ -30,6 +30,17 @@ const completeOrganizerProfile = asyncHandler(
       // Validate the data against schema
       const validatedData = completeOrganizerProfileSchema.parse(body);
 
+      // Check if profile is complete
+      const isProfileComplete =
+        !!validatedData.organizationName &&
+        !!validatedData.companyEmail &&
+        !!validatedData.phoneNumber &&
+        !!validatedData.location &&
+        !!validatedData.location.country &&
+        !!validatedData.location.state &&
+        !!validatedData.location.city &&
+        !!validatedData.location.address;
+
       // Update the organizer profile
       const updatedProfile = await db
         .update(organizers)
@@ -41,11 +52,15 @@ const completeOrganizerProfile = asyncHandler(
           phoneNumber: validatedData.phoneNumber,
           socialLinks: validatedData.socialLinks,
           location: validatedData.location,
-          isProfileComplete: true,
           updatedAt: new Date(),
         })
         .where(eq(organizers.userId, user.id))
         .returning();
+
+      await db
+        .update(users)
+        .set({ isProfileComplete })
+        .where(eq(users.id, user.id));
 
       // Return the updated profile
       return res
@@ -58,15 +73,9 @@ const completeOrganizerProfile = asyncHandler(
           )
         );
     } catch (error: any) {
-      console.error("Error updating organizer profile:", error);
-
-      if (error.name === "ZodError") {
-        throw new ApiError(400, `Validation error: ${error.errors[0].message}`);
-      }
-
       throw new ApiError(
-        error.statusCode || 500,
-        error.message || "Something went wrong while updating the profile"
+        500,
+        "Something went wrong while updating the profile"
       );
     }
   }

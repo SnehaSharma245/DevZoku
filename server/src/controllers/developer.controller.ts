@@ -66,6 +66,16 @@ const completeDeveloperProfile = asyncHandler(
         );
       }
 
+      // Check if profile is complete
+      const isProfileComplete =
+        !!validatedData.title &&
+        Array.isArray(validatedData.skills) &&
+        validatedData.skills.length > 0 &&
+        !!validatedData.location &&
+        !!validatedData.location.city &&
+        !!validatedData.location.country &&
+        !!validatedData.location.state;
+
       // Update the developer profile
       const updatedProfile = await db
         .update(developers)
@@ -73,7 +83,6 @@ const completeDeveloperProfile = asyncHandler(
           title: validatedData.title,
           bio: validatedData.bio,
           skills: validatedData.skills,
-          isAvailable: validatedData.isAvailable ?? false,
           socialLinks: validatedData.socialLinks,
           projects: validatedData.projects || [],
           location: validatedData.location,
@@ -81,6 +90,12 @@ const completeDeveloperProfile = asyncHandler(
         })
         .where(eq(developers.userId, user.id))
         .returning();
+
+      // Update user table's isProfileComplete
+      await db
+        .update(users)
+        .set({ isProfileComplete })
+        .where(eq(users.id, user.id));
 
       // Return the updated profile
       return res

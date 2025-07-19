@@ -27,10 +27,6 @@ export interface DeveloperProfile {
     city: string;
   };
   overallScore?: number;
-  isProfileComplete?: boolean;
-  isAvailable?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface OrganizerProfile {
@@ -53,10 +49,6 @@ export interface OrganizerProfile {
     address: string;
   };
   totalEventsOrganized?: number;
-  isProfileComplete?: boolean;
-  isVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface User {

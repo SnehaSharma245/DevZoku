@@ -8,7 +8,7 @@ const safeUrl = z
   });
 
 export const completeDeveloperProfileSchema = z.object({
-  title: z.string().trim().optional(),
+  title: z.string().trim().min(2, "Title is required"),
   bio: z.string().optional(),
   skills: z.array(z.string()).optional(),
   socialLinks: z
@@ -33,12 +33,9 @@ export const completeDeveloperProfileSchema = z.object({
       })
     )
     .optional(),
-  location: z
-    .object({
-      country: z.string(),
-      state: z.string(),
-      city: z.string(),
-    })
-    .optional(),
-  isAvailable: z.boolean().optional(),
+  location: z.object({
+    country: z.string().min(2, "Country is required"),
+    state: z.string().min(2, "State is required"),
+    city: z.string().min(2, "City is required"),
+  }),
 });

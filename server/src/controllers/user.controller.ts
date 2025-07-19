@@ -187,10 +187,18 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
     sameSite: "lax" as const,
   };
 
-  redirectPath =
-    role === "developer"
-      ? "/developer/complete-profile"
-      : "/organizer/complete-profile";
+  if (existingUsers.length === 0) {
+    // New user: redirect to complete profile
+    redirectPath =
+      role === "developer"
+        ? "/developer/complete-profile"
+        : "/organizer/complete-profile";
+  } else {
+    redirectPath =
+      role === "developer"
+        ? `/developer/profile/${userObj.id}`
+        : `/organizer/profile/${userObj.id}`;
+  }
   // Construct full redirect URL
   const fullRedirectUrl = `${
     process.env.CLIENT_URL || "http://localhost:3000"

@@ -56,10 +56,6 @@ export const developers = pgTable("developers", {
     "0.00"
   ),
 
-  // Profile Status
-  isProfileComplete: boolean("is_profile_complete").default(false),
-  isAvailable: boolean("is_available").default(true),
-
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
