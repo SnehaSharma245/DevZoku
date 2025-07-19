@@ -282,20 +282,25 @@ function ParticularHackathon() {
       {phases && phases.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-2">Phases</h2>
-          <div className="space-y-3">
+          <ol className="relative border-l border-gray-300 ml-4">
             {phases
               .sort((a, b) => a.order - b.order)
-              .map((phase) => (
-                <div key={phase.id} className="border rounded p-3 bg-gray-50">
-                  <div className="font-semibold">{phase.title}</div>
-                  <div className="text-gray-700 mb-1">{phase.description}</div>
-                  <div className="text-xs text-gray-500">
-                    {formatDateTime(phase.startTime)} -{" "}
-                    {formatDateTime(phase.endTime)}
+              .map((phase, idx) => (
+                <li key={phase.id} className="mb-8 ml-6">
+                  <span className="absolute -left-3 flex items-center justify-center w-6 h-6 bg-yellow-400 rounded-full ring-8 ring-white">
+                    {idx + 1}
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <div className="font-semibold text-lg">{phase.title}</div>
+                    <div className="text-gray-700">{phase.description}</div>
+                    <div className="text-xs text-gray-500">
+                      {formatDateTime(phase.startTime)} -{" "}
+                      {formatDateTime(phase.endTime)}
+                    </div>
                   </div>
-                </div>
+                </li>
               ))}
-          </div>
+          </ol>
         </div>
       )}
 
