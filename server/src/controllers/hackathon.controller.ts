@@ -15,7 +15,7 @@ import {
 import { hackathonTeamEmailQueue } from "../queues/queue";
 import formatDate from "../utils/formatDate";
 import { organizers } from "../db/schema/organizer.schema";
-
+import hackathonStatusChecker from "../utils/hackathonStatusChecker";
 // controller for applying to a hackathon with a team
 const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
   const { user } = req;
@@ -229,11 +229,17 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
 
   // Duration filter (in hours)
   if (duration) {
-    whereClauses.push(
-      sql`EXTRACT(EPOCH FROM (${hackathons.endTime} - ${
-        hackathons.startTime
-      }))/3600 = ${Number(duration)}`
-    );
+    if (duration === "gt72") {
+      whereClauses.push(
+        sql`EXTRACT(EPOCH FROM (${hackathons.endTime} - ${hackathons.startTime}))/3600 > 72`
+      );
+    } else {
+      whereClauses.push(
+        sql`EXTRACT(EPOCH FROM (${hackathons.endTime} - ${
+          hackathons.startTime
+        }))/3600 <= ${Number(duration)}`
+      );
+    }
   }
 
   // Start date filter
@@ -246,17 +252,46 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     whereClauses.push(sql`${hackathons.endTime} <= ${endDate}`);
   }
 
+  // Mode filter
+  if (mode && (mode === "online" || mode === "offline")) {
+    whereClauses.push(sql`${hackathons.mode} = ${mode}`);
+  }
+
+  // Fetch all hackathons matching filters
   const allHackathons = await db
     .select()
     .from(hackathons)
-    .where(and(...whereClauses))
+    .where(whereClauses.length > 0 ? and(...whereClauses) : undefined)
     .orderBy(desc(hackathons.startTime))
     .execute();
+
+  // Calculate status for each hackathon
+  const hackathonsWithStatus = allHackathons.map((hack) => {
+    const statusValue = hackathonStatusChecker(
+      new Date(hack.registrationStart ?? ""),
+      new Date(hack.registrationEnd ?? ""),
+      new Date(hack.startTime ?? ""),
+      new Date(hack.endTime ?? "")
+    );
+    return { ...hack, status: statusValue };
+  });
+
+  // Status filter (after status calculation)
+  let filteredHackathons = hackathonsWithStatus;
+  if (status && status !== "all") {
+    filteredHackathons = hackathonsWithStatus.filter(
+      (h) => h.status === status
+    );
+  }
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, allHackathons, "Hackathons fetched successfully")
+      new ApiResponse(
+        200,
+        filteredHackathons,
+        "Hackathons fetched successfully"
+      )
     );
 });
 
@@ -380,6 +415,16 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
     }
     if (!Array.isArray(tags)) tags = [];
 
+    let phases = req.body.phases;
+    if (typeof phases === "string") {
+      try {
+        phases = JSON.parse(phases);
+      } catch {
+        phases = [];
+      }
+    }
+    if (!Array.isArray(phases)) phases = [];
+
     const [newHackathon] = await tx
       .insert(hackathons)
       .values({
@@ -402,8 +447,14 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
     if (!newHackathon) throw new ApiError(500, "Failed to create hackathon");
 
     // If phases provided, validate and insert
-    if (Array.isArray(body.phases) && body.phases.length > 0) {
-      const phases = body.phases.map((phase: any) => ({
+    if (phases.length > 0) {
+      const now = new Date();
+      const regStart = new Date(req.body.registrationStart);
+      const regEnd = new Date(req.body.registrationEnd);
+      const hackStart = new Date(req.body.startTime);
+      const hackEnd = new Date(req.body.endTime);
+
+      const phasesToInsert = phases.map((phase: any) => ({
         hackathonId: newHackathon.id,
         name: phase.name,
         description: phase.description,
@@ -414,7 +465,7 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
       }));
 
       // Phase validations
-      for (const phase of phases) {
+      for (const phase of phasesToInsert) {
         if (phase.startTime >= phase.endTime)
           throw new ApiError(400, "Phase start time must be before end time");
         if (phase.startTime < now || phase.endTime < now)
@@ -422,14 +473,16 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
             400,
             "Phase start time or end time must be in the future"
           );
-        if (phase.startTime < hackStart || phase.endTime > hackEnd)
+        if (phase.startTime < regStart || phase.endTime > hackEnd)
           throw new ApiError(
             400,
             "Each phase's start and end time must be within the hackathon's start and end time"
           );
       }
 
-      const phaseInsertion = await tx.insert(hackathonPhases).values(phases);
+      const phaseInsertion = await tx
+        .insert(hackathonPhases)
+        .values(phasesToInsert);
       if (!phaseInsertion)
         throw new ApiError(500, "Failed to create hackathon phases");
     }

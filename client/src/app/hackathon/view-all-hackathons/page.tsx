@@ -14,7 +14,13 @@ export interface Hackathon {
   location: string;
   tags: string[];
   poster: string;
-  status: "upcoming" | "ongoing" | "completed";
+  status:
+    | "upcoming"
+    | "ongoing"
+    | "completed"
+    | "Registration in Progress"
+    | "Registration ended"
+    | "unknown";
 }
 
 function AllHackathons() {
@@ -27,54 +33,40 @@ function AllHackathons() {
   const [duration, setDuration] = useState(""); // e.g. "24", "48"
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [status, setStatus] = useState<"upcoming" | "ongoing" | "all" | "">(
-    "all"
-  );
+  const statusOptions = [
+    "all",
+    "upcoming",
+    "Registration in Progress",
+    "Registration ended",
+    "ongoing",
+    "completed",
+    "unknown",
+  ] as const;
+
+  type StatusType = (typeof statusOptions)[number];
+
+  const [status, setStatus] = useState<StatusType>("all");
   const [mode, setMode] = useState(""); // e.g. "online", "offline"
 
   // 1. Page load par sab fetch karo (sirf ek baar)
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/hackathon/view-all-hackathons");
-
-        const { status, data, message } = res.data;
-
-        if (status === 200) {
-          setFetchedHackathons(data);
-        } else {
-          toast.error(message || "Failed to fetch hackathons");
-        }
-      } catch (error: any) {
-        toast.error(
-          error?.response?.data?.message || "Failed to fetch hackathons"
-        );
-        setFetchedHackathons([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+    fetchHackathons();
   }, []);
 
-  // 2. Tag search par sirf button click par fetch karo
-  const handleTagSearch = async () => {
+  const fetchHackathons = async (params: any = {}) => {
     setLoading(true);
     try {
-      const params: any = {};
-      if (tagSearch) params.tags = tagSearch;
-      if (duration) params.duration = duration;
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-      // Only send status if not "all"
-      if (status && status !== "all") params.status = status;
-      if (mode) params.mode = mode; // Add mode to params if it's set
       const query = new URLSearchParams(params).toString();
       const res = await api.get(
         `/hackathon/view-all-hackathons${query ? "?" + query : ""}`
       );
-      setFetchedHackathons(res.data.data);
+      const { status, data, message } = res.data;
+      if (status === 200) {
+        setFetchedHackathons(data);
+      } else {
+        toast.error(message || "Failed to fetch hackathons");
+        setFetchedHackathons([]);
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to fetch hackathons"
@@ -83,6 +75,18 @@ function AllHackathons() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 2. Tag search/filter par fetch karo
+  const handleFilterSearch = async () => {
+    const params: any = {};
+    if (tagSearch) params.tags = tagSearch;
+    if (duration) params.duration = duration;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (status && status !== "all") params.status = status;
+    if (mode) params.mode = mode;
+    fetchHackathons(params);
   };
 
   function normalize(str: string) {
@@ -113,43 +117,20 @@ function AllHackathons() {
           onChange={(e) => setTagSearch(e.target.value)}
           className="border px-3 py-2 rounded w-full"
         />
-        <button
-          onClick={handleTagSearch}
-          className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded"
-          disabled={loading}
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
       </div>
 
-      {/* checkbox for status check for upcoming and ongoing hackathons */}
-      <div className="flex gap-4 mb-4">
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={status === "upcoming"}
-            onChange={() =>
-              setStatus(status === "upcoming" ? "all" : "upcoming")
-            }
-          />
-          Upcoming
-        </label>
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={status === "ongoing"}
-            onChange={() => setStatus(status === "ongoing" ? "all" : "ongoing")}
-          />
-          Ongoing
-        </label>
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={status === "all"}
-            onChange={() => setStatus("all")}
-          />
-          All
-        </label>
+      {/* Status filter */}
+      <div className="flex gap-4 mb-4 flex-wrap">
+        {statusOptions.map((option) => (
+          <label key={option} className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={status === option}
+              onChange={() => setStatus(status === option ? "all" : option)}
+            />
+            {option.charAt(0).toUpperCase() + option.slice(1)}
+          </label>
+        ))}
       </div>
 
       <div className="flex gap-2 mb-4">
@@ -191,18 +172,26 @@ function AllHackathons() {
           <option value="offline">Offline</option>
         </select>
       </div>
-      {filteredHackathons.length === 0 && (
+      <button
+        onClick={handleFilterSearch}
+        className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded"
+        disabled={loading}
+      >
+        {loading ? "Searching..." : "Apply Filters"}
+      </button>
+      {loading && <div className="text-gray-500">Loading...</div>}
+      {!loading && filteredHackathons.length === 0 && (
         <div className="text-gray-500">No hackathons found.</div>
       )}
-      {filteredHackathons.map((hackathon) => (
-        <div
-          key={hackathon.id}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4"
-        >
-          <div className=" border-2 border-pink-400 m-2 p-4 rounded-lg shadow-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+        {filteredHackathons.map((hackathon) => (
+          <div
+            key={hackathon.id}
+            className="border-2 border-pink-400 m-2 p-4 rounded-lg shadow-lg flex flex-col"
+          >
             <div>
               <img
-                className="  h-48 object-fit"
+                className="h-48 object-fit"
                 src={hackathon.poster}
                 alt={hackathon.title}
               />
@@ -223,12 +212,40 @@ function AllHackathons() {
                 </span>
               ))}
             </div>
-            <Link href={`/hackathon/view-all-hackathons/${hackathon.id}`}>
+            <div className="mt-2">
+              <span
+                className="inline-block px-2 py-1 rounded text-xs font-semibold"
+                style={{
+                  background:
+                    hackathon.status === "upcoming"
+                      ? "#fbbf24"
+                      : hackathon.status === "ongoing"
+                      ? "#34d399"
+                      : hackathon.status === "completed"
+                      ? "#f87171"
+                      : "#e5e7eb",
+                  color:
+                    hackathon.status === "upcoming"
+                      ? "#92400e"
+                      : hackathon.status === "ongoing"
+                      ? "#065f46"
+                      : hackathon.status === "completed"
+                      ? "#7f1d1d"
+                      : "#374151",
+                }}
+              >
+                {hackathon.status}
+              </span>
+            </div>
+            <Link
+              href={`/hackathon/view-all-hackathons/${hackathon.id}`}
+              className="mt-2 underline text-blue-600"
+            >
               View Details
             </Link>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
