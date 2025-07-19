@@ -12,10 +12,24 @@ export default function ClientWrapper({
 }) {
   const pathname = usePathname();
 
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
 
   // Check if the route matches specific paths
-  const isPageWithoutNavbarAndFooter = pathname.startsWith("/auth/*");
+
+  let isPageWithoutNavbarAndFooter = false;
+
+  if (
+    user &&
+    user.isProfileComplete === false &&
+    pathname !== "/complete-profile"
+  ) {
+    isPageWithoutNavbarAndFooter =
+      pathname.startsWith("/auth/*") || pathname.includes("/complete-profile");
+  }
+  if (!user && pathname.startsWith("/auth/") && !pathname.includes("/signup")) {
+    isPageWithoutNavbarAndFooter =
+      pathname.startsWith("/auth/*") || pathname.includes("/complete-profile");
+  }
 
   if (loading) {
     return <LoadingScreen />;
