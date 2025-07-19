@@ -21,11 +21,7 @@ export interface DeveloperProfile {
     repoUrl?: string;
     demoUrl?: string;
   }>;
-  location?: {
-    country: string;
-    state: string;
-    city: string;
-  };
+
   overallScore?: number;
 }
 
@@ -42,12 +38,6 @@ export interface OrganizerProfile {
     twitter?: string;
     instagram?: string;
   };
-  location?: {
-    country: string;
-    state: string;
-    city: string;
-    address: string;
-  };
   totalEventsOrganized?: number;
 }
 
@@ -55,13 +45,19 @@ export interface User {
   id: string;
   email: string;
   firstName: string;
-  lastName: string | null;
-  role: "developer" | "organizer";
-  isProfileComplete?: boolean;
-  profile: DeveloperProfile | OrganizerProfile;
+  lastName: string;
+  role: string;
+  isProfileComplete: boolean;
   googleId?: string;
   createdAt?: string;
   updatedAt?: string;
+  location?: {
+    country?: string;
+    state?: string;
+    city?: string;
+    address?: string;
+  };
+  profile?: DeveloperProfile | OrganizerProfile;
 }
 
 // Type guards to check profile type
