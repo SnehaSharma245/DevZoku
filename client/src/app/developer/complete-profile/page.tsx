@@ -1,18 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import React, { Fragment, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import {
-  Input,
-  Textarea,
-  Button,
-  Switch,
-  Card,
-  CardContent,
-  Label,
-} from "@/components/index";
+import { Input, Button } from "@/components/index";
 import {
   Form,
   FormField,
@@ -25,30 +17,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 import api from "@/utils/api";
-
-// Client-side validation schema
-// Make all fields optional except for project fields if a project exists
-const projectSchema = z.object({
-  title: z.string().min(1, "Project title is required"),
-  description: z.string().min(1, "Project description is required"),
-  techStack: z.string().min(1, "Tech stack is required"),
-  repoUrl: z.string().url("Enter a valid URL").or(z.literal("")),
-  demoUrl: z.string().url("Enter a valid URL").or(z.literal("")),
-});
+import { Country, State, City } from "country-state-city";
 
 const formSchema = z.object({
   title: z.string().trim().min(2, "Title is required"),
   bio: z.string().optional(),
   skills: z.string().min(2, "Skills are required"),
-
-  location: z
-    .object({
-      city: z.string().min(2, "City is required"),
-      state: z.string().min(2, "State is required"),
-      country: z.string().min(2, "Country is required"),
-    })
-    .optional(),
-
+  location: z.object({
+    city: z.string().min(2, "City is required"),
+    state: z.string().min(2, "State is required"),
+    country: z.string().min(2, "Country is required"),
+    address: z.string().min(2, "Address is required"),
+  }),
   socialLinks: z
     .object({
       github: z.string().url("Enter a valid URL").or(z.literal("")),
@@ -60,25 +40,22 @@ const formSchema = z.object({
       instagram: z.string().url("Enter a valid URL").or(z.literal("")),
     })
     .optional(),
-
-  // Projects array is optional, but if a project exists, its fields are required
-  projects: z.array(projectSchema).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-const initialProject = {
-  title: "",
-  description: "",
-  techStack: "",
-  repoUrl: "",
-  demoUrl: "",
-};
-
 function CompleteProfileForm() {
   const { user } = useAuth();
+  console.log("User in CompleteProfileForm:", user);
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState(1);
+  const [countries, setCountries] = useState<
+    { name: string; isoCode: string }[]
+  >([]);
+  const [states, setStates] = useState<{ name: string; isoCode: string }[]>([]);
+  const [cities, setCities] = useState<{ name: string }[]>([]);
+  const [isAutofilling, setIsAutofilling] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,6 +67,7 @@ function CompleteProfileForm() {
         city: "",
         state: "",
         country: "",
+        address: "",
       },
       socialLinks: {
         github: "",
@@ -100,7 +78,6 @@ function CompleteProfileForm() {
         devto: "",
         instagram: "",
       },
-      projects: [],
     },
   });
 
@@ -112,76 +89,106 @@ function CompleteProfileForm() {
     watch,
   } = form;
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "projects",
-  });
-
-  // Track if user is trying to add a project
-  const [isAddingProject, setIsAddingProject] = useState(false);
-
-  // Load user data once when component mounts
+  // Fetch all countries on mount
   useEffect(() => {
-    if (user?.profile && user.role === "developer") {
-      const profile = user.profile;
-
-      reset({
-        title: profile.title || "",
-        bio: profile.bio || "",
-        skills: Array.isArray(profile.skills) ? profile.skills.join(", ") : "",
-
-        location: {
-          city: profile.location?.city || "",
-          state: profile.location?.state || "",
-          country: profile.location?.country || "",
-        },
-
-        socialLinks: {
-          github: profile.socialLinks?.github || "",
-          linkedin: profile.socialLinks?.linkedin || "",
-          portfolio: profile.socialLinks?.portfolio || "",
-          twitter: profile.socialLinks?.twitter || "",
-          hashnode: profile.socialLinks?.hashnode || "",
-          devto: profile.socialLinks?.devto || "",
-          instagram: profile.socialLinks?.instagram || "",
-        },
-
-        // Map existing projects if any exist, otherwise keep as empty array
-        projects:
-          Array.isArray(profile.projects) && profile.projects.length > 0
-            ? profile.projects.map((project) => ({
-                title: project.title || "",
-                description: project.description || "",
-                techStack: Array.isArray(project.techStack)
-                  ? project.techStack.join(", ")
-                  : project.techStack || "",
-                repoUrl: project.repoUrl || "",
-                demoUrl: project.demoUrl || "",
-              }))
-            : undefined, // ← yahi change chahiye
-      });
+    if (countries.length === 0) {
+      setCountries(Country.getAllCountries());
     }
-  }, [user, reset]);
+
+    if (user?.role === "developer" && user.isProfileComplete && user.location) {
+      setIsAutofilling(true);
+      const countryCode = user.location.country || "";
+      const stateCode = user.location.state || "";
+      const cityName = user.location.city || "";
+
+      // 1. Reset form with all user values (sabhi fields prefill)
+      reset({
+        title: user.profile?.title || "",
+        bio: user.profile?.bio || "",
+        skills: Array.isArray(user.profile?.skills)
+          ? user.profile.skills.join(", ")
+          : "",
+        location: {
+          country: countryCode,
+          state: stateCode,
+          city: cityName,
+          address: user.location.address || "",
+        },
+        socialLinks: {
+          github: user.profile?.socialLinks?.github || "",
+          linkedin: user.profile?.socialLinks?.linkedin || "",
+          portfolio: user.profile?.socialLinks?.portfolio || "",
+          twitter: user.profile?.socialLinks?.twitter || "",
+          hashnode: user.profile?.socialLinks?.hashnode || "",
+          devto: user.profile?.socialLinks?.devto || "",
+          instagram: user.profile?.socialLinks?.instagram || "",
+        },
+      });
+
+      // 2. States/cities set karo aur city ki value bhi set karo (reset ke baad)
+      setTimeout(() => {
+        if (countryCode) {
+          const fetchedStates = State.getStatesOfCountry(countryCode);
+          setStates(fetchedStates);
+          if (stateCode) {
+            const fetchedCities = City.getCitiesOfState(countryCode, stateCode);
+            setCities(fetchedCities);
+            if (cityName) form.setValue("location.city", cityName);
+          } else {
+            setCities([]);
+          }
+          form.setValue("location.country", countryCode);
+          form.setValue("location.state", stateCode);
+          form.setValue("location.city", cityName);
+          form.setValue("location.address", user?.location?.address || "");
+        }
+        setIsAutofilling(false);
+      }, 0);
+    }
+  }, [user, reset, countries.length]);
+
+  // Watch for country/state/city changes
+  const selectedCountry = watch("location.country");
+  const selectedState = watch("location.state");
+  const selectedCity = watch("location.city");
+
+  useEffect(() => {
+    if (selectedCountry) {
+      setStates(State.getStatesOfCountry(selectedCountry));
+    } else {
+      setStates([]);
+    }
+    setCities([]);
+    if (!isAutofilling) {
+      form.setValue("location.state", "");
+      form.setValue("location.city", "");
+      form.setValue("location.address", "");
+    }
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    if (selectedCountry && selectedState) {
+      setCities(City.getCitiesOfState(selectedCountry, selectedState));
+    } else {
+      setCities([]);
+    }
+    if (!isAutofilling) {
+      form.setValue("location.city", "");
+      form.setValue("location.address", "");
+    }
+  }, [selectedState, selectedCountry]);
+
+  useEffect(() => {
+    if (!isAutofilling) {
+      form.setValue("location.address", "");
+    }
+  }, [selectedCity]);
 
   const onSubmit = async (formData: FormData) => {
     try {
+      console.log("Submitting profile data:", formData);
       setIsSubmitting(true);
 
-      // Check if any project is incomplete
-      if (formData.projects && formData.projects.length > 0) {
-        const hasIncompleteProject = formData.projects.some(
-          (project) =>
-            !project.title || !project.description || !project.techStack
-        );
-
-        if (hasIncompleteProject) {
-          toast.error("Please complete all required fields in your projects");
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // Format data to match API expectations
       const formattedData = {
         title: formData.title?.trim(),
         bio: formData.bio?.trim(),
@@ -191,13 +198,12 @@ function CompleteProfileForm() {
               .map((s) => s.trim())
               .filter(Boolean)
           : [],
-
         location: formData.location && {
           city: formData.location.city?.trim() || "",
           state: formData.location.state?.trim(),
           country: formData.location.country?.trim() || "",
+          address: formData.location.address?.trim() || "",
         },
-
         socialLinks:
           formData.socialLinks &&
           Object.fromEntries(
@@ -205,24 +211,13 @@ function CompleteProfileForm() {
               .filter(([_, value]) => value && value.trim() !== "")
               .map(([key, value]) => [key, value?.trim()])
           ),
-
-        projects:
-          formData.projects &&
-          formData.projects.map((proj) => ({
-            title: proj.title.trim(),
-            description: proj.description.trim(),
-            techStack: proj.techStack
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-            repoUrl: proj.repoUrl?.trim() || "",
-            demoUrl: proj.demoUrl?.trim() || "",
-          })),
       };
 
       const res = await api.post(`/developer/complete-profile`, formattedData, {
         withCredentials: true,
       });
+
+      console.log(res);
 
       const { status, data, message } = res.data;
 
@@ -238,292 +233,303 @@ function CompleteProfileForm() {
     }
   };
 
+  // Step 1 validation: Only required fields
+  const handleNext = async () => {
+    const values = form.getValues();
+    if (
+      !values.title ||
+      !values.skills ||
+      !values.location?.city ||
+      !values.location?.state ||
+      !values.location?.country
+    ) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    setStep(2);
+  };
+
   if (user?.role !== "developer") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
+      <div className="min-h-screen flex items-center justify-center text-xl text-white bg-[#101012]">
         This page is only for developers.
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Complete Your Developer Profile
-      </h1>
-
-      <Form {...form}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-8 bg-white rounded-xl shadow-md p-6"
-        >
-          {/* Basic Information */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold border-b pb-2">
-              Basic Information
-            </h2>
-
-            {/* Title */}
-            <FormField
-              control={control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Professional Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g. Full Stack Developer" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Bio */}
-            <FormField
-              control={control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Tell us about yourself..."
-                      className="min-h-[100px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Skills */}
-            <FormField
-              control={control}
-              name="skills"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Skills (comma separated)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="React, Node.js, PostgreSQL"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Location */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold border-b pb-2">Location</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(["city", "state", "country"] as const).map((key) => (
-                <FormField
-                  key={key}
-                  control={control}
-                  name={`location.${key}`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="capitalize">{key}</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder={`Enter ${key}`} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Social Links */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold border-b pb-2">
-              Social Links
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Add your social media profiles
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.keys(form.getValues().socialLinks || {}).map((key) => (
-                <FormField
-                  key={key}
-                  control={control}
-                  name={`socialLinks.${key}` as any}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="capitalize">{key}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder={`https://${key}.com/username`}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Projects */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold border-b pb-2">Projects</h2>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-gray-500">
-                Add projects to showcase your skills
-              </p>
-
-              {/* Add project button */}
-              <Button
+    <div className="bg-[#101012] min-h-screen w-full">
+      <div className="max-w-4xl mx-auto py-10 px-4">
+        <h1 className="text-3xl font-extrabold mb-8 text-center text-white tracking-tight">
+          Complete Your Developer Profile
+        </h1>
+        <Form {...form}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-10 bg-[#18181e] rounded-3xl shadow-xl p-8 border border-[#23232b]"
+          >
+            {/* Stepper */}
+            <div className="flex justify-center mb-8 gap-4">
+              {/* Step 1 */}
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setIsAddingProject(true);
-                  append(initialProject);
+                className={`px-4 py-2 rounded-xl font-semibold transition ${
+                  step === 1
+                    ? "bg-[#a3e635] text-black"
+                    : "bg-[#23232b] text-white hover:bg-[#333]"
+                }`}
+                onClick={() => setStep(1)}
+              >
+                1. Compulsory Info
+              </button>
+              {/* Step 2 */}
+              <button
+                type="button"
+                className={`px-4 py-2 rounded-xl font-semibold transition ${
+                  step === 2
+                    ? "bg-[#a3e635] text-black"
+                    : "bg-[#23232b] text-white hover:bg-[#333]"
+                }`}
+                onClick={async () => {
+                  // Validate step 1 fields before allowing navigation
+                  const values = form.getValues();
+                  if (
+                    !values.title ||
+                    !values.skills ||
+                    !values.location?.city ||
+                    !values.location?.state ||
+                    !values.location?.country
+                  ) {
+                    toast.error("Please complete Compulsory Info first");
+                    return;
+                  }
+                  setStep(2);
                 }}
               >
-                + Add Project
-              </Button>
+                2. Social Links
+              </button>
             </div>
-
-            {/* No projects message */}
-            {fields.length === 0 && !isAddingProject && (
-              <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500">No projects added yet</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsAddingProject(true);
-                    append(initialProject);
-                  }}
-                  className="mt-2"
-                >
-                  Click to add your first project
-                </Button>
-              </div>
+            {/* Step 1: Compulsory Info */}
+            {step === 1 && (
+              <Fragment>
+                <div className="space-y-6">
+                  <h2 className="text-xl font-bold text-white border-b border-[#23232b] pb-2">
+                    Compulsory Information
+                  </h2>
+                  {/* Title */}
+                  <FormField
+                    control={control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">
+                          Professional Title *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="e.g. Full Stack Developer"
+                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Skills */}
+                  <FormField
+                    control={control}
+                    name="skills"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">
+                          Skills (comma separated) *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="React, Node.js, PostgreSQL"
+                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Location Dropdowns */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Country */}
+                    <FormField
+                      control={control}
+                      name="location.country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="capitalize text-white">
+                            Country *
+                          </FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                            >
+                              <option value="">Select Country</option>
+                              {countries.map((country) => (
+                                <option
+                                  key={country.isoCode}
+                                  value={country.isoCode}
+                                >
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* State */}
+                    <FormField
+                      control={control}
+                      name="location.state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="capitalize text-white">
+                            State *
+                          </FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                              disabled={!selectedCountry}
+                            >
+                              <option value="">Select State</option>
+                              {states.map((state) => (
+                                <option
+                                  key={state.isoCode}
+                                  value={state.isoCode}
+                                >
+                                  {state.name}
+                                </option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* City */}
+                    <FormField
+                      control={control}
+                      name="location.city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="capitalize text-white">
+                            City *
+                          </FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                              disabled={!selectedState}
+                            >
+                              <option value="">Select City</option>
+                              {cities.map((city) => (
+                                <option key={city.name} value={city.name}>
+                                  {city.name}
+                                </option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {/* Address Field */}
+                  <FormField
+                    control={control}
+                    name="location.address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">Address *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Enter your address"
+                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-end mt-8">
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    className="bg-[#a3e635] text-black rounded-xl font-bold"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </Fragment>
             )}
-
-            {/* Project list */}
-            <div className="space-y-6">
-              {fields.map((field, index) => (
-                <Card key={field.id} className="border border-gray-200">
-                  <CardContent className="space-y-4 p-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">Project {index + 1}</h3>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => remove(index)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-
-                    <FormField
-                      control={control}
-                      name={`projects.${index}.title`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Title *</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Project Title" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={control}
-                      name={`projects.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description *</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="Describe your project"
-                              className="min-h-[80px]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={control}
-                      name={`projects.${index}.techStack`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tech Stack (comma separated) *</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="React, Node.js, MongoDB"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={control}
-                        name={`projects.${index}.repoUrl`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Repository URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="https://github.com/username/repo"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={control}
-                        name={`projects.${index}.demoUrl`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Demo URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="https://your-project.com"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Submit */}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Profile"}
-          </Button>
-        </form>
-      </Form>
+            {/* Step 2: Social Links */}
+            {step === 2 && (
+              <Fragment>
+                <div className="space-y-6">
+                  <h2 className="text-xl font-bold text-white border-b border-[#23232b] pb-2">
+                    Social Links (Optional)
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.keys(form.getValues().socialLinks || {}).map(
+                      (key) => (
+                        <FormField
+                          key={key}
+                          control={control}
+                          name={`socialLinks.${key}` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="capitalize text-white">
+                                {key}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={`https://${key}.com/username`}
+                                  className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-between mt-8">
+                  <Button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="bg-[#23232b] text-white rounded-xl"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-[#a3e635] text-black font-bold rounded-xl"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save Profile"}
+                  </Button>
+                </div>
+              </Fragment>
+            )}
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
