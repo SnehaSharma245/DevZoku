@@ -5,27 +5,13 @@ import { formatDateTime } from "@/utils/formattedDate";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-
-export interface Hackathon {
-  id: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  location: string;
-  tags: string[];
-  poster: string;
-  status:
-    | "upcoming"
-    | "ongoing"
-    | "completed"
-    | "Registration in Progress"
-    | "Registration ended"
-    | "unknown";
-}
+import type { Hackathon } from "@/types/hackathon.types";
 
 function AllHackathons() {
   const { user } = useAuth();
 
+  const [showParticipated, setShowParticipated] = useState(false);
+  const [showMine, setShowMine] = useState(false);
   const [fetchedHackathons, setFetchedHackathons] = useState<Hackathon[]>([]);
   const [search, setSearch] = useState("");
   const [tagSearch, setTagSearch] = useState("");
@@ -46,9 +32,9 @@ function AllHackathons() {
   type StatusType = (typeof statusOptions)[number];
 
   const [status, setStatus] = useState<StatusType>("all");
-  const [mode, setMode] = useState(""); // e.g. "online", "offline"
+  const [mode, setMode] = useState("");
 
-  // 1. Page load par sab fetch karo (sirf ek baar)
+  // 1. Page load par sab fetch karo
   useEffect(() => {
     fetchHackathons();
   }, []);
@@ -86,6 +72,12 @@ function AllHackathons() {
     if (endDate) params.endDate = endDate;
     if (status && status !== "all") params.status = status;
     if (mode) params.mode = mode;
+    if (showMine && user?.role === "organizer" && user?.id) {
+      params.organizerId = user.id;
+    }
+    if (showParticipated && user?.role === "developer") {
+      params.devId = user.id;
+    }
     fetchHackathons(params);
   };
 
@@ -93,7 +85,6 @@ function AllHackathons() {
     return str.toLowerCase().replace(/[^a-z0-9]/gi, "");
   }
 
-  // Local filter for title
   const filteredHackathons = fetchedHackathons.filter((hackathon) =>
     normalize(hackathon.title).includes(normalize(search))
   );
@@ -172,6 +163,29 @@ function AllHackathons() {
           <option value="offline">Offline</option>
         </select>
       </div>
+
+      {user?.role === "organizer" && (
+        <label className="flex items-center gap-2 mb-4">
+          <input
+            type="checkbox"
+            checked={showMine}
+            onChange={() => setShowMine((v) => !v)}
+          />
+          Show only hackathons created by me
+        </label>
+      )}
+
+      {user?.role === "developer" && (
+        <label className="flex items-center gap-2 mb-4">
+          <input
+            type="checkbox"
+            checked={showParticipated}
+            onChange={() => setShowParticipated((v) => !v)}
+          />
+          Show only hackathons I have participated in
+        </label>
+      )}
+
       <button
         onClick={handleFilterSearch}
         className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded"
@@ -179,10 +193,7 @@ function AllHackathons() {
       >
         {loading ? "Searching..." : "Apply Filters"}
       </button>
-      {loading && <div className="text-gray-500">Loading...</div>}
-      {!loading && filteredHackathons.length === 0 && (
-        <div className="text-gray-500">No hackathons found.</div>
-      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
         {filteredHackathons.map((hackathon) => (
           <div
@@ -198,8 +209,8 @@ function AllHackathons() {
             </div>
             <h3 className="font-semibold">{hackathon.title}</h3>
             <p>
-              {formatDateTime(hackathon.startTime)} -{" "}
-              {formatDateTime(hackathon.endTime)}
+              {formatDateTime(hackathon?.startTime)} -{" "}
+              {formatDateTime(hackathon?.endTime)}
             </p>
             <p>{hackathon.location}</p>
             <div>
