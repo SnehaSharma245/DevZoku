@@ -24,12 +24,6 @@ interface Developer {
     demoUrl?: string;
     techStack: string[]; // or string (comma-separated)
   }[];
-  location?: {
-    country?: string;
-    state?: string;
-    city?: string;
-  };
-  isAvailable: boolean;
 }
 
 interface Organizer {
@@ -52,20 +46,8 @@ interface Organizer {
     instagram?: string;
   };
 
-  // Location
-  location?: {
-    country: string;
-    state: string;
-    city: string;
-    address: string;
-  };
-
   // Statistics
   totalEventsOrganized?: number;
-
-  // Profile Status
-  isProfileComplete?: boolean;
-  isVerified?: boolean;
 
   // Metadata
   createdAt?: string; // or Date
@@ -84,6 +66,12 @@ interface User {
   isProfileComplete?: boolean;
   createdAt: string; // will be string when received from API (ISO format)
   updatedAt: string;
+  location?: {
+    country?: string;
+    state?: string;
+    city?: string;
+    address?: string;
+  };
 }
 
 export interface Notification {
