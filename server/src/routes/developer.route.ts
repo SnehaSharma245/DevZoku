@@ -3,6 +3,8 @@ import {
   completeDeveloperProfile,
   notificationHandling,
   fetchDeveloperProfile,
+  fetchProjects,
+  addProject,
 } from "../controllers/developer.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -12,6 +14,8 @@ const router = Router();
 router.post("/complete-profile", verifyJWT, completeDeveloperProfile);
 router.get("/notifications", verifyJWT, notificationHandling);
 router.delete("/notifications/:id", verifyJWT, notificationHandling);
+router.get("/projects", verifyJWT, fetchProjects);
+router.post("/add-project", verifyJWT, addProject);
 
 // unprotected route
 router.get("/developer-profile/:id", fetchDeveloperProfile);
