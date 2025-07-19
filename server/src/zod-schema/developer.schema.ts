@@ -37,5 +37,6 @@ export const completeDeveloperProfileSchema = z.object({
     country: z.string().min(2, "Country is required"),
     state: z.string().min(2, "State is required"),
     city: z.string().min(2, "City is required"),
+    address: z.string().optional(), // Optional address field
   }),
 });

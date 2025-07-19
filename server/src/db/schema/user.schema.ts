@@ -5,6 +5,7 @@ import {
   timestamp,
   uuid,
   boolean,
+  json,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -19,6 +20,13 @@ export const users = pgTable("users", {
   isProfileComplete: boolean("is_profile_complete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Location
+  location: json("location").$type<{
+    country: string;
+    state: string;
+    city: string;
+    address: string;
+  }>(),
 });
 
 export type User = typeof users.$inferSelect;

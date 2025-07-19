@@ -33,14 +33,6 @@ export const organizers = pgTable("organizers", {
     instagram?: string;
   }>(),
 
-  // Location
-  location: json("location").$type<{
-    country: string;
-    state: string;
-    city: string;
-    address: string;
-  }>(),
-
   // Statistics
   totalEventsOrganized: integer("total_events_organized").default(0),
 

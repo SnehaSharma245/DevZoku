@@ -44,13 +44,6 @@ export const developers = pgTable("developers", {
     }[]
   >(),
 
-  // Location
-  location: json("location").$type<{
-    country: string;
-    state: string;
-    city: string;
-  }>(),
-
   // Scoring & Ranking
   overallScore: decimal("overall_score", { precision: 10, scale: 2 }).default(
     "0.00"
