@@ -5,6 +5,7 @@ import api from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components";
 import { withAuth } from "@/utils/withAuth";
+import Link from "next/link";
 
 export interface PendingInvites {
   id: string;
@@ -29,6 +30,7 @@ function TeamDetailPage() {
       });
 
       const { status, data, message } = response.data;
+
       if (status === 200) {
         setPendingInvites(data.pendingUsers);
         setTeamName(data.teamName);
@@ -68,33 +70,48 @@ function TeamDetailPage() {
   };
 
   return (
-    <div>
-      <h1>Pending Invites</h1>
-
+    <div className="py-10 px-2 max-w-xl mx-auto">
+      <h1 className="text-2xl font-extrabold text-white tracking-tight mb-8 flex items-center gap-2">
+        Pending Invites
+      </h1>
       {pendingInvites && pendingInvites.length > 0 ? (
         <div>
-          <h2>{teamName}</h2>
-          <h2>Pending Invites</h2>
-          <ul>
+          <h2 className="text-lg font-semibold text-[#a3e635] mb-4">
+            {teamName}
+          </h2>
+          <ul className="space-y-4">
             {pendingInvites.map((invite) => (
-              <div key={invite.id}>
-                <li key={invite.id}>
-                  {invite.firstName} ({invite.email})
-                </li>
+              <li
+                key={invite.id}
+                className="flex items-center justify-between border border-[#23232b] rounded-xl px-5 py-4 shadow"
+              >
+                <div>
+                  <Link href={`/developer/profile/${invite.id}`}>
+                    <span className="font-semibold text-white">
+                      {invite.firstName}
+                    </span>
+                  </Link>
+                  <span className="text-gray-400 text-sm ml-2">
+                    ({invite.email})
+                  </span>
+                </div>
                 <Button
-                  className={`${
+                  className={`bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition ml-4 ${
                     inviteAccepted ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   onClick={() => handleAcceptInvite(invite.id)}
+                  disabled={inviteAccepted}
                 >
                   Accept Invite
                 </Button>
-              </div>
+              </li>
             ))}
           </ul>
         </div>
       ) : (
-        <p>No pending invites</p>
+        <div className="text-gray-400 text-center py-12 rounded-xl border border-[#23232b]">
+          No pending invites
+        </div>
       )}
     </div>
   );
