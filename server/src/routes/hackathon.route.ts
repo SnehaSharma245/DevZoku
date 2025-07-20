@@ -18,6 +18,8 @@ router.post(
   upload.single("poster"),
   createHackathon
 );
+router.get("/view-all-hackathons-auth", verifyJWT, viewAllHackathons);
+router.get("/hackathon-auth/:id", verifyJWT, viewHackathonById);
 
 // unprotected routes
 router.get("/view-all-hackathons", viewAllHackathons);
