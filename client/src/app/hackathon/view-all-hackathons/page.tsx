@@ -6,7 +6,9 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Hackathon } from "@/types/hackathon.types";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
+import { tagSections } from "@/constants/const";
+import { Separator } from "@/components/ui/separator";
 
 function AllHackathons() {
   const { user } = useAuth();
@@ -21,6 +23,7 @@ function AllHackathons() {
   const [duration, setDuration] = useState(""); // e.g. "24", "48"
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const statusOptions = [
     "all",
     "upcoming",
@@ -45,9 +48,10 @@ function AllHackathons() {
     setLoading(true);
     try {
       const query = new URLSearchParams(params).toString();
-      const res = await api.get(
-        `/hackathon/view-all-hackathons${query ? "?" + query : ""}`
-      );
+      const endpoint = user
+        ? "/hackathon/view-all-hackathons-auth"
+        : "/hackathon/view-all-hackathons";
+      const res = await api.get(`${endpoint}${query ? "?" + query : ""}`);
       const { status, data, message } = res.data;
       if (status === 200) {
         setFetchedHackathons(data);
@@ -77,8 +81,8 @@ function AllHackathons() {
     if (showMine && user?.role === "organizer" && user?.id) {
       params.organizerId = user.id;
     }
-    if (showParticipated && user?.role === "developer") {
-      params.devId = user.id;
+    if (showParticipated && user?.role === "developer" && user?.id) {
+      params.showParticipated = true;
     }
     fetchHackathons(params);
   };
@@ -91,19 +95,16 @@ function AllHackathons() {
     normalize(hackathon.title).includes(normalize(search))
   );
 
-  // Tag input handlers
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && tagInput.trim() !== "") {
-      e.preventDefault();
-      const val = tagInput.trim();
-      if (!tags.includes(val)) {
-        setTags([...tags, val]);
-      }
-      setTagInput("");
-    }
-  };
   const handleRemoveTag = (idx: number) => {
     setTags(tags.filter((_, i) => i !== idx));
+  };
+
+  // Tag selection dropdown handler
+  const handleSelectTag = (tag: string) => {
+    if (!tags.includes(tag)) {
+      setTags([...tags, tag]);
+    }
+    setTagDropdownOpen(false);
   };
 
   return (
@@ -119,8 +120,8 @@ function AllHackathons() {
             {loading ? "Searching..." : "Apply Filters"}
           </button>
 
-          {/* Tag input */}
-          <div>
+          {/* Tag input as dropdown */}
+          <div className="relative">
             <label className="block text-white font-semibold mb-1">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag, idx) => (
@@ -140,14 +141,45 @@ function AllHackathons() {
                 </span>
               ))}
             </div>
-            <input
-              type="text"
-              placeholder="Type a tag and press Enter"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleTagInputKeyDown}
-              className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] px-3 py-2"
-            />
+            <button
+              type="button"
+              className="flex items-center gap-2 bg-[#18181e] text-white border border-[#a3e635] rounded-xl px-3 py-2 hover:bg-[#23232b]/80 transition"
+              onClick={() => setTagDropdownOpen((v) => !v)}
+            >
+              <ChevronDown className="w-4 h-4" />
+              {tags.length === 0 ? "Select tags" : "Add more tags"}
+            </button>
+            {tagDropdownOpen && (
+              <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto bg-[#23232b] border border-[#a3e635] rounded-xl shadow-xl p-2">
+                {tagSections.map((section, idx) => (
+                  <div key={section.label}>
+                    <div className="text-xs font-bold text-[#a3e635] px-2 py-1">
+                      {section.label}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {section.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                            tags.includes(tag)
+                              ? "bg-[#a3e635] text-black border-[#a3e635] cursor-not-allowed"
+                              : "bg-[#18181e] text-white border-[#23232b] hover:border-[#a3e635] hover:bg-[#23232b]"
+                          }`}
+                          disabled={tags.includes(tag)}
+                          onClick={() => handleSelectTag(tag)}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                    {idx !== tagSections.length - 1 && (
+                      <Separator className="my-2 bg-[#23232b]" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Status filter */}
