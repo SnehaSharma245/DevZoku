@@ -14,11 +14,13 @@ import {
 import { Input, Textarea, Button } from "@/components/index";
 import api from "@/utils/api";
 import { toast } from "sonner";
-import { Upload, Sparkles, RotateCcw, Trash, FileText } from "lucide-react";
+import { Upload, RotateCcw, Trash, FileText, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { useRouter } from "next/navigation";
+import { tagSections } from "@/constants/const";
+import { Separator } from "@/components/ui/separator";
 
 const phaseSchema = z.object({
   name: z.string().min(1, "Phase name is required"),
@@ -82,6 +84,7 @@ function CreateHackathonPage() {
   const { control, handleSubmit, watch, setValue } = form;
   const [newTag, setNewTag] = useState("");
   const [descCharCount, setDescCharCount] = useState(0);
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const router = useRouter();
 
   const { fields, append, remove } = useFieldArray({
@@ -91,19 +94,19 @@ function CreateHackathonPage() {
 
   const tags = watch("tags") || [];
 
-  const handleAddTag = () => {
-    const trimmedTag = newTag.trim();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setValue("tags", [...tags, trimmedTag]);
-      setNewTag("");
-    }
-  };
-
   const handleRemoveTag = (idx: number) => {
     setValue(
       "tags",
       tags.filter((_, i) => i !== idx)
     );
+  };
+
+  // Tag selection dropdown handler
+  const handleSelectTag = (tag: string) => {
+    if (!tags.includes(tag)) {
+      setValue("tags", [...tags, tag]);
+    }
+    setTagDropdownOpen(false);
   };
 
   const onSubmit = async (data: HackathonForm) => {
@@ -139,6 +142,7 @@ function CreateHackathonPage() {
       });
 
       const { status, data, message } = res.data;
+
       if (status === 201) {
         toast.success(message || "Hackathon created successfully!");
         form.reset();
@@ -613,7 +617,7 @@ function CreateHackathonPage() {
             </div>
 
             {/* Tags */}
-            <div>
+            <div className="relative">
               <FormLabel className="mb-2 block text-white font-semibold">
                 Tags
               </FormLabel>
@@ -635,28 +639,45 @@ function CreateHackathonPage() {
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Type a tag and press Enter"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                  className="flex-1 bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddTag}
-                  variant="outline"
-                  className="bg-[#23232b] text-white border-none rounded-xl hover:bg-[#23232b]/80 transition"
-                >
-                  Add
-                </Button>
-              </div>
+              <button
+                type="button"
+                className="flex items-center gap-2 bg-[#23232b] text-white border border-[#a3e635] rounded-xl px-3 py-2 hover:bg-[#23232b]/80 transition"
+                onClick={() => setTagDropdownOpen((v) => !v)}
+              >
+                <ChevronDown className="w-4 h-4" />
+                {tags.length === 0 ? "Select tags" : "Add more tags"}
+              </button>
+              {tagDropdownOpen && (
+                <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto bg-[#23232b] border border-[#a3e635] rounded-xl shadow-xl p-2">
+                  {tagSections.map((section, idx) => (
+                    <div key={section.label}>
+                      <div className="text-xs font-bold text-[#a3e635] px-2 py-1">
+                        {section.label}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {section.tags.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              tags.includes(tag)
+                                ? "bg-[#a3e635] text-black border-[#a3e635] cursor-not-allowed"
+                                : "bg-[#18181e] text-white border-[#23232b] hover:border-[#a3e635] hover:bg-[#23232b]"
+                            }`}
+                            disabled={tags.includes(tag)}
+                            onClick={() => handleSelectTag(tag)}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                      {idx !== tagSections.length - 1 && (
+                        <Separator className="my-2 bg-[#23232b]" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit */}
