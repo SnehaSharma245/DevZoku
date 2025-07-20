@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray, sql, name } from "drizzle-orm";
+import { eq, desc, and, inArray, sql, name, not } from "drizzle-orm";
 import { db } from "../db";
 import { developers } from "../db/schema/developer.schema";
 import { ApiResponse } from "../utils/ApiResponse";
@@ -193,17 +193,79 @@ const viewAllTeams = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(401, "User not authenticated");
   }
 
-  const allTeams = await db
-    .select({ team: teams, captain: users })
-    .from(teams)
-    .orderBy(desc(teams.createdAt))
-    .innerJoin(users, eq(teams.captainId, users.id))
+  const joinedTeams = await db
+    .select({ teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, user.id))
     .execute();
 
-  const particularTeam = allTeams.find((team) => team.team.id === id);
+  const joinedTeamIds = joinedTeams.map((t) => t.teamId);
 
-  if (id && !particularTeam) {
-    throw new ApiError(404, "Team not found");
+  // teams where user is not the member
+  const allTeams = await db
+    .select({
+      team: {
+        ...teams,
+        currentMemberCount: sql<number>`(
+        SELECT COUNT(*) FROM ${teamMembers}
+        WHERE ${teamMembers.teamId} = ${teams.id}
+      )`,
+        requiredMemberCount: teams.teamSize,
+      },
+      captain: users,
+    })
+    .from(teams)
+    .innerJoin(users, eq(teams.captainId, users.id))
+    .where(
+      joinedTeamIds.length > 0
+        ? not(inArray(teams.id, joinedTeamIds))
+        : undefined
+    )
+    .orderBy(desc(teams.createdAt))
+    .execute();
+
+  // teams where user is the member
+  const joinedTeamsWithDetails = await db
+    .select({
+      team: {
+        ...teams,
+        currentMemberCount: sql<number>`(
+        SELECT COUNT(*) FROM ${teamMembers}
+        WHERE ${teamMembers.teamId} = ${teams.id}
+      )`,
+        requiredMemberCount: teams.teamSize,
+      },
+      captain: users,
+    })
+    .from(teams)
+    .innerJoin(users, eq(teams.captainId, users.id))
+    .where(inArray(teams.id, joinedTeamIds))
+    .orderBy(desc(teams.createdAt))
+    .execute();
+
+  const particularTeam = joinedTeamsWithDetails.find(
+    (team) => team.team.id === id
+  );
+
+  if (id) {
+    if (!particularTeam) {
+      throw new ApiError(404, "Team not found");
+    }
+  }
+
+  // Fetch all members of the team
+  let teamMembersList: { userId: string; name: string }[] = [];
+  if (id) {
+    teamMembersList = await db
+      .select({
+        userId: teamMembers.userId,
+        name: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(teamMembers)
+      .innerJoin(users, eq(users.id, teamMembers.userId))
+      .where(eq(teamMembers.teamId, id))
+      .execute();
   }
 
   if (id && particularTeam) {
@@ -212,7 +274,7 @@ const viewAllTeams = asyncHandler(async (req: Request, res: Response) => {
       .json(
         new ApiResponse(
           200,
-          particularTeam,
+          { ...particularTeam, team_members: teamMembersList },
           "Particular team fetched successfully"
         )
       );
