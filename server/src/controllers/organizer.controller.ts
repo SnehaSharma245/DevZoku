@@ -55,8 +55,6 @@ const completeOrganizerProfile = asyncHandler(
         .where(eq(organizers.userId, user.id))
         .returning();
 
-      console.log(isProfileComplete);
-
       // Update user's location (address yahan store hoga)
       await db
         .update(users)

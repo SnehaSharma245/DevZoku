@@ -100,7 +100,6 @@ function EditTeamPage() {
       skillsNeeded: skills.join(", "),
     }));
   }, [skills]);
-  console.log("Edit Team ID:", team);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

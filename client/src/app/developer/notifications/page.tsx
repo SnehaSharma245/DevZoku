@@ -29,7 +29,7 @@ function NotificationsPage() {
       });
 
       const { status, data, message } = res.data;
-      console.log(data);
+
       if (status === 200) {
         setNotifications(data || []);
       }

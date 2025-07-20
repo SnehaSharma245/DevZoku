@@ -505,8 +505,6 @@ const viewHackathonById = asyncHandler(async (req, res) => {
       .limit(1)
       .execute();
 
-    console.log(recentView);
-
     if (recentView.length === 0) {
       const userInteraction = await db
         .insert(userInteractions)

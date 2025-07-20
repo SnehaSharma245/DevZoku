@@ -40,7 +40,7 @@ function JoinedTeamsPage() {
   const { user } = useAuth();
 
   const [joinedTeams, setJoinedTeams] = useState<JoinedTeamData[]>([]);
-  console.log(joinedTeams);
+
   const [isLeaveTimeDialogOpen, setIsLeaveTimeDialogOpen] =
     useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);

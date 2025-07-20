@@ -63,10 +63,10 @@ export default function ManageProjectsPage() {
               .map((t) => t.trim())
               .filter(Boolean),
       };
-      console.log(payload);
+
       const res = await api.post("/developer/add-project", payload);
       const { status, data, message } = res.data;
-      console.log(data);
+
       if (status === 201) {
         setProjects((prev) => [...prev, data]);
         toast.success(message);

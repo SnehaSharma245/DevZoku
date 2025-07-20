@@ -41,7 +41,6 @@ function ViewAllTeams() {
       });
 
       const { status, data, message } = response.data;
-      console.log(data);
 
       if (status === 200) {
         setTeams(data || []);

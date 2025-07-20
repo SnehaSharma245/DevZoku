@@ -46,7 +46,6 @@ type FormData = z.infer<typeof formSchema>;
 
 function CompleteProfileForm() {
   const { user } = useAuth();
-  console.log("User in CompleteProfileForm:", user);
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
@@ -186,7 +185,6 @@ function CompleteProfileForm() {
 
   const onSubmit = async (formData: FormData) => {
     try {
-      console.log("Submitting profile data:", formData);
       setIsSubmitting(true);
 
       const formattedData = {
@@ -216,8 +214,6 @@ function CompleteProfileForm() {
       const res = await api.post(`/developer/complete-profile`, formattedData, {
         withCredentials: true,
       });
-
-      console.log(res);
 
       const { status, data, message } = res.data;
 
