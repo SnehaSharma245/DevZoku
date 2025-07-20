@@ -6,6 +6,7 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Hackathon } from "@/types/hackathon.types";
+import { X } from "lucide-react";
 
 function AllHackathons() {
   const { user } = useAuth();
@@ -14,7 +15,8 @@ function AllHackathons() {
   const [showMine, setShowMine] = useState(false);
   const [fetchedHackathons, setFetchedHackathons] = useState<Hackathon[]>([]);
   const [search, setSearch] = useState("");
-  const [tagSearch, setTagSearch] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [duration, setDuration] = useState(""); // e.g. "24", "48"
   const [startDate, setStartDate] = useState("");
@@ -66,7 +68,7 @@ function AllHackathons() {
   // 2. Tag search/filter par fetch karo
   const handleFilterSearch = async () => {
     const params: any = {};
-    if (tagSearch) params.tags = tagSearch;
+    if (tags.length > 0) params.tags = tags.join(",");
     if (duration) params.duration = duration;
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
@@ -89,174 +91,248 @@ function AllHackathons() {
     normalize(hackathon.title).includes(normalize(search))
   );
 
+  // Tag input handlers
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagInput.trim() !== "") {
+      e.preventDefault();
+      const val = tagInput.trim();
+      if (!tags.includes(val)) {
+        setTags([...tags, val]);
+      }
+      setTagInput("");
+    }
+  };
+  const handleRemoveTag = (idx: number) => {
+    setTags(tags.filter((_, i) => i !== idx));
+  };
+
   return (
-    <div>
-      {/* Title search (local filter) */}
-      <input
-        type="text"
-        placeholder="Search hackathon by title..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="border px-3 py-2 rounded mb-2 w-full"
-      />
-      {/* Tag search (API filter) */}
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Search by tags (comma separated, e.g. ai, web)"
-          value={tagSearch}
-          onChange={(e) => setTagSearch(e.target.value)}
-          className="border px-3 py-2 rounded w-full"
-        />
-      </div>
-
-      {/* Status filter */}
-      <div className="flex gap-4 mb-4 flex-wrap">
-        {statusOptions.map((option) => (
-          <label key={option} className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={status === option}
-              onChange={() => setStatus(status === option ? "all" : option)}
-            />
-            {option.charAt(0).toUpperCase() + option.slice(1)}
-          </label>
-        ))}
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        {/* Duration Filter */}
-        <select
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="">All Durations</option>
-          <option value="7">≤ 7 Hours</option>
-          <option value="24">≤ 24 Hours</option>
-          <option value="48">≤ 48 Hours</option>
-          <option value="72">≤ 72 Hours</option>
-          <option value="gt72">{">72 Hours"}</option>
-        </select>
-        {/* Start Date */}
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="border px-3 py-2 rounded"
-        />
-        {/* End Date */}
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="border px-3 py-2 rounded"
-        />
-        {/* Mode Filter */}
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="">All Modes</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-        </select>
-      </div>
-
-      {user?.role === "organizer" && (
-        <label className="flex items-center gap-2 mb-4">
-          <input
-            type="checkbox"
-            checked={showMine}
-            onChange={() => setShowMine((v) => !v)}
-          />
-          Show only hackathons created by me
-        </label>
-      )}
-
-      {user?.role === "developer" && (
-        <label className="flex items-center gap-2 mb-4">
-          <input
-            type="checkbox"
-            checked={showParticipated}
-            onChange={() => setShowParticipated((v) => !v)}
-          />
-          Show only hackathons I have participated in
-        </label>
-      )}
-
-      <button
-        onClick={handleFilterSearch}
-        className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded"
-        disabled={loading}
-      >
-        {loading ? "Searching..." : "Apply Filters"}
-      </button>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-        {filteredHackathons.map((hackathon) => (
-          <div
-            key={hackathon.id}
-            className="border-2 border-pink-400 m-2 p-4 rounded-lg shadow-lg flex flex-col"
+    <div className="min-h-screen flex flex-col md:flex-row gap-8 px-2 py-8">
+      {/* Filters */}
+      <aside className="w-full md:w-80 mb-8 md:mb-0 md:mr-8">
+        <div className="bg-[#23232b] border border-[#23232b] rounded-2xl shadow-xl p-6 flex flex-col gap-6 sticky top-8">
+          <button
+            onClick={handleFilterSearch}
+            className="w-full bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition py-2 mb-2"
+            disabled={loading}
           >
-            <div>
-              <img
-                className="h-48 object-fit"
-                src={hackathon.poster}
-                alt={hackathon.title}
-              />
-            </div>
-            <h3 className="font-semibold">{hackathon.title}</h3>
-            <p>
-              {formatDateTime(hackathon?.startTime)} -{" "}
-              {formatDateTime(hackathon?.endTime)}
-            </p>
-            <p>{hackathon.location}</p>
-            <div>
-              {hackathon.tags.map((tag) => (
+            {loading ? "Searching..." : "Apply Filters"}
+          </button>
+
+          {/* Tag input */}
+          <div>
+            <label className="block text-white font-semibold mb-1">Tags</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag, idx) => (
                 <span
-                  key={tag}
-                  className="bg-pink-200 text-pink-800 px-2 py-1 rounded-full text-sm mr-2"
+                  key={tag + idx}
+                  className="flex items-center bg-[#18181e] text-white px-3 py-1 rounded-full text-sm border border-[#a3e635]"
                 >
                   {tag}
+                  <button
+                    type="button"
+                    className="ml-2 text-gray-400 hover:text-red-400"
+                    onClick={() => handleRemoveTag(idx)}
+                    tabIndex={-1}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </span>
               ))}
             </div>
-            <div className="mt-2">
-              <span
-                className="inline-block px-2 py-1 rounded text-xs font-semibold"
-                style={{
-                  background:
-                    hackathon.status === "upcoming"
-                      ? "#fbbf24"
-                      : hackathon.status === "ongoing"
-                      ? "#34d399"
-                      : hackathon.status === "completed"
-                      ? "#f87171"
-                      : "#e5e7eb",
-                  color:
-                    hackathon.status === "upcoming"
-                      ? "#92400e"
-                      : hackathon.status === "ongoing"
-                      ? "#065f46"
-                      : hackathon.status === "completed"
-                      ? "#7f1d1d"
-                      : "#374151",
-                }}
-              >
-                {hackathon.status}
-              </span>
-            </div>
-            <Link
-              href={`/hackathon/view-all-hackathons/${hackathon.id}`}
-              className="mt-2 underline text-blue-600"
-            >
-              View Details
-            </Link>
+            <input
+              type="text"
+              placeholder="Type a tag and press Enter"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleTagInputKeyDown}
+              className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] px-3 py-2"
+            />
           </div>
-        ))}
-      </div>
+
+          {/* Status filter */}
+          <div>
+            <label className="block text-white font-semibold mb-1">
+              Status
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {statusOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                    status === option
+                      ? "bg-[#a3e635] text-black border-[#a3e635]"
+                      : "bg-[#18181e] text-white border-[#23232b] hover:border-[#a3e635]"
+                  }`}
+                  onClick={() => setStatus(option)}
+                >
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Duration, Dates, Mode */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="block text-white font-semibold mb-1">
+                Duration
+              </label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] px-3 py-2"
+              >
+                <option value="">All Durations</option>
+                <option value="7">≤ 7 Hours</option>
+                <option value="24">≤ 24 Hours</option>
+                <option value="48">≤ 48 Hours</option>
+                <option value="72">≤ 72 Hours</option>
+                <option value="gt72">{">72 Hours"}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-white font-semibold mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-white font-semibold mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-white font-semibold mb-1">
+                Mode
+              </label>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="w-full bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] px-3 py-2"
+              >
+                <option value="">All Modes</option>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Organizer/Developer filters */}
+          {user?.role === "organizer" && (
+            <label className="flex items-center gap-2 text-white mt-2">
+              <input
+                type="checkbox"
+                checked={showMine}
+                onChange={() => setShowMine((v) => !v)}
+                className="accent-[#a3e635]"
+              />
+              Show only hackathons created by me
+            </label>
+          )}
+          {user?.role === "developer" && (
+            <label className="flex items-center gap-2 text-white mt-2">
+              <input
+                type="checkbox"
+                checked={showParticipated}
+                onChange={() => setShowParticipated((v) => !v)}
+                className="accent-[#a3e635]"
+              />
+              Show only hackathons I have participated in
+            </label>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1">
+        {/* Title search (local filter) */}
+        <input
+          type="text"
+          placeholder="Search hackathon by title..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] px-3 py-2 mb-4 w-full"
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredHackathons.map((hackathon) => (
+            <div
+              key={hackathon.id}
+              className="bg-[#23232b] border border-[#23232b] rounded-2xl shadow-lg flex flex-col p-4"
+            >
+              <div className="w-full aspect-[3/2] rounded-xl overflow-hidden mb-2 bg-[#18181e] border border-[#23232b]">
+                <img
+                  className="w-full h-full object-cover"
+                  src={hackathon.poster}
+                  alt={hackathon.title}
+                />
+              </div>
+              <h3 className="font-semibold text-white text-lg mb-1">
+                {hackathon.title}
+              </h3>
+              <p className="text-xs text-gray-400 mb-1">
+                {formatDateTime(hackathon?.startTime)} -{" "}
+                {formatDateTime(hackathon?.endTime)}
+              </p>
+              <p className="text-xs text-gray-400 mb-2">{hackathon.location}</p>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {hackathon.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-[#18181e] text-[#a3e635] px-2 py-1 rounded-full text-xs border border-[#a3e635]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-auto">
+                <span
+                  className="inline-block px-2 py-1 rounded text-xs font-semibold"
+                  style={{
+                    background:
+                      hackathon.status === "upcoming"
+                        ? "#fbbf24"
+                        : hackathon.status === "ongoing"
+                        ? "#a3e635"
+                        : hackathon.status === "completed"
+                        ? "#f87171"
+                        : "#e5e7eb",
+                    color:
+                      hackathon.status === "upcoming"
+                        ? "#92400e"
+                        : hackathon.status === "ongoing"
+                        ? "#23232b"
+                        : hackathon.status === "completed"
+                        ? "#7f1d1d"
+                        : "#374151",
+                  }}
+                >
+                  {hackathon.status}
+                </span>
+              </div>
+              <Link
+                href={`/hackathon/view-all-hackathons/${hackathon.id}`}
+                className="mt-3 underline text-[#a3e635] font-semibold"
+              >
+                View Details
+              </Link>
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
