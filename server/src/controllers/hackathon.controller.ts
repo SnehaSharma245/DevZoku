@@ -255,7 +255,6 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     whereClauses.push(inArray(hackathons.id, hackIds));
   }
 
-  // Baaki filters (ye sab participated hackathons pe hi lagenge agar upar wala block chala)
   if (organizerId) {
     whereClauses.push(sql`${hackathons.createdBy} = ${organizerId}`);
   }
@@ -268,10 +267,11 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
       .filter((t) => t.length > 0);
     if (tagArr.length > 0) {
       whereClauses.push(
-        sql`${hackathons.tags} && ARRAY[${sql.join(
-          tagArr.map((t) => sql`${t}`),
-          ","
-        )}]`
+        sql`${hackathons.tags} && ${sql.raw(
+          `ARRAY[${tagArr
+            .map((t) => `'${t.replace(/'/g, "''")}'`)
+            .join(",")}]::varchar[]`
+        )}`
       );
     }
   }
