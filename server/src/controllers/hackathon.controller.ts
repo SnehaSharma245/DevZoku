@@ -1,4 +1,4 @@
-import { eq, and, inArray, sql, desc } from "drizzle-orm";
+import { eq, and, inArray, sql, desc, gt } from "drizzle-orm";
 import { db } from "../db";
 import { ApiResponse } from "../utils/ApiResponse";
 import type { Request, Response } from "express";
@@ -16,6 +16,11 @@ import { hackathonTeamEmailQueue } from "../queues/queue";
 import formatDate from "../utils/formatDate";
 import { organizers } from "../db/schema/organizer.schema";
 import hackathonStatusChecker from "../utils/hackathonStatusChecker";
+import {
+  userHackathonViews,
+  userInteractions,
+} from "../db/schema/userInteraction.schema";
+
 // controller for applying to a hackathon with a team
 const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
   const { user } = req;
@@ -198,6 +203,61 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     });
   });
 
+  // add user interaction to all the team members
+  for (const member of teamMember) {
+    if (member.userId) {
+      const recentView = await db
+        .select()
+        .from(userHackathonViews)
+        .where(
+          and(
+            eq(userHackathonViews.userId, member.userId),
+            eq(userHackathonViews.hackathonId, hackathon[0].id),
+            gt(
+              userHackathonViews.viewedAt,
+              new Date(Date.now() - 10 * 60 * 1000)
+            )
+          )
+        )
+        .limit(1)
+        .execute();
+      if (recentView.length === 0) {
+        const userInteraction = await db
+          .insert(userInteractions)
+          .values({
+            userId: member.userId,
+            interactionType: "register",
+            hackathonTagsSearchedFor: [],
+            hackathonsRegisteredTags: hackathon[0]?.tags || [],
+            preferredDuration:
+              hackStart &&
+              hackEnd &&
+              hackEnd.getTime() - hackStart.getTime() > 0
+                ? (
+                    (hackEnd.getTime() - hackStart.getTime()) /
+                    3600000
+                  ).toString()
+                : null,
+            preferredMode: hackathon[0]?.mode || null,
+          })
+          .execute();
+
+        if (!userInteraction) {
+          throw new ApiError(500, "Failed to log user interaction");
+        }
+
+        // Add to user hackathon views
+        const newView = await db
+          .insert(userHackathonViews)
+          .values({
+            userId: member.userId,
+            hackathonId: hackathon[0].id,
+          })
+          .execute();
+      }
+    }
+  }
+
   return res
     .status(201)
     .json(
@@ -215,15 +275,17 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     status,
     mode,
     organizerId,
-    devId,
+    showParticipated,
   } = {
     ...req.query,
     ...req.body,
   };
 
+  const devId = req.user?.id;
+
   let whereClauses = [];
 
-  if (devId) {
+  if (showParticipated && devId) {
     // 1. Get all teamIds where user is a member
     const userTeamIds = await db
       .select({ teamId: teamMembers.teamId })
@@ -259,9 +321,10 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     whereClauses.push(sql`${hackathons.createdBy} = ${organizerId}`);
   }
 
+  let tagArr: string[] = [];
   // Tag filter (comma separated, matches ANY tag)
   if (tags) {
-    const tagArr = String(tags)
+    tagArr = String(tags)
       .split(",")
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
@@ -333,6 +396,34 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
     );
   }
 
+  // add user interaction to table
+  if (
+    devId &&
+    ((tagArr && tagArr.length > 0) ||
+      duration ||
+      startDate ||
+      endDate ||
+      status ||
+      mode ||
+      organizerId)
+  ) {
+    const userInteraction = await db
+      .insert(userInteractions)
+      .values({
+        userId: devId,
+        interactionType: "search",
+        hackathonTagsSearchedFor: tagArr,
+        hackathonsRegisteredTags: [],
+        preferredDuration: duration ? String(duration) : null,
+        preferredMode: mode || null,
+      })
+      .execute();
+
+    if (!userInteraction) {
+      throw new ApiError(500, "Failed to log user interaction");
+    }
+  }
+
   return res
     .status(200)
     .json(
@@ -347,6 +438,10 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
 // controller for view hackathon by id
 const viewHackathonById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  let devId;
+  if (req.user && req.user.role === "developer") {
+    devId = req.user?.id;
+  }
 
   if (!id) {
     throw new ApiError(400, "Hackathon ID is required");
@@ -386,6 +481,58 @@ const viewHackathonById = asyncHandler(async (req, res) => {
 
   if (organizer.length === 0) {
     throw new ApiError(404, "Organizer not found for this hackathon");
+  }
+
+  const duration =
+    hackathon.startTime &&
+    hackathon.endTime &&
+    hackathon.endTime.getTime() - hackathon.startTime.getTime() > 0
+      ? (hackathon.endTime.getTime() - hackathon.startTime.getTime()) / 3600000
+      : null;
+
+  // save viewed hackathon interaction
+  if (devId) {
+    const recentView = await db
+      .select()
+      .from(userHackathonViews)
+      .where(
+        and(
+          eq(userHackathonViews.userId, devId),
+          eq(userHackathonViews.hackathonId, hackathon.id),
+          gt(userHackathonViews.viewedAt, new Date(Date.now() - 10 * 60 * 1000))
+        )
+      )
+      .limit(1)
+      .execute();
+
+    console.log(recentView);
+
+    if (recentView.length === 0) {
+      const userInteraction = await db
+        .insert(userInteractions)
+        .values({
+          userId: devId,
+          interactionType: "view",
+          hackathonTagsSearchedFor: [],
+          hackathonsRegisteredTags: hackathon.tags || [],
+          preferredDuration: duration ? duration.toString() : null,
+          preferredMode: hackathon.mode || null,
+        })
+        .execute();
+
+      if (!userInteraction) {
+        throw new ApiError(500, "Failed to log user interaction");
+      }
+
+      // Add to user hackathon views
+      const newView = await db
+        .insert(userHackathonViews)
+        .values({
+          userId: devId,
+          hackathonId: hackathon.id,
+        })
+        .execute();
+    }
   }
 
   return res
