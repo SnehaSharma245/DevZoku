@@ -222,15 +222,11 @@ const addProject = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, techStack, repoUrl, demoUrl } = body;
   if (
     !title ||
-    !description ||
     !techStack ||
     !Array.isArray(techStack) ||
     techStack.length === 0
   ) {
-    throw new ApiError(
-      400,
-      "Project must have title, description, and tech stack"
-    );
+    throw new ApiError(400, "Project must have title and tech stack");
   }
 
   // Get current projects
