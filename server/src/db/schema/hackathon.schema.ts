@@ -13,7 +13,7 @@ import {
 import { teams } from "./team.schema";
 import { users } from "./user.schema";
 
-const modeSchemaEnum = ["online", "offline"] as const;
+export const modeSchemaEnum = ["online", "offline"] as const;
 
 //HACKATHONS table with indexes
 export const hackathons = pgTable(
