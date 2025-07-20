@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { PlusCircle } from "lucide-react";
 
 const projectSchema = z.object({
   title: z.string().trim().min(1, "Project title is required"),
@@ -76,9 +77,12 @@ export default function AddProjectDialog({
         onClose();
       }}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg bg-[#23232b] border border-[#23232b] rounded-2xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Add Project</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <PlusCircle className="w-6 h-6 text-[#a3e635]" />
+            Add Project
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit(handleAdd)} className="space-y-4">
@@ -87,9 +91,15 @@ export default function AddProjectDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Project Title *</FormLabel>
+                  <FormLabel className="text-white font-semibold">
+                    Project Title *
+                  </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Project Title" />
+                    <Input
+                      {...field}
+                      placeholder="Project Title"
+                      className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,9 +110,15 @@ export default function AddProjectDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel className="text-white font-semibold">
+                    Description
+                  </FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Describe your project" />
+                    <Textarea
+                      {...field}
+                      placeholder="Describe your project"
+                      className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] resize-none"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -113,9 +129,15 @@ export default function AddProjectDialog({
               name="techStack"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tech Stack (comma separated) *</FormLabel>
+                  <FormLabel className="text-white font-semibold">
+                    Tech Stack (comma separated) *
+                  </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="React, Node.js, MongoDB" />
+                    <Input
+                      {...field}
+                      placeholder="React, Node.js, MongoDB"
+                      className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,9 +149,15 @@ export default function AddProjectDialog({
                 name="repoUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Repo URL</FormLabel>
+                    <FormLabel className="text-white font-semibold">
+                      Repo URL
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="https://github.com/..." />
+                      <Input
+                        {...field}
+                        placeholder="https://github.com/..."
+                        className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,9 +168,15 @@ export default function AddProjectDialog({
                 name="demoUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Demo URL</FormLabel>
+                    <FormLabel className="text-white font-semibold">
+                      Demo URL
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="https://your-demo.com" />
+                      <Input
+                        {...field}
+                        placeholder="https://your-demo.com"
+                        className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,6 +187,7 @@ export default function AddProjectDialog({
               <Button
                 type="button"
                 variant="ghost"
+                className="rounded-xl"
                 onClick={() => {
                   reset(); // Reset fields on cancel
                   onClose();
@@ -160,7 +195,11 @@ export default function AddProjectDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Adding..." : "Add Project"}
               </Button>
             </DialogFooter>
