@@ -36,7 +36,7 @@ interface JoinedTeamData {
 }
 
 function ParticularHackathon() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [hackathonDetails, setHackathonDetails] = useState<Hackathon | null>(
     null
   );
@@ -51,9 +51,14 @@ function ParticularHackathon() {
 
   // Fetch hackathon details
   useEffect(() => {
+    if (loading) return;
+
     const fetchHackathonDetails = async () => {
       try {
-        const res = await api.get(`/hackathon/hackathon/${id}`);
+        const endpoint = user
+          ? `/hackathon/hackathon-auth/${id}`
+          : `/hackathon/hackathon/${id}`;
+        const res = await api.get(endpoint);
         const { status, data, message } = res.data;
         if (status === 200) {
           setHackathonDetails(data);
@@ -66,7 +71,7 @@ function ParticularHackathon() {
       }
     };
     if (id) fetchHackathonDetails();
-  }, [id]);
+  }, [id, user, loading]);
 
   // Fetch joined teams
   const handleRegistration = async () => {
@@ -117,30 +122,22 @@ function ParticularHackathon() {
     }
   };
 
-  if (!hackathonDetails) {
-    return (
-      <div className="text-center py-10 text-red-500">Hackathon not found.</div>
-    );
-  }
-
   // Handle both active and archived hackathon fields
-  const {
-    title,
-    description,
-    poster,
-    tags,
-    registrationStart,
-    registrationEnd,
-    startTime,
-    endTime,
-    minTeamSize,
-    maxTeamSize,
-    mode,
-    status,
-    phases,
-    organizationName,
-    dateCompleted,
-  } = hackathonDetails;
+  const title = hackathonDetails?.title;
+  const description = hackathonDetails?.description;
+  const poster = hackathonDetails?.poster;
+  const tags = hackathonDetails?.tags;
+  const registrationStart = hackathonDetails?.registrationStart;
+  const registrationEnd = hackathonDetails?.registrationEnd;
+  const startTime = hackathonDetails?.startTime;
+  const endTime = hackathonDetails?.endTime;
+  const minTeamSize = hackathonDetails?.minTeamSize;
+  const maxTeamSize = hackathonDetails?.maxTeamSize;
+  const mode = hackathonDetails?.mode;
+  const status = hackathonDetails?.status;
+  const phases = hackathonDetails?.phases;
+  const organizationName = hackathonDetails?.organizationName;
+  const dateCompleted = hackathonDetails?.dateCompleted;
 
   const teamsArray = joinedTeams
     ? joinedTeams.flatMap((jt) =>
