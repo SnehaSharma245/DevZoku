@@ -174,10 +174,17 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateTokens(userObj, role);
 
   //update user in db with refresh token
-  await db
-    .update(users)
-    .set({ refreshToken, isProfileComplete: false })
-    .where(eq(users.id, userObj.id));
+  if (existingUsers.length === 0) {
+    await db
+      .update(users)
+      .set({ refreshToken, isProfileComplete: false })
+      .where(eq(users.id, userObj.id));
+  } else {
+    await db
+      .update(users)
+      .set({ refreshToken })
+      .where(eq(users.id, userObj.id));
+  }
 
   let redirectPath = "";
 
