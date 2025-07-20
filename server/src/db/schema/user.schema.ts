@@ -13,14 +13,13 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).unique().notNull(),
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }),
-  role: varchar("role", { length: 20 }).notNull().default("developer"), // 'developer' or 'organizer'
+  role: varchar("role", { length: 20 }).notNull().default("developer"),
   password: text("password").notNull().default(""),
   refreshToken: text("refresh_token").default(""),
   googleId: varchar("google_id", { length: 100 }).unique().default(""),
   isProfileComplete: boolean("is_profile_complete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  // Location
   location: json("location").$type<{
     country: string;
     state: string;
