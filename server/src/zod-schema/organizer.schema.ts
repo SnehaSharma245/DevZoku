@@ -12,7 +12,11 @@ export const completeOrganizerProfileSchema = z.object({
   bio: z.string().optional(),
   website: safeUrl.optional(),
   companyEmail: z.string().email("Invalid email address"),
-  phoneNumber: z.string().min(7, "Invalid phone number"),
+  phoneNumber: z
+    .string()
+    .min(8, "Phone number is required")
+    .max(16, "Phone number is too long")
+    .regex(/^\+?[0-9]{8,16}$/, "Enter a valid phone number"),
   socialLinks: z
     .object({
       linkedin: safeUrl.optional(),
