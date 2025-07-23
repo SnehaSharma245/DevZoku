@@ -18,6 +18,7 @@ import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { Country, State, City } from "country-state-city";
+import PhoneInput from "react-phone-number-input";
 
 const formSchema = z.object({
   title: z.string().trim().min(2, "Title is required"),
@@ -29,6 +30,7 @@ const formSchema = z.object({
     country: z.string().min(2, "Country is required"),
     address: z.string().min(2, "Address is required"),
   }),
+
   socialLinks: z
     .object({
       github: z.string().url("Enter a valid URL").or(z.literal("")),
@@ -45,7 +47,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 function CompleteProfileForm() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
@@ -218,6 +220,7 @@ function CompleteProfileForm() {
       const { status, data, message } = res.data;
 
       if (status === 200) {
+        setUser(user ? { ...user, isProfileComplete: true } : user);
         toast.success(message || "Profile updated successfully!");
         router.push(`/developer/profile/${user?.id}`);
       }
@@ -294,7 +297,8 @@ function CompleteProfileForm() {
                     !values.skills ||
                     !values.location?.city ||
                     !values.location?.state ||
-                    !values.location?.country
+                    !values.location?.country ||
+                    !values.location?.address
                   ) {
                     toast.error("Please complete Compulsory Info first");
                     return;
@@ -352,6 +356,7 @@ function CompleteProfileForm() {
                       </FormItem>
                     )}
                   />
+
                   {/* Location Dropdowns */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Country */}
