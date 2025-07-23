@@ -14,7 +14,7 @@ import formatDate from "../utils/formatDate";
 import { organizers } from "../db/schema/organizer.schema";
 
 // Controller to create a team
-const createTeam = asyncHandler(async (req: Request, res: Response) => {
+const createTeam = asyncHandler(async (req, res) => {
   try {
     const { user, body } = req;
 
@@ -86,43 +86,41 @@ const createTeam = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Controller to check if a team name is unique
-const checkTeamNameUnique = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { teamName } = req.query;
+const checkTeamNameUnique = asyncHandler(async (req, res) => {
+  const { teamName } = req.query;
 
-    if (
-      !teamName ||
-      typeof teamName !== "string" ||
-      teamName.trim() === "" ||
-      teamName.length < 3
-    ) {
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { isUnique: false }, "Invalid Team Name"));
-    }
-
-    // Check if the team name is unique
-    const existingTeam = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.name, teamName))
-      .limit(1)
-      .execute();
-
-    if (existingTeam.length > 0) {
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { isUnique: false }, "Team name is taken"));
-    }
-
+  if (
+    !teamName ||
+    typeof teamName !== "string" ||
+    teamName.trim() === "" ||
+    teamName.length < 3
+  ) {
     return res
       .status(200)
-      .json(new ApiResponse(200, { isUnique: true }, "Team name is available"));
+      .json(new ApiResponse(200, { isUnique: false }, "Invalid Team Name"));
   }
-);
+
+  // Check if the team name is unique
+  const existingTeam = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.name, teamName))
+    .limit(1)
+    .execute();
+
+  if (existingTeam.length > 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { isUnique: false }, "Team name is taken"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { isUnique: true }, "Team name is available"));
+});
 
 /// controller to get joined teams
-const getJoinedTeams = asyncHandler(async (req: Request, res: Response) => {
+const getJoinedTeams = asyncHandler(async (req, res) => {
   const { user } = req;
 
   if (!user) {
@@ -185,7 +183,7 @@ const getJoinedTeams = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // controller to view all teams and a particular team by ID
-const viewAllTeams = asyncHandler(async (req: Request, res: Response) => {
+const viewAllTeams = asyncHandler(async (req, res) => {
   const { user } = req;
   const { id } = req.params;
 
@@ -286,7 +284,7 @@ const viewAllTeams = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // controller for joining a team via invitation
-const sendInvitation = asyncHandler(async (req: Request, res: Response) => {
+const sendInvitation = asyncHandler(async (req, res) => {
   const { user } = req;
   const { teamId } = req.body;
 
@@ -407,161 +405,155 @@ const sendInvitation = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // controller to fetch pending invites and accepting them
-const fetchPendingInvitesAndAcceptThem = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { user } = req;
-    const { teamId } = req.params;
-    const { pendingUserId } = req.query;
+const fetchPendingInvitesAndAcceptThem = asyncHandler(async (req, res) => {
+  const { user } = req;
+  const { teamId } = req.params;
+  const { pendingUserId } = req.query;
 
-    if (!user) throw new ApiError(401, "User not authenticated");
-    if (!teamId) throw new ApiError(400, "Team ID is required");
+  if (!user) throw new ApiError(401, "User not authenticated");
+  if (!teamId) throw new ApiError(400, "Team ID is required");
 
-    // Fetch team
-    const [team] = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, teamId))
-      .execute();
+  // Fetch team
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .execute();
 
-    if (!team) {
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(200, [], "No pending invites found for this team")
-        );
-    }
+  if (!team) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No pending invites found for this team"));
+  }
 
-    const pendingUserIds = team.pendingInvitesFromUsers ?? [];
+  const pendingUserIds = team.pendingInvitesFromUsers ?? [];
 
-    // Fetch pending users
-    const pendingUsers = await db
-      .select({ firstName: users.firstName, email: users.email, id: users.id })
-      .from(users)
-      .where(inArray(users.id, pendingUserIds))
-      .execute();
+  // Fetch pending users
+  const pendingUsers = await db
+    .select({ firstName: users.firstName, email: users.email, id: users.id })
+    .from(users)
+    .where(inArray(users.id, pendingUserIds))
+    .execute();
 
-    // If no pendingUserId, just return pending invites
-    if (!pendingUserId) {
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(
-            200,
-            { pendingUsers, teamName: team.name },
-            "Pending invites fetched successfully"
-          )
-        );
-    }
-
-    // Only captain can accept
-    if (user.id !== team.captainId) {
-      throw new ApiError(400, "Only the team captain can accept invites");
-    }
-
-    // Add user to teamMembers
-    const addedPendingUser = await db
-      .insert(teamMembers)
-      .values({
-        teamId: teamId as string,
-        userId: pendingUserId as string,
-      })
-      .execute();
-
-    if (!addedPendingUser) {
-      throw new ApiError(500, "Failed to add user to the team");
-    }
-
-    // --- Notification logic ---
-    const notification = {
-      id: crypto.randomUUID(),
-      type: "invitation-accepted" as "invitation-accepted",
-      message: `You have been added to the team ${team.name}`,
-      createdAt: new Date().toISOString(),
-      teamId: teamId as string,
-    };
-
-    // 1. Real-time notification
-    io.to(pendingUserId as string).emit("invitation-accepted", notification);
-
-    // 2. Persist notification in DB
-    const [dev] = await db
-      .select({ notifications: developers.notifications })
-      .from(developers)
-      .where(eq(developers.userId, pendingUserId as string))
-      .limit(1)
-      .execute();
-
-    const updatedNotifications = [...(dev?.notifications ?? []), notification];
-
-    const notificationInDb = await db
-      .update(developers)
-      .set({ notifications: updatedNotifications })
-      .where(eq(developers.userId, pendingUserId as string))
-      .execute();
-
-    if (!notificationInDb) {
-      throw new ApiError(500, "Failed to save notification in the database");
-    }
-
-    // Remove user from pending invites
-    const updatedPendingInvites = pendingUserIds.filter(
-      (id) => id !== (pendingUserId as string)
-    );
-
-    const removedPendingInvite = await db
-      .update(teams)
-      .set({ pendingInvitesFromUsers: updatedPendingInvites })
-      .where(eq(teams.id, teamId))
-      .execute();
-
-    if (!removedPendingInvite) {
-      throw new ApiError(500, "Failed to remove user from pending invites");
-    }
-
+  // If no pendingUserId, just return pending invites
+  if (!pendingUserId) {
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          addedPendingUser,
-          "User added to the team successfully"
+          { pendingUsers, teamName: team.name },
+          "Pending invites fetched successfully"
         )
       );
   }
-);
+
+  // Only captain can accept
+  if (user.id !== team.captainId) {
+    throw new ApiError(400, "Only the team captain can accept invites");
+  }
+
+  // Add user to teamMembers
+  const addedPendingUser = await db
+    .insert(teamMembers)
+    .values({
+      teamId: teamId as string,
+      userId: pendingUserId as string,
+    })
+    .execute();
+
+  if (!addedPendingUser) {
+    throw new ApiError(500, "Failed to add user to the team");
+  }
+
+  // --- Notification logic ---
+  const notification = {
+    id: crypto.randomUUID(),
+    type: "invitation-accepted" as "invitation-accepted",
+    message: `You have been added to the team ${team.name}`,
+    createdAt: new Date().toISOString(),
+    teamId: teamId as string,
+  };
+
+  // 1. Real-time notification
+  io.to(pendingUserId as string).emit("invitation-accepted", notification);
+
+  // 2. Persist notification in DB
+  const [dev] = await db
+    .select({ notifications: developers.notifications })
+    .from(developers)
+    .where(eq(developers.userId, pendingUserId as string))
+    .limit(1)
+    .execute();
+
+  const updatedNotifications = [...(dev?.notifications ?? []), notification];
+
+  const notificationInDb = await db
+    .update(developers)
+    .set({ notifications: updatedNotifications })
+    .where(eq(developers.userId, pendingUserId as string))
+    .execute();
+
+  if (!notificationInDb) {
+    throw new ApiError(500, "Failed to save notification in the database");
+  }
+
+  // Remove user from pending invites
+  const updatedPendingInvites = pendingUserIds.filter(
+    (id) => id !== (pendingUserId as string)
+  );
+
+  const removedPendingInvite = await db
+    .update(teams)
+    .set({ pendingInvitesFromUsers: updatedPendingInvites })
+    .where(eq(teams.id, teamId))
+    .execute();
+
+  if (!removedPendingInvite) {
+    throw new ApiError(500, "Failed to remove user from pending invites");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        addedPendingUser,
+        "User added to the team successfully"
+      )
+    );
+});
 
 // controller for fetching all the sent invitations
-const fetchSentInvitations = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) {
-      throw new ApiError(401, "User not authenticated");
-    }
-
-    const sentInvitations = await db
-      .select()
-      .from(teams)
-      .where(sql`${user.id} = ANY(${teams.pendingInvitesFromUsers})`)
-      .execute();
-
-    if (!sentInvitations) {
-      throw new ApiError(404, "No sent invitations found");
-    }
-
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          sentInvitations,
-          "Sent invitations fetched successfully"
-        )
-      );
+const fetchSentInvitations = asyncHandler(async (req, res) => {
+  const { user } = req;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
   }
-);
+
+  const sentInvitations = await db
+    .select()
+    .from(teams)
+    .where(sql`${user.id} = ANY(${teams.pendingInvitesFromUsers})`)
+    .execute();
+
+  if (!sentInvitations) {
+    throw new ApiError(404, "No sent invitations found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        sentInvitations,
+        "Sent invitations fetched successfully"
+      )
+    );
+});
 
 // controller to leave the team
-const leaveTeam = asyncHandler(async (req: Request, res: Response) => {
+const leaveTeam = asyncHandler(async (req, res) => {
   const { user } = req;
 
   if (!user) {
