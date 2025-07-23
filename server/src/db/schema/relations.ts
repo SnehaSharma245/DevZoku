@@ -5,18 +5,15 @@ import { teamMembers } from "./team.schema";
 import { hackathonPhases, hackathons } from "./hackathon.schema";
 import { teamHackathons } from "./hackathon.schema";
 
-// ✅ Team ↔ TeamMembers
 export const teamsRelations = relations(teams, ({ many }) => ({
   members: many(teamMembers),
   hackathons: many(teamHackathons),
 }));
 
-// ✅ Users ↔ TeamMembers
 export const usersRelations = relations(users, ({ many }) => ({
   teams: many(teamMembers),
 }));
 
-// ✅ TeamMembers ↔ both sides
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   team: one(teams, {
     fields: [teamMembers.teamId],
@@ -28,13 +25,11 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   }),
 }));
 
-// ✅ Hackathons ↔ TeamHackathons
 export const hackathonRelations = relations(hackathons, ({ many }) => ({
   participants: many(teamHackathons),
   phases: many(hackathonPhases),
 }));
 
-// ✅ TeamHackathons ↔ both sides
 export const teamHackathonsRelations = relations(teamHackathons, ({ one }) => ({
   team: one(teams, {
     fields: [teamHackathons.teamId],

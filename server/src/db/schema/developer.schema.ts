@@ -7,6 +7,7 @@ import {
   boolean,
   decimal,
   json,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { users } from "./user.schema";
 
@@ -15,15 +16,10 @@ export const developers = pgTable("developers", {
   userId: uuid("user_id")
     .notNull()
     .unique()
-    .references(() => users.id), // Foreign key to users table
-  // Profile Setup
+    .references(() => users.id),
   title: varchar("title", { length: 100 }),
   bio: text("bio"),
-
-  // Resume & Skills,
   skills: text("skills").array(),
-
-  // Social Links
   socialLinks: json("social_links").$type<{
     github?: string;
     linkedin?: string;
@@ -33,26 +29,20 @@ export const developers = pgTable("developers", {
     devto?: string;
     instagram?: string;
   }>(),
-
   projects: json("projects").$type<
     {
       title: string;
       description: string;
-      techStack: string[]; // or string (comma-separated)
+      techStack: string[];
       repoUrl?: string;
       demoUrl?: string;
     }[]
   >(),
-
-  // Scoring & Ranking
   overallScore: decimal("overall_score", { precision: 10, scale: 2 }).default(
     "0.00"
   ),
-
-  // Metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-
   notifications: json("notifications")
     .$type<
       | {
@@ -60,11 +50,14 @@ export const developers = pgTable("developers", {
           type: "invitation-sent" | "invitation-accepted";
           message: string;
           createdAt: string;
-          teamId?: string; // Optional, only for invite notifications
+          teamId?: string;
+          hackathonId?: string;
         }[]
       | null
     >()
     .default(null),
+  recommendedHackathonIds: jsonb("recommended-hack-ids"),
+  participatedHackathonIds: jsonb("participated-hack-ids"),
 });
 
 export type Developer = typeof developers.$inferSelect;

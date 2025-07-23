@@ -8,12 +8,15 @@ import {
   json,
 } from "drizzle-orm/pg-core";
 import { hackathons, modeSchemaEnum } from "./hackathon.schema";
+import { users } from "./user.schema";
 
 const interactionTypeEnum = ["view", "search", "register"] as const;
 
 export const userInteractions = pgTable("user_interactions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
   hackathonTagsSearchedFor: varchar("hackathon_tags_searched_for").array(),
   hackathonsRegisteredTags: varchar("hackathons_registered_tags").array(),
   preferredDuration: varchar("preferred_duration", {

@@ -8,6 +8,7 @@ import {
   index,
   boolean,
   json,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 import { teams } from "./team.schema";
@@ -35,11 +36,7 @@ export const hackathons = pgTable(
     minTeamSize: integer("min_team_size").notNull(),
     maxTeamSize: integer("max_team_size").notNull(),
     mode: varchar("mode", { length: 20, enum: modeSchemaEnum }).notNull(),
-    positionHolders: json("position_holders").$type<{
-      1: { teamId: string };
-      2: { teamId: string };
-      3: { teamId: string };
-    }>(),
+    positionHolders: jsonb("position_holders"),
   },
   (t) => [
     index("idx_hackathons_created_by").on(t.createdBy),
@@ -49,6 +46,14 @@ export const hackathons = pgTable(
 );
 
 //TEAM_HACKATHONS table with indexes
+
+const POSITION_ENUM = [
+  "winner",
+  "firstRunnerUp",
+  "secondRunnerUp",
+  "participant",
+] as const;
+
 export const teamHackathons = pgTable(
   "team_hackathons",
   {
@@ -58,13 +63,12 @@ export const teamHackathons = pgTable(
     hackathonId: uuid("hackathon_id")
       .notNull()
       .references(() => hackathons.id, { onDelete: "cascade" }),
-    isWinner: boolean("is_winner").default(false),
+    position: varchar("position", { length: 50, enum: POSITION_ENUM }),
   },
   (t) => [
     primaryKey({ columns: [t.teamId, t.hackathonId] }),
     index("idx_team_hackathons_team_id").on(t.teamId),
     index("idx_team_hackathons_hackathon_id").on(t.hackathonId),
-    index("idx_team_hackathons_is_winner").on(t.isWinner),
   ]
 );
 
