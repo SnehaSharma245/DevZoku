@@ -18,13 +18,19 @@ import { toast } from "sonner";
 import api from "@/utils/api";
 import { useRouter } from "next/navigation";
 import { Country, State, City } from "country-state-city";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 const formSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
   bio: z.string().optional(),
-  website: z.string().url("Enter a valid URL").or(z.literal("")).optional(), // <-- .optional() added
+  website: z.string().url("Enter a valid URL").or(z.literal("")).optional(),
   companyEmail: z.string().email("Invalid email address"),
-  phoneNumber: z.string().min(7, "Invalid phone number"),
+  phoneNumber: z
+    .string()
+    .min(8, "Phone number is required")
+    .max(16, "Phone number is too long")
+    .regex(/^\+?[0-9]{8,16}$/, "Enter a valid phone number"),
   location: z.object({
     country: z.string().min(2, "Country is required"),
     state: z.string().min(2, "State is required"),
@@ -43,7 +49,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 function OrganizerCompleteProfileForm() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
@@ -211,6 +217,8 @@ function OrganizerCompleteProfileForm() {
       const { status, message } = response.data;
 
       if (status === 200) {
+        setUser(user ? { ...user, isProfileComplete: true } : user);
+
         toast.success("Organization profile updated successfully!");
         router.push(`/organizer/profile/${user?.id}`);
       }
@@ -392,10 +400,12 @@ function OrganizerCompleteProfileForm() {
                           Phone Number *
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <PhoneInput
                             {...field}
-                            placeholder="+91-9876543210"
-                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                            defaultCountry="IN"
+                            international
+                            countryCallingCodeEditable={true}
+                            className="bg-[#23232b] text-black border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] w-full"
                           />
                         </FormControl>
                         <FormMessage />
