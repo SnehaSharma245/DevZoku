@@ -9,6 +9,13 @@ import type { Hackathon } from "@/types/hackathon.types";
 import { X, ChevronDown } from "lucide-react";
 import { tagSections } from "@/constants/const";
 import { Separator } from "@/components/ui/separator";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 function AllHackathons() {
   const { user } = useAuth();
@@ -16,6 +23,9 @@ function AllHackathons() {
   const [showParticipated, setShowParticipated] = useState(false);
   const [showMine, setShowMine] = useState(false);
   const [fetchedHackathons, setFetchedHackathons] = useState<Hackathon[]>([]);
+  const [recommendedHackathons, setRecommendedHackathons] = useState<
+    Hackathon[]
+  >([]);
   const [search, setSearch] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -106,6 +116,29 @@ function AllHackathons() {
     }
     setTagDropdownOpen(false);
   };
+
+  const handleShowRecommendedHackathons = async () => {
+    try {
+      const res = await api.get("/developer/recommended-hackathons");
+      const { status, data, message } = res.data;
+      if (status === 200) {
+        setRecommendedHackathons(data);
+      }
+      console.log(data);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to fetch recommended hackathons"
+      );
+      setFetchedHackathons([]);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "developer") {
+      handleShowRecommendedHackathons();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row gap-8 px-2 py-8">
@@ -290,6 +323,93 @@ function AllHackathons() {
 
       {/* Main Content */}
       <main className="flex-1">
+        {/* Recommended Hackathons Carousel */}
+
+        {user?.role === "developer" && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Recommended Hackathons
+            </h2>
+            <div className="relative">
+              <Carousel opts={{ loop: true }}>
+                <CarouselContent>
+                  {recommendedHackathons.length === 0 ? (
+                    <CarouselItem>
+                      <div className="text-gray-400 text-center py-8">
+                        No recommended hackathons found.
+                      </div>
+                    </CarouselItem>
+                  ) : (
+                    recommendedHackathons.map((hackathon) => (
+                      <CarouselItem
+                        key={hackathon.id}
+                        className="md:basis-1/2 lg:basis-1/3 px-2"
+                      >
+                        <div className="bg-[#23232b] border border-[#23232b] rounded-2xl shadow-lg flex flex-row items-center justify-center p-4 h-full gap-4 w-full">
+                          {/* Image Left */}
+                          <div className="w-24 h-16 rounded-lg overflow-hidden bg-[#18181e] border border-[#23232b] flex-shrink-0 flex items-center justify-center">
+                            <img
+                              className="w-full h-full object-cover"
+                              src={hackathon.poster}
+                              alt={hackathon.title}
+                            />
+                          </div>
+                          {/* Content Right */}
+                          <div className="flex flex-col flex-1 min-w-0 items-center text-center">
+                            <Link
+                              href={`/hackathon/view-all-hackathons/${hackathon.id}`}
+                            >
+                              <h3 className="font-semibold text-white text-lg mb-1 truncate w-full">
+                                {hackathon.title}
+                              </h3>
+                            </Link>
+
+                            <p className="text-xs text-gray-400 mb-1 truncate w-full">
+                              {formatDateTime(hackathon?.startTime)} -{" "}
+                              {formatDateTime(hackathon?.endTime)}
+                            </p>
+                            <p className="text-xs text-gray-400 mb-2 truncate w-full">
+                              {hackathon.location}
+                            </p>
+
+                            <div className="mt-auto flex items-center gap-2 justify-center w-full">
+                              <span
+                                className="inline-block px-2 py-1 rounded text-xs font-semibold"
+                                style={{
+                                  background:
+                                    hackathon.status === "upcoming"
+                                      ? "#fbbf24"
+                                      : hackathon.status === "ongoing"
+                                      ? "#a3e635"
+                                      : hackathon.status === "completed"
+                                      ? "#f87171"
+                                      : "#e5e7eb",
+                                  color:
+                                    hackathon.status === "upcoming"
+                                      ? "#92400e"
+                                      : hackathon.status === "ongoing"
+                                      ? "#23232b"
+                                      : hackathon.status === "completed"
+                                      ? "#7f1d1d"
+                                      : "#374151",
+                                }}
+                              >
+                                {hackathon.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    ))
+                  )}
+                </CarouselContent>
+                <CarouselPrevious className="left-0 -translate-y-1/2 top-1/2 absolute" />
+                <CarouselNext className="right-0 -translate-y-1/2 top-1/2 absolute" />
+              </Carousel>
+            </div>
+          </div>
+        )}
+
         {/* Title search (local filter) */}
         <input
           type="text"
