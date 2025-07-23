@@ -6,11 +6,8 @@ export const connection =
     ? new Redis(process.env.REDIS_URL!, { tls: {}, maxRetriesPerRequest: null })
     : new Redis({ host: "localhost", port: 6379, maxRetriesPerRequest: null });
 
-const hackathonTeamEmailQueue = new Queue(
-  "team-hackathon-registration-emails",
-  {
-    connection: connection,
-  }
-);
+const hackathonTeamEmailQueue = new Queue("hackathon-emails", {
+  connection: connection,
+});
 
 export { hackathonTeamEmailQueue };
