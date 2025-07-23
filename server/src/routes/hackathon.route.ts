@@ -2,6 +2,8 @@ import Router from "express";
 import {
   applyToHackathon,
   createHackathon,
+  embedHackathons,
+  markWinners,
   viewAllHackathons,
   viewHackathonById,
 } from "../controllers/hackathon.controller";
@@ -20,9 +22,13 @@ router.post(
 );
 router.get("/view-all-hackathons-auth", verifyJWT, viewAllHackathons);
 router.get("/hackathon-auth/:id", verifyJWT, viewHackathonById);
+router.post("/mark-winners", verifyJWT, markWinners);
 
 // unprotected routes
 router.get("/view-all-hackathons", viewAllHackathons);
 router.get("/hackathon/:id", viewHackathonById);
+
+//cron routes
+router.post("/embed-hackathons", embedHackathons);
 
 export default router;
