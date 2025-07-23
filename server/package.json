@@ -30,7 +30,14 @@
     "dev:worker": "bun --watch src/worker/worker.ts"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.66",
+    "@langchain/google-genai": "^0.2.15",
+    "@langchain/mistralai": "^0.2.1",
+    "@langchain/pinecone": "^0.2.0",
+    "@langchain/qdrant": "^0.1.2",
+    "@langchain/textsplitters": "^0.1.0",
     "@neondatabase/serverless": "^1.0.1",
+    "@pinecone-database/pinecone": "5",
     "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.56.4",
