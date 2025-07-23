@@ -1,4 +1,4 @@
-import { eq, and, inArray, sql, desc, gt } from "drizzle-orm";
+import { eq, and, inArray, sql, desc, gt, not } from "drizzle-orm";
 import { db } from "../db";
 import { ApiResponse } from "../utils/ApiResponse";
 import type { Request, Response } from "express";
@@ -20,9 +20,14 @@ import {
   userHackathonViews,
   userInteractions,
 } from "../db/schema/userInteraction.schema";
+import { buildUserInteractionText } from "../utils/vector/buildUserIteraction";
+import { Document } from "@langchain/core/documents";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { initialiseVectorStore } from "../lib/vectorStore";
+import { developers } from "../db/schema/developer.schema";
 
 // controller for applying to a hackathon with a team
-const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
+const applyToHackathon = asyncHandler(async (req, res) => {
   const { user } = req;
   if (!user) {
     throw new ApiError(401, "User not authenticated");
@@ -185,7 +190,7 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     .execute();
 
   emails.forEach((member) => {
-    hackathonTeamEmailQueue.add("send-hackathon-registration-email", {
+    hackathonTeamEmailQueue.add("hackathon-email", {
       email: member.email,
       memberName: member.name,
       teamName: team[0]?.name,
@@ -200,6 +205,7 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
       ),
       organizationName: organizer[0]?.name,
       organizationEmail: organizer[0]?.email,
+      type: "team-registration",
     });
   });
 
@@ -265,7 +271,7 @@ const applyToHackathon = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-// View all Hackathons
+// controller for Viewing all Hackathons
 const viewAllHackathons = asyncHandler(async (req, res) => {
   const {
     tags,
@@ -438,9 +444,17 @@ const viewAllHackathons = asyncHandler(async (req, res) => {
 // controller for view hackathon by id
 const viewHackathonById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const { withTeams } = req.query;
+
   let devId;
+
   if (req.user && req.user.role === "developer") {
     devId = req.user?.id;
+  }
+  let orgId;
+  if (req.user && req.user.role === "organizer") {
+    orgId = req.user?.id;
+    console.log("orgId:", orgId);
   }
 
   if (!id) {
@@ -458,6 +472,13 @@ const viewHackathonById = asyncHandler(async (req, res) => {
   }
 
   const hackathon = hackathonArr[0];
+
+  const statusValue = hackathonStatusChecker(
+    new Date(hackathon?.registrationStart ?? ""),
+    new Date(hackathon?.registrationEnd ?? ""),
+    new Date(hackathon?.startTime ?? ""),
+    new Date(hackathon?.endTime ?? "")
+  );
 
   if (!hackathon) {
     throw new ApiError(404, "Hackathon not found");
@@ -511,8 +532,8 @@ const viewHackathonById = asyncHandler(async (req, res) => {
         .values({
           userId: devId,
           interactionType: "view",
-          hackathonTagsSearchedFor: [],
-          hackathonsRegisteredTags: hackathon.tags || [],
+          hackathonTagsSearchedFor: hackathon.tags || [],
+          hackathonsRegisteredTags: [],
           preferredDuration: duration ? duration.toString() : null,
           preferredMode: hackathon.mode || null,
         })
@@ -533,19 +554,61 @@ const viewHackathonById = asyncHandler(async (req, res) => {
     }
   }
 
+  if (withTeams === "true" && orgId) {
+    // Fetch all teams that have applied to this hackathon
+    console.log("Fetching teams applied to hackathon:", hackathon.id);
+    const teamsApplied = await db
+      .select({ teams: teams })
+      .from(teams)
+      .innerJoin(teamHackathons, eq(teams.id, teamHackathons.teamId))
+      .where(eq(teamHackathons.hackathonId, hackathon.id))
+      .orderBy(teams.name)
+      .execute();
+
+    if (teamsApplied.length === 0) {
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            ...hackathon,
+            organizer: organizer[0],
+            phases,
+            teamsApplied: [],
+            status: statusValue,
+          },
+          "Hackathon fetched successfully"
+        )
+      );
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          ...hackathon,
+          organizer: organizer[0],
+          phases,
+          teamsApplied,
+          status: statusValue,
+        },
+        "Hackathon fetched successfully"
+      )
+    );
+  }
+
   return res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { ...hackathon, organizer: organizer[0], phases },
+        { ...hackathon, organizer: organizer[0], phases, status: statusValue },
         "Hackathon fetched successfully"
       )
     );
 });
 
 // controller for creating hackathon
-const createHackathon = asyncHandler(async (req: Request, res: Response) => {
+const createHackathon = asyncHandler(async (req, res) => {
   const { user, body } = req;
   const posterUrl = req.file?.path || "";
 
@@ -690,9 +753,274 @@ const createHackathon = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(201, result, "Hackathon created successfully "));
 });
 
+// controller for creating hackathon embeddings (CRON JOB)
+const embedHackathons = asyncHandler(async (req, res) => {
+  console.log("abcd");
+  const CRON_SECRET = process.env.CRON_SECRET;
+
+  if (!CRON_SECRET) {
+    throw new ApiError(500, "CRON_SECRET is not set in environment variables");
+  }
+
+  const authHeader = req?.headers?.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  const submittedSecret = authHeader.substring(7);
+
+  if (submittedSecret !== CRON_SECRET) {
+    throw new ApiError(403, "Forbidden: Invalid secret");
+  }
+
+  const fetchRecentHackathons = await db
+    .select()
+    .from(hackathons)
+    .where(
+      gt(hackathons.createdAt, new Date(Date.now() - 4 * 24 * 60 * 60 * 1000))
+    )
+    .orderBy(desc(hackathons.createdAt))
+    .execute();
+
+  if (fetchRecentHackathons.length === 0) {
+    throw new ApiError(400, "No Recent Hackathons");
+  }
+
+  const doc = new Document({
+    pageContent: JSON.stringify(fetchRecentHackathons),
+    metadata: {
+      type: "hackathon-embeddings",
+      embeddedAt: new Date().toISOString(),
+    },
+  });
+
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 500,
+    chunkOverlap: 100,
+  });
+
+  const splits = await splitter.splitDocuments([doc]);
+
+  const vecStore = await initialiseVectorStore({
+    collectionName: "hackathon-embeddings",
+  });
+  const fiveDaysAgo = new Date(
+    Date.now() - 5 * 24 * 60 * 60 * 1000
+  ).toISOString();
+  // Qdrant example
+  await vecStore.delete({
+    filter: {
+      must: [
+        {
+          key: "embeddedAt",
+          match: { lte: fiveDaysAgo },
+        },
+      ],
+    },
+  });
+
+  await vecStore.addDocuments(splits);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Hackathons embedded successfully"));
+});
+
+// controller for marking winners
+const markWinners = asyncHandler(async (req, res) => {
+  const { user } = req;
+
+  if (!user) throw new ApiError(401, "Unauthorized");
+  if (user.role !== "organizer")
+    throw new ApiError(403, "Only organizers can mark winners");
+
+  const { hackathonId, winners } = req.body;
+  if (!hackathonId || !winners) throw new ApiError(400, "Invalid request");
+
+  const hackathon = await db
+    .select({ title: hackathons.title, createdBy: hackathons.createdBy })
+    .from(hackathons)
+    .where(eq(hackathons.id, hackathonId))
+    .limit(1)
+    .execute();
+
+  if (!hackathon || hackathon.length === 0) {
+    throw new ApiError(404, "Hackathon not found");
+  }
+
+  // Update hackathon with winners
+  const updatedHackathon = await db
+    .update(hackathons)
+    .set({ positionHolders: winners })
+    .where(eq(hackathons.id, hackathonId))
+    .execute();
+
+  if (!updatedHackathon) throw new ApiError(500, "Failed to mark winners");
+
+  // Update teamHackathons table for all positions
+  const positionMap = [
+    { key: "winner", value: "winner" },
+    { key: "firstRunnerUp", value: "firstRunnerUp" },
+    { key: "secondRunnerUp", value: "secondRunnerUp" },
+  ];
+
+  for (const pos of positionMap) {
+    if (winners[pos.key]) {
+      await db
+        .update(teamHackathons)
+        .set({
+          position: pos.value as
+            | "winner"
+            | "firstRunnerUp"
+            | "secondRunnerUp"
+            | "participant",
+        })
+        .where(
+          and(
+            eq(teamHackathons.hackathonId, hackathonId),
+            eq(teamHackathons.teamId, winners[pos.key])
+          )
+        )
+        .execute();
+    }
+  }
+
+  // set other teams as participants
+  await db
+    .update(teamHackathons)
+    .set({ position: "participant" })
+    .where(
+      and(
+        eq(teamHackathons.hackathonId, hackathonId),
+        not(
+          inArray(
+            teamHackathons.teamId,
+            [
+              winners.winner,
+              winners.firstRunnerUp,
+              winners.secondRunnerUp,
+            ].filter(Boolean)
+          )
+        )
+      )
+    )
+    .execute();
+
+  // Get all teamIds for this hackathon
+  const allTeamIdArr = await db
+    .select({ teamId: teamHackathons.teamId, captainId: teams.captainId })
+    .from(teamHackathons)
+    .innerJoin(teams, eq(teamHackathons.teamId, teams.id))
+    .where(eq(teamHackathons.hackathonId, hackathonId));
+
+  //  Get all members of those teams
+  const allTeamIds = allTeamIdArr.map((t) => t.teamId);
+  const captainIds = allTeamIdArr.map((t) => t.captainId);
+  const allTeamMembers = await db
+    .select({ userId: teamMembers.userId, teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(inArray(teamMembers.teamId, allTeamIds));
+
+  //  Update each developer's participatedHackathonIds
+  for (const member of allTeamMembers) {
+    let position = "participant";
+    if (member.teamId === winners.winner) position = "winner";
+    else if (member.teamId === winners.firstRunnerUp)
+      position = "firstRunnerUp";
+    else if (member.teamId === winners.secondRunnerUp)
+      position = "secondRunnerUp";
+
+    const [existingDev] = await db
+      .select({ participatedHackathonIds: developers.participatedHackathonIds })
+      .from(developers)
+      .where(eq(developers.userId, member.userId))
+      .limit(1)
+      .execute();
+
+    const prevHackathons = Array.isArray(existingDev?.participatedHackathonIds)
+      ? existingDev.participatedHackathonIds
+      : [];
+
+    const newHackathonObj = {
+      hackathonId: hackathonId,
+      position,
+    };
+
+    const updatedHackathons = [
+      ...prevHackathons.filter((h: any) => h.hackathonId !== hackathonId),
+      newHackathonObj,
+    ];
+
+    await db
+      .update(developers)
+      .set({ participatedHackathonIds: updatedHackathons })
+      .where(eq(developers.userId, member.userId))
+      .execute();
+  }
+
+  // Email to team captains about hackathon result announced
+  const teamIdToPosition: Record<string, string> = {
+    [winners.winner]: "winner",
+    [winners.firstRunnerUp]: "firstRunnerUp",
+    [winners.secondRunnerUp]: "secondRunnerUp",
+  };
+  allTeamIds.forEach((teamId) => {
+    if (!teamIdToPosition[teamId]) teamIdToPosition[teamId] = "participant";
+  });
+
+  const captains = await db
+    .select({
+      email: users.email,
+      name: users.firstName,
+      teamId: teams.id,
+      teamName: teams.name,
+    })
+    .from(users)
+    .innerJoin(teams, eq(users.id, teams.captainId))
+    .where(inArray(teams.id, allTeamIds))
+    .execute();
+
+  const organizer = await db
+    .select({
+      name: organizers.organizationName,
+      email: organizers.companyEmail,
+    })
+    .from(organizers)
+    .where(
+      eq(
+        organizers.userId,
+        hackathon[0] && hackathon[0].createdBy ? hackathon[0].createdBy : ""
+      )
+    )
+    .limit(1)
+    .execute();
+
+  for (const captain of captains) {
+    const position = teamIdToPosition[captain.teamId] || "participant";
+    hackathonTeamEmailQueue.add("hackathon-email", {
+      email: captain.email,
+      captainName: captain.name,
+      teamName: captain.teamName,
+      hackathonName: hackathon[0]?.title,
+      organizationName: organizer[0]?.name,
+      organizationEmail: organizer[0]?.email,
+      position,
+      type: "hackathon-result-announcement",
+    });
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedHackathon, "Winners marked successfully")
+    );
+});
+
 export {
   applyToHackathon,
   viewAllHackathons,
   viewHackathonById,
   createHackathon,
+  embedHackathons,
+  markWinners,
 };
