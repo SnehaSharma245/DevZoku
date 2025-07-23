@@ -8,16 +8,16 @@ import LoadingScreen from "@/components/LoadingScreen";
 import { socket } from "@/utils/socket";
 import { toast } from "sonner";
 import type { Notification } from "./Types";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
-
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [redBadge, setRedBadge] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const fetchUser = async () => {
     try {
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const { status, data, message } = res.data;
       const userData = data;
-
+      console.log("User data:", userData);
       if (res.status === 200) {
         setUser(userData);
         setIsAuthenticated(true);
