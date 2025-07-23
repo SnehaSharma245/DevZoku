@@ -23,6 +23,12 @@ export interface Hackathon {
   location?: string;
   mode?: "online" | "offline";
   phases?: Phases[];
+  positionHolders?: {
+    winner?: string;
+    firstRunnerUp?: string;
+    secondRunnerUp?: string;
+    participant?: string[];
+  } | null;
   dateCompleted?: string; // archived field
 }
 
