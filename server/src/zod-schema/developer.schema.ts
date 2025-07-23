@@ -39,4 +39,9 @@ export const completeDeveloperProfileSchema = z.object({
     city: z.string().min(2, "City is required"),
     address: z.string().optional(), // Optional address field
   }),
+  phoneNumber: z
+    .string()
+    .min(8, "Phone number is required")
+    .max(16, "Phone number is too long")
+    .regex(/^\+?[0-9]{8,16}$/, "Enter a valid phone number"),
 });
