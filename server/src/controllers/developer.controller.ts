@@ -104,11 +104,56 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Developer profile not found");
   }
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, developerProfile[0], "Profile fetched successfully")
-    );
+  // fetch the participated hackathons
+  const participatedHackathonIds = Array.isArray(
+    developerProfile[0]?.participatedHackathonIds
+  )
+    ? developerProfile[0].participatedHackathonIds
+    : [];
+
+  const participatedHackathonsCount = participatedHackathonIds.length;
+
+  const winnerCount = participatedHackathonIds.filter(
+    (item: any) => item.position === "winner"
+  ).length;
+  const firstRunnerUpCount = participatedHackathonIds.filter(
+    (item: any) => item.position === "firstRunnerUp"
+  ).length;
+  const secondRunnerUpCount = participatedHackathonIds.filter(
+    (item: any) => item.position === "secondRunnerUp"
+  ).length;
+
+  const hackathonsWithPositionCount =
+    winnerCount + firstRunnerUpCount + secondRunnerUpCount;
+
+  const participatedHackathons = await db
+    .select({ tags: hackathons.tags })
+    .from(hackathons)
+    .where(
+      participatedHackathonIds.length > 0
+        ? inArray(
+            hackathons.id,
+            participatedHackathonIds.map((h: any) => h.hackathonId)
+          )
+        : undefined
+    )
+    .execute();
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        ...developerProfile[0],
+        participatedHackathonsCount,
+        hackathonsWithPositionCount,
+        participatedHackathons,
+        winnerCount,
+        firstRunnerUpCount,
+        secondRunnerUpCount,
+      },
+      "Profile fetched successfully"
+    )
+  );
 });
 
 // controller for handling notifications

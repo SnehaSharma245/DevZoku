@@ -27,7 +27,6 @@ export const developers = pgTable("developers", {
     twitter?: string;
     hashnode?: string;
     devto?: string;
-    instagram?: string;
   }>(),
   projects: json("projects").$type<
     {
