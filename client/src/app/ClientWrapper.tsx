@@ -36,7 +36,10 @@ export default function ClientWrapper({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#101012] via-[#18181e] to-[#23232b]">
+    <div
+      className="min-h-screen flex flex-col bg-gradient-to-br from-[#F8FBFD] via-[#FAFCFD] to-[#FFFFFF]
+"
+    >
       {!isPageWithoutNavbarAndFooter && <Header />}
       <main className="flex-1 mb-3">
         {children || <p>No children to render</p>}
