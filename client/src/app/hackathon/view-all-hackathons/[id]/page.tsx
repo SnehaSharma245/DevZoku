@@ -65,7 +65,7 @@ function ParticularHackathon() {
           : `/hackathon/hackathon/${id}$`;
         const res = await api.get(endpoint);
         const { status, data, message } = res.data;
-        console.log(data);
+
         if (status === 200) {
           setHackathonDetails(data);
           const participatingTeams = data.teamsApplied
