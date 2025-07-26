@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import api from "@/utils/api";
 import { Country, State, City } from "country-state-city";
 import PhoneInput from "react-phone-number-input";
+import Link from "next/link";
+import { Users, Rocket } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().trim().min(2, "Title is required"),
@@ -39,7 +41,6 @@ const formSchema = z.object({
       twitter: z.string().url("Enter a valid URL").or(z.literal("")),
       hashnode: z.string().url("Enter a valid URL").or(z.literal("")),
       devto: z.string().url("Enter a valid URL").or(z.literal("")),
-      instagram: z.string().url("Enter a valid URL").or(z.literal("")),
     })
     .optional(),
 });
@@ -77,7 +78,6 @@ function CompleteProfileForm() {
         twitter: "",
         hashnode: "",
         devto: "",
-        instagram: "",
       },
     },
   });
@@ -122,7 +122,6 @@ function CompleteProfileForm() {
           twitter: user.profile?.socialLinks?.twitter || "",
           hashnode: user.profile?.socialLinks?.hashnode || "",
           devto: user.profile?.socialLinks?.devto || "",
-          instagram: user.profile?.socialLinks?.instagram || "",
         },
       });
 
@@ -250,32 +249,403 @@ function CompleteProfileForm() {
 
   if (user?.role !== "developer") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-white bg-[#101012]">
+      <div className="min-h-screen flex items-center justify-center text-xl text-[#062a47] bg-[#cddefa]">
         This page is only for developers.
       </div>
     );
   }
 
+  // Show grid branding only if profile is NOT complete
+  if (!user?.isProfileComplete) {
+    return (
+      <div className="min-h-screen w-full">
+        <div className="max-w-6xl mx-auto py-10 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
+            {/* Left Side: Branding, tagline, icons, vertical centering */}
+            <div className="hidden md:flex flex-col justify-center px-10 bg-gradient-to-br from-[#EDF6FA] via-[#D9EAF2] to-[#CFE4EF] rounded-xl shadow-md h-full">
+              <div className="flex flex-col justify-center items-start w-full max-w-md">
+                <Link
+                  href="/"
+                  className="font-extrabold text-4xl tracking-tight text-[#062a47] mb-10 hover:text-[#f75a2f] transition-all duration-300"
+                  style={{ letterSpacing: "-1px" }}
+                >
+                  DevZoku
+                </Link>
+
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-[#062a47] mb-3">
+                    Complete Your Developer Profile
+                  </h2>
+                  <p className="text-base text-[#062a47] font-medium leading-relaxed">
+                    <span className="font-semibold text-[#f75a2f]">
+                      Stand out
+                    </span>{" "}
+                    in the DevZoku community and get noticed by organizers and
+                    devs alike.
+                  </p>
+                </div>
+
+                <ul className="text-left text-[#062a47] mb-6 space-y-3 list-disc list-inside marker:text-[#f75a2f]">
+                  <li>
+                    <strong>Showcase</strong> your top skills and tech stack
+                  </li>
+                  <li>
+                    <strong>Connect</strong> with fellow innovators and mentors
+                  </li>
+                  <li>
+                    <strong>Collaborate</strong> on exciting projects and
+                    hackathons
+                  </li>
+                </ul>
+
+                <div className="mt-2 pl-3 border-l-4 border-[#f75a2f]">
+                  <span className="text-base font-semibold text-[#062a47] italic">
+                    “Devs who squad together, win together.”
+                  </span>
+                </div>
+              </div>
+            </div>
+            {/* Right Side: Form (full width on mobile) */}
+            <div className="h-full w-full">
+              {/* Mobile branding header */}
+              <div className="md:hidden mb-8 text-center">
+                <span className="text-3xl font-extrabold text-[#062a47]">
+                  DevZoku
+                </span>
+                <h1 className="text-xl font-bold text-[#062a47] mt-2">
+                  Complete Your Developer Profile
+                </h1>
+              </div>
+              <Form {...form}>
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="space-y-10 bg-white rounded-3xl shadow-2xl p-8 border border-[#e3e8ee]"
+                >
+                  {/* Stepper */}
+                  <div className="flex justify-center mb-8 gap-4">
+                    {/* Step 1 */}
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
+                        step === 1
+                          ? "bg-[#f75a2f] text-white"
+                          : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
+                      }`}
+                      onClick={() => setStep(1)}
+                    >
+                      1. Compulsory Info
+                    </button>
+                    {/* Step 2 */}
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
+                        step === 2
+                          ? "bg-[#f75a2f] text-white"
+                          : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
+                      }`}
+                      onClick={async () => {
+                        const values = form.getValues();
+                        if (
+                          !values.title ||
+                          !values.skills ||
+                          !values.location?.city ||
+                          !values.location?.state ||
+                          !values.location?.country ||
+                          !values.location?.address
+                        ) {
+                          toast.error("Please complete Compulsory Info first");
+                          return;
+                        }
+                        setStep(2);
+                      }}
+                    >
+                      2. Social Links
+                    </button>
+                  </div>
+                  {/* Step 1: Compulsory Info */}
+                  {step === 1 && (
+                    <Fragment>
+                      <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
+                          Basic Information
+                        </h2>
+                        {/* Title */}
+                        <FormField
+                          control={control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[#062a47] font-semibold">
+                                Professional Title *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="e.g. Full Stack Developer"
+                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {/* Bio */}
+                        <FormField
+                          control={control}
+                          name="bio"
+                          render={({ field }) => {
+                            const bioValue = field.value || "";
+                            return (
+                              <FormItem>
+                                <div className="flex justify-between items-center mb-1 w-full">
+                                  <FormLabel className="text-[#062a47] font-semibold m-0">
+                                    Bio{" "}
+                                    <span className="text-gray-400 font-normal">
+                                      (optional)
+                                    </span>
+                                  </FormLabel>
+                                  <span className="text-xs text-gray-500">
+                                    {bioValue.length}/250
+                                  </span>
+                                </div>
+                                <FormControl>
+                                  <textarea
+                                    {...field}
+                                    maxLength={250}
+                                    rows={4}
+                                    placeholder="Tell us about yourself (max 250 characters)"
+                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition w-full resize-none p-3"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                        {/* Skills */}
+                        <FormField
+                          control={control}
+                          name="skills"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[#062a47] font-semibold">
+                                Skills (comma separated) *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="React, Node.js, PostgreSQL"
+                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Location Dropdowns */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Country */}
+                          <FormField
+                            control={control}
+                            name="location.country"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="capitalize text-[#062a47] font-semibold">
+                                  Country *
+                                </FormLabel>
+                                <FormControl>
+                                  <select
+                                    {...field}
+                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
+                                  >
+                                    <option value="">Select Country</option>
+                                    {countries.map((country) => (
+                                      <option
+                                        key={country.isoCode}
+                                        value={country.isoCode}
+                                      >
+                                        {country.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {/* State */}
+                          <FormField
+                            control={control}
+                            name="location.state"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="capitalize text-[#062a47] font-semibold">
+                                  State *
+                                </FormLabel>
+                                <FormControl>
+                                  <select
+                                    {...field}
+                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
+                                    disabled={!selectedCountry}
+                                  >
+                                    <option value="">Select State</option>
+                                    {states.map((state) => (
+                                      <option
+                                        key={state.isoCode}
+                                        value={state.isoCode}
+                                      >
+                                        {state.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {/* City */}
+                          <FormField
+                            control={control}
+                            name="location.city"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="capitalize text-[#062a47] font-semibold">
+                                  City *
+                                </FormLabel>
+                                <FormControl>
+                                  <select
+                                    {...field}
+                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
+                                    disabled={!selectedState}
+                                  >
+                                    <option value="">Select City</option>
+                                    {cities.map((city) => (
+                                      <option key={city.name} value={city.name}>
+                                        {city.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        {/* Address Field */}
+                        <FormField
+                          control={control}
+                          name="location.address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[#062a47] font-semibold">
+                                Address *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Enter your address"
+                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex justify-end mt-8">
+                        <Button
+                          type="button"
+                          onClick={handleNext}
+                          className="bg-[#f75a2f] text-white rounded-xl font-bold shadow hover:bg-[#062a47] transition"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </Fragment>
+                  )}
+                  {/* Step 2: Social Links */}
+                  {step === 2 && (
+                    <Fragment>
+                      <div className="space-y-6">
+                        <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
+                          Social Links (Optional)
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.keys(form.getValues().socialLinks || {}).map(
+                            (key) => (
+                              <FormField
+                                key={key}
+                                control={control}
+                                name={`socialLinks.${key}` as any}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="capitalize text-[#062a47] font-semibold">
+                                      {key}
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        placeholder={`https://${key}.com/username`}
+                                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-8">
+                        <Button
+                          type="button"
+                          onClick={() => setStep(1)}
+                          className="bg-[#062a47] text-white rounded-xl shadow hover:bg-[#f75a2f] transition"
+                        >
+                          Back
+                        </Button>
+                        <Button
+                          type="submit"
+                          className="bg-[#f75a2f] text-white font-bold rounded-xl shadow hover:bg-[#062a47] transition"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? "Saving..." : "Save Profile"}
+                        </Button>
+                      </div>
+                    </Fragment>
+                  )}
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If profile is complete, show edit profile heading and normal form
   return (
-    <div className="bg-[#101012] min-h-screen w-full">
-      <div className="max-w-4xl mx-auto py-10 px-4">
-        <h1 className="text-3xl font-extrabold mb-8 text-center text-white tracking-tight">
-          Complete Your Developer Profile
+    <div className=" min-h-screen w-full">
+      <div className="max-w-2xl mx-auto py-10 px-4">
+        <h1 className="text-3xl font-extrabold mb-8 text-center text-[#062a47] tracking-tight">
+          Edit Profile
         </h1>
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-10 bg-[#18181e] rounded-3xl shadow-xl p-8 border border-[#23232b]"
+            className="space-y-10 bg-white rounded-3xl shadow-2xl p-8 border border-[#e3e8ee]"
           >
             {/* Stepper */}
             <div className="flex justify-center mb-8 gap-4">
               {/* Step 1 */}
               <button
                 type="button"
-                className={`px-4 py-2 rounded-xl font-semibold transition ${
+                className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
                   step === 1
-                    ? "bg-[#a3e635] text-black"
-                    : "bg-[#23232b] text-white hover:bg-[#333]"
+                    ? "bg-[#f75a2f] text-white"
+                    : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
                 }`}
                 onClick={() => setStep(1)}
               >
@@ -284,10 +654,10 @@ function CompleteProfileForm() {
               {/* Step 2 */}
               <button
                 type="button"
-                className={`px-4 py-2 rounded-xl font-semibold transition ${
+                className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
                   step === 2
-                    ? "bg-[#a3e635] text-black"
-                    : "bg-[#23232b] text-white hover:bg-[#333]"
+                    ? "bg-[#f75a2f] text-white"
+                    : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
                 }`}
                 onClick={async () => {
                   // Validate step 1 fields before allowing navigation
@@ -313,8 +683,8 @@ function CompleteProfileForm() {
             {step === 1 && (
               <Fragment>
                 <div className="space-y-6">
-                  <h2 className="text-xl font-bold text-white border-b border-[#23232b] pb-2">
-                    Compulsory Information
+                  <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
+                    Basic Information
                   </h2>
                   {/* Title */}
                   <FormField
@@ -322,34 +692,69 @@ function CompleteProfileForm() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">
+                        <FormLabel className="text-[#062a47] font-semibold">
                           Professional Title *
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="e.g. Full Stack Developer"
-                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  {/* Bio */}
+                  <FormField
+                    control={control}
+                    name="bio"
+                    render={({ field }) => {
+                      const bioValue = field.value || "";
+                      return (
+                        <FormItem>
+                          <div className="flex justify-between items-center mb-1 w-full">
+                            <FormLabel className="text-[#062a47] font-semibold m-0">
+                              Bio{" "}
+                              <span className="text-gray-400 font-normal">
+                                (optional)
+                              </span>
+                            </FormLabel>
+                            <span className="text-xs text-gray-500">
+                              {bioValue.length}/250
+                            </span>
+                          </div>
+                          <FormControl>
+                            <textarea
+                              {...field}
+                              maxLength={250}
+                              rows={4}
+                              placeholder="Tell us about yourself (max 250 characters)"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition w-full resize-none p-3"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+
                   {/* Skills */}
                   <FormField
                     control={control}
                     name="skills"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">
+                        <FormLabel className="text-[#062a47] font-semibold">
                           Skills (comma separated) *
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="React, Node.js, PostgreSQL"
-                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -365,13 +770,13 @@ function CompleteProfileForm() {
                       name="location.country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="capitalize text-white">
+                          <FormLabel className="capitalize text-[#062a47] font-semibold">
                             Country *
                           </FormLabel>
                           <FormControl>
                             <select
                               {...field}
-                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
                             >
                               <option value="">Select Country</option>
                               {countries.map((country) => (
@@ -394,13 +799,13 @@ function CompleteProfileForm() {
                       name="location.state"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="capitalize text-white">
+                          <FormLabel className="capitalize text-[#062a47] font-semibold">
                             State *
                           </FormLabel>
                           <FormControl>
                             <select
                               {...field}
-                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
                               disabled={!selectedCountry}
                             >
                               <option value="">Select State</option>
@@ -424,13 +829,13 @@ function CompleteProfileForm() {
                       name="location.city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="capitalize text-white">
+                          <FormLabel className="capitalize text-[#062a47] font-semibold">
                             City *
                           </FormLabel>
                           <FormControl>
                             <select
                               {...field}
-                              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] w-full"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
                               disabled={!selectedState}
                             >
                               <option value="">Select City</option>
@@ -452,12 +857,14 @@ function CompleteProfileForm() {
                     name="location.address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Address *</FormLabel>
+                        <FormLabel className="text-[#062a47] font-semibold">
+                          Address *
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="Enter your address"
-                            className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -469,7 +876,7 @@ function CompleteProfileForm() {
                   <Button
                     type="button"
                     onClick={handleNext}
-                    className="bg-[#a3e635] text-black rounded-xl font-bold"
+                    className="bg-[#f75a2f] text-white rounded-xl font-bold shadow hover:bg-[#062a47] transition"
                   >
                     Next
                   </Button>
@@ -480,7 +887,7 @@ function CompleteProfileForm() {
             {step === 2 && (
               <Fragment>
                 <div className="space-y-6">
-                  <h2 className="text-xl font-bold text-white border-b border-[#23232b] pb-2">
+                  <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
                     Social Links (Optional)
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -492,14 +899,14 @@ function CompleteProfileForm() {
                           name={`socialLinks.${key}` as any}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="capitalize text-white">
+                              <FormLabel className="capitalize text-[#062a47] font-semibold">
                                 {key}
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   {...field}
                                   placeholder={`https://${key}.com/username`}
-                                  className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -514,13 +921,13 @@ function CompleteProfileForm() {
                   <Button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="bg-[#23232b] text-white rounded-xl"
+                    className="bg-[#062a47] text-white rounded-xl shadow hover:bg-[#f75a2f] transition"
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-[#a3e635] text-black font-bold rounded-xl"
+                    className="bg-[#f75a2f] text-white font-bold rounded-xl shadow hover:bg-[#062a47] transition"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Saving..." : "Save Profile"}
