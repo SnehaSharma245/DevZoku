@@ -8,6 +8,17 @@ import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Popup } from "@/components/CompleteProfilePopup";
+import { set } from "react-hook-form";
+import {
+  FaGithub,
+  FaLinkedin,
+  FaGlobe,
+  FaTwitter,
+  FaDev,
+  FaInstagram,
+} from "react-icons/fa";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHashnode } from "@fortawesome/free-brands-svg-icons";
 
 interface Project {
   title: string;
@@ -37,7 +48,6 @@ interface DeveloperProfile {
   title?: string;
   bio?: string;
   skills?: string[];
-  isAvailable?: boolean;
   location?: Location;
   socialLinks?: SocialLinks;
   projects?: Project[];
@@ -76,8 +86,14 @@ function DeveloperDashboard() {
   const { id } = useParams();
 
   const [profile, setProfile] = useState<DeveloperProfile | null>(null);
-
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [stats, setStats] = useState<{
+    participatedHackathonsCount?: number;
+    hackathonsWithPositionCount?: number;
+    winnerCount?: number;
+    firstRunnerUpCount?: number;
+    secondRunnerUpCount?: number;
+  }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -86,11 +102,19 @@ function DeveloperDashboard() {
         // Fetch developer profile
         const profileRes = await api.get(`/developer/developer-profile/${id}`);
 
-        setProfile(profileRes.data.data);
-
-        // Fetch hackathons (registered or participated)
-        // const hackRes = await api.get(`/developer/hackathons`);
-        // setHackathons(hackRes.data.data || []);
+        const { status, data, message } = profileRes.data;
+        console.log("Profile data:", data);
+        if (status === 200) {
+          setProfile(data);
+          setHackathons(data.participatedHackathons || []);
+          setStats({
+            participatedHackathonsCount: data.participatedHackathonsCount,
+            hackathonsWithPositionCount: data.hackathonsWithPositionCount,
+            winnerCount: data.winnerCount,
+            firstRunnerUpCount: data.firstRunnerUpCount,
+            secondRunnerUpCount: data.secondRunnerUpCount,
+          });
+        }
       } catch (error: any) {
         toast.error(error?.response?.data?.message || "Failed to fetch data");
       }
@@ -110,148 +134,271 @@ function DeveloperDashboard() {
     <>
       <Popup open={showIncompleteModal} onOpenChange={setShowIncompleteModal} />
       <div className="max-w-5xl mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          Developer Dashboard
-        </h1>
-
-        {/* Profile Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 space-y-2">
-                <div>
-                  <span className="font-semibold">Title:</span>{" "}
-                  {profile?.title || (
-                    <span className="text-gray-400">Not set</span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-semibold">Bio:</span>{" "}
-                  {profile?.bio || (
-                    <span className="text-gray-400">Not set</span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-semibold">Skills:</span>{" "}
-                  {profile?.skills && profile.skills.length > 0 ? (
-                    profile.skills.map((s) => (
-                      <Badge key={s} className="mr-1">
-                        {s}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-gray-400">Not set</span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-semibold">Available for Projects:</span>{" "}
-                  {profile?.isAvailable ? (
-                    <span className="text-green-600 font-semibold">Yes</span>
-                  ) : (
-                    <span className="text-gray-500">No</span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-semibold">Location:</span>{" "}
-                  {profile?.location ? (
-                    [
-                      profile.location.city,
-                      profile.location.state,
-                      profile.location.country,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || (
-                      <span className="text-gray-400">Not set</span>
-                    )
-                  ) : (
-                    <span className="text-gray-400">Not set</span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-semibold">Social Links:</span>{" "}
-                  {profile?.socialLinks &&
-                  Object.values(profile.socialLinks).some((v) => v) ? (
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {Object.entries(profile.socialLinks)
-                        .filter(([_, v]) => v)
-                        .map(([key, value]) => (
-                          <a
-                            key={key}
-                            href={value as string}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline text-sm"
-                          >
-                            {key}
-                          </a>
-                        ))}
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">Not set</span>
-                  )}
-                </div>
+        {/* Modern Profile Header */}
+        <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-[#eaf6fb] to-[#fff] rounded-3xl shadow-lg p-8 mb-8">
+          <div className="flex-shrink-0 w-32 h-32 rounded-full bg-[#2563eb] flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+            {(user?.firstName && user.firstName.charAt(0)) ||
+              (user?.lastName && user.lastName.charAt(0)) ||
+              "U"}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-3xl font-extrabold text-[#062a47] mb-2">
+              {user?.firstName}
+            </h2>
+            <div className="text-lg text-[#2563eb] font-semibold mb-1">
+              {profile?.title || "Developer"}
+            </div>
+            <div className="text-gray-600 mb-4">{profile?.bio}</div>
+            <div className="flex gap-4 flex-wrap mb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#f75a2f]">
+                  {hackathons.length}
+                </span>
+                <span className="text-gray-500">Participated Hackathon</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#2563eb]">
+                  {profile?.projects?.length || 0}
+                </span>
+                <span className="text-gray-500">Projects</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#062a47]">
+                  {profile?.skills?.length || 0}
+                </span>
+                <span className="text-gray-500">Skills</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {profile?.skills?.map((s) => (
+                <Badge
+                  key={s}
+                  className="bg-[#eaf6fb] text-[#062a47] font-semibold"
+                >
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        {/* Hackathons Section */}
-        <Card>
+        {/* Social Links Section */}
+        {profile?.socialLinks &&
+          Object.values(profile.socialLinks).some(Boolean) && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Let's Connect</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 flex-wrap items-center">
+                  {profile.socialLinks.github && (
+                    <a
+                      href={profile.socialLinks.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#333] hover:text-[#2563eb] transition"
+                    >
+                      <FaGithub size={22} />
+                      <span className="hidden md:inline">GitHub</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.linkedin && (
+                    <a
+                      href={profile.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#0077b5] hover:text-[#2563eb] transition"
+                    >
+                      <FaLinkedin size={22} />
+                      <span className="hidden md:inline">LinkedIn</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.portfolio && (
+                    <a
+                      href={profile.socialLinks.portfolio}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#2563eb] hover:text-[#062a47] transition"
+                    >
+                      <FaGlobe size={22} />
+                      <span className="hidden md:inline">Portfolio</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.twitter && (
+                    <a
+                      href={profile.socialLinks.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#1da1f2] hover:text-[#2563eb] transition"
+                    >
+                      <FaTwitter size={22} />
+                      <span className="hidden md:inline">Twitter</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.hashnode && (
+                    <a
+                      href={profile.socialLinks.hashnode}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#2962ff] hover:text-[#2563eb] transition"
+                    >
+                      <FontAwesomeIcon icon={faHashnode} size="lg" />
+                      <span className="hidden md:inline">Hashnode</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.devto && (
+                    <a
+                      href={profile.socialLinks.devto}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#0a0a0a] hover:text-[#2563eb] transition"
+                    >
+                      <FaDev size={22} />
+                      <span className="hidden md:inline">Dev.to</span>
+                    </a>
+                  )}
+                  {profile.socialLinks.instagram && (
+                    <a
+                      href={profile.socialLinks.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[#e1306c] hover:text-[#2563eb] transition"
+                    >
+                      <FaInstagram size={22} />
+                      <span className="hidden md:inline">Instagram</span>
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+        {/* Experience & Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6 flex flex-col items-center">
+            <span className="text-lg font-semibold text-[#2563eb]">
+              Hackathons Participated
+            </span>
+            <span className="text-4xl font-bold mt-2">
+              {stats.participatedHackathonsCount ?? hackathons.length}
+            </span>
+          </Card>
+          <Card className="p-6 flex flex-col items-center">
+            <span className="text-lg font-semibold text-[#f75a2f]">
+              Hackathons with Position
+            </span>
+            <span className="text-4xl font-bold mt-2">
+              {stats.hackathonsWithPositionCount ?? 0}
+            </span>
+            <div className="flex gap-2 mt-2 text-sm">
+              <span className="text-green-700">
+                🏆 {stats.winnerCount ?? 0}
+              </span>
+              <span className="text-orange-600">
+                🥈 {stats.firstRunnerUpCount ?? 0}
+              </span>
+              <span className="text-blue-700">
+                🥉 {stats.secondRunnerUpCount ?? 0}
+              </span>
+            </div>
+          </Card>
+          <Card className="p-6 flex flex-col items-center">
+            <span className="text-lg font-semibold text-[#f75a2f]">
+              Projects
+            </span>
+            <span className="text-4xl font-bold mt-2">
+              {profile?.projects?.length || 0}
+            </span>
+          </Card>
+          <Card className="p-6 flex flex-col items-center">
+            <span className="text-lg font-semibold text-[#062a47]">Skills</span>
+            <span className="text-4xl font-bold mt-2">
+              {profile?.skills?.length || 0}
+            </span>
+          </Card>
+        </div>
+
+        {/* Projects Section */}
+        <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Your Hackathons</CardTitle>
+            <CardTitle>Projects</CardTitle>
           </CardHeader>
           <CardContent>
-            {hackathons.length === 0 ? (
-              <div className="text-gray-500">
-                You have not participated in any hackathons yet.
-              </div>
-            ) : (
+            {profile?.projects && profile.projects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {hackathons.map((hack) => (
+                {profile.projects.map((project, idx) => (
                   <div
-                    key={hack.id}
-                    className="border rounded p-4 flex flex-col gap-2"
+                    key={idx}
+                    className="border rounded p-4 flex flex-col gap-2 bg-[#f3f4f6]"
                   >
-                    <div className="font-semibold text-lg">{hack.title}</div>
-                    <div className="text-xs text-gray-500">
-                      Status:{" "}
-                      <span
-                        className={
-                          hack.status === "completed"
-                            ? "text-gray-600"
-                            : hack.status === "ongoing"
-                            ? "text-green-600"
-                            : "text-blue-600"
-                        }
-                      >
-                        {hack.status.charAt(0).toUpperCase() +
-                          hack.status.slice(1)}
-                      </span>
+                    <div className="font-semibold text-lg text-[#062a47]">
+                      {project.title}
                     </div>
-                    {hack.startTime && hack.endTime && (
-                      <div className="text-xs text-gray-500">
-                        {new Date(hack.startTime).toLocaleString()} -{" "}
-                        {new Date(hack.endTime).toLocaleString()}
-                      </div>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        router.push(`hackathon/view-all-hackathons/${hack.id}`)
-                      }
-                    >
-                      View Hackathon
-                    </Button>
+                    <div className="text-sm text-gray-600">
+                      {project.description}
+                    </div>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {project.techStack.map((tech) => (
+                        <Badge key={tech} className="bg-[#2563eb] text-white">
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      {project.repoUrl && (
+                        <a
+                          href={project.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Repo
+                        </a>
+                      )}
+                      {project.demoUrl && (
+                        <a
+                          href={project.demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 underline text-sm"
+                        >
+                          Demo
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="text-gray-500">No projects added yet.</div>
             )}
           </CardContent>
         </Card>
+
+        {/* Hackathon Domains/Tags Section */}
+        {hackathons && hackathons.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Hackathon Domains</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  ...new Set(
+                    hackathons.flatMap((h: any) => h.tags || []).filter(Boolean)
+                  ),
+                ].map((tag: string) => (
+                  <Badge
+                    key={tag}
+                    className="bg-[#eaf6fb] text-[#2563eb] font-semibold"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );
