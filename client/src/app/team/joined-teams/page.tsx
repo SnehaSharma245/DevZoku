@@ -113,9 +113,9 @@ function JoinedTeamsPage() {
         onConfirm={() => selectedTeam && handleLeavingTeam(selectedTeam.id)}
         teamName={selectedTeam?.name}
       />
-      <div className="min-h-screen w-full  flex flex-col">
+      <div className="min-h-screen w-full flex flex-col ">
         <div className="max-w-7xl w-full mx-auto pt-8 sm:pt-12 px-2 sm:px-6 flex-1 flex flex-col">
-          <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-white tracking-tight drop-shadow-lg">
+          <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-[#062a47] tracking-tight drop-shadow-lg">
             Joined Teams
           </h1>
 
@@ -126,19 +126,19 @@ function JoinedTeamsPage() {
               placeholder="Search by team title..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full max-w-md px-4 py-2 rounded-xl bg-[#23232b] text-white border-none focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] shadow"
+              className="w-full max-w-md px-4 py-2 rounded-xl bg-white text-[#062a47] border border-[#e3e8ee] focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] shadow transition"
             />
           </div>
 
           {filteredTeams.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
-              <p className="text-center text-gray-400 text-lg mb-6">
+              <p className="text-center text-[#8ca2c3] text-lg mb-6">
                 {joinedTeams.length === 0
                   ? "You haven't joined any teams yet."
                   : "No teams found."}
               </p>
               <Link href="/team/view-all-teams">
-                <Button className="bg-[#a3e635] text-black font-semibold rounded-xl hover:bg-lime-400 transition px-6 py-2 text-base shadow-md">
+                <Button className="bg-[#f75a2f] text-white font-semibold rounded-xl hover:bg-[#062a47] transition px-6 py-2 text-base shadow-md">
                   Explore Teams
                 </Button>
               </Link>
@@ -157,31 +157,31 @@ function JoinedTeamsPage() {
               {filteredTeams.map((item) => (
                 <Card
                   key={`${item.team_members.userId}-${item.teams.id}`}
-                  className="bg-[#18181e] border border-[#23232b] rounded-2xl shadow-xl hover:shadow-2xl transition-shadow aspect-square flex flex-col justify-between"
+                  className="bg-white border border-[#e3e8ee] rounded-2xl shadow-xl hover:shadow-2xl transition-shadow aspect-square flex flex-col justify-between"
                 >
                   <CardContent className="p-6 sm:p-8 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                       {/* Team Name & Details */}
                       <Link href={`/team/view-all-teams/${item.teams.id}`}>
-                        <h2 className="text-2xl font-bold cursor-pointer text-[#a3e635] hover:underline transition mb-2">
+                        <h2 className="text-2xl font-bold cursor-pointer text-[#f75a2f] hover:underline transition mb-2">
                           {item.teams.name}
                         </h2>
                       </Link>
                       {/* 3 Dots Dropdown (shadcn) */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-2 rounded-full hover:bg-[#23232b]">
-                            <EllipsisVertical className="w-6 h-6 text-gray-400" />
+                          <button className="p-2 rounded-full hover:bg-[#f7faff]">
+                            <EllipsisVertical className="w-6 h-6 text-[#8ca2c3]" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                           align="end"
-                          className="w-48 bg-[#23232b] border-none rounded-xl shadow-lg"
+                          className="w-48 bg-white border border-[#e3e8ee] rounded-xl shadow-lg"
                         >
                           <DropdownMenuItem asChild>
                             <Link
                               href={`/team/joined-teams/${item.teams.id}`}
-                              className="block px-4 py-2 text-sm text-white hover:bg-[#a3e635] hover:text-black rounded"
+                              className="block px-4 py-2 text-sm text-[#062a47] hover:bg-[#f75a2f] hover:text-white rounded"
                             >
                               View Pending Invites
                             </Link>
@@ -191,14 +191,14 @@ function JoinedTeamsPage() {
                               setSelectedTeam(item.teams);
                               setIsLeaveTimeDialogOpen(true);
                             }}
-                            className="block px-4 py-2 text-sm text-white hover:bg-[#a3e635] hover:text-black rounded cursor-pointer"
+                            className="block px-4 py-2 text-sm text-[#062a47] hover:bg-[#f75a2f] hover:text-white rounded cursor-pointer"
                           >
                             Leave Team
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link
                               href={`/team/edit-team/${item.teams.id}`}
-                              className="block px-4 py-2 text-sm text-white hover:bg-[#a3e635] hover:text-black rounded"
+                              className="block px-4 py-2 text-sm text-[#062a47] hover:bg-[#f75a2f] hover:text-white rounded"
                             >
                               Edit Team
                             </Link>
@@ -208,10 +208,10 @@ function JoinedTeamsPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-3 mt-2">
-                      <span className="bg-[#23232b] text-gray-300 px-4 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-[#f7faff] text-[#062a47] px-4 py-1 rounded-full text-xs font-medium border border-[#e3e8ee]">
                         Required Team Size: {item.teams.teamSize}
                       </span>
-                      <span className="bg-[#23232b] text-gray-300 px-4 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-[#f7faff] text-[#062a47] px-4 py-1 rounded-full text-xs font-medium border border-[#e3e8ee]">
                         Current Members: {item.teams.currentMemberCount}
                       </span>
                     </div>
@@ -226,7 +226,7 @@ function JoinedTeamsPage() {
                             return (
                               <span
                                 key={trimmed + idx}
-                                className="bg-[#a3e635] text-black px-3 py-1 rounded-full text-xs font-semibold"
+                                className="bg-[#f75a2f]  px-3 py-1 rounded-full text-xs font-semibold"
                               >
                                 {trimmed}
                               </span>
