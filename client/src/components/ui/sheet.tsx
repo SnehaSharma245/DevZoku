@@ -73,8 +73,8 @@ function SheetContent({
       >
         {children}
         <SheetPrimitive.Close className="ring-offset-background :bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100  focus:outline-none disabled:pointer-events-none cursor-pointer">
-          <ChevronsRight className="size-6 text-[#a3e635]" />
-          <span className="sr-only text-[#a3e635]">Close</span>
+          <ChevronsRight className="size-6 text-[#062a47]" />
+          <span className="sr-only text-[#062a47]">Close</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>

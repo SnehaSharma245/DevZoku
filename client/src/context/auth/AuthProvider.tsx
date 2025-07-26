@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const { status, data, message } = res.data;
       const userData = data;
-      console.log("User data:", userData);
+
       if (res.status === 200) {
         setUser(userData);
         setIsAuthenticated(true);
