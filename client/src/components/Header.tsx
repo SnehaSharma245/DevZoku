@@ -50,13 +50,13 @@ const Header = () => {
 
   return (
     <>
-      <header className="w-full bg-[#18181e] shadow-lg px-6 py-4 flex items-center justify-between  border-b border-[#23232b]">
+      <header className=" w-full shadow-lg  px-6 py-4 flex items-center justify-between  ">
         {/* Left: Logo */}
         <Link
           href="/"
-          className="text-2xl font-extrabold text-[#a3e635] flex items-center gap-2"
+          className="text-3xl font-extrabold text-[#062a47] flex items-center gap-2 tracking-tight"
+          style={{ letterSpacing: "-1px" }}
         >
-          <LayoutDashboard className="w-7 h-7" />
           DevZoku
         </Link>
 
@@ -65,8 +65,8 @@ const Header = () => {
           {user ? (
             <Sheet open={open} onOpenChange={setOpen}>
               <div onClick={() => setOpen(true)}>
-                <Avatar className="w-10 h-10 cursor-pointer bg-[#101011] text-[#a3e635] font-semibold border-2 border-[#a3e635]">
-                  <AvatarFallback className="bg-[#272729] text-[#a3e635] font-semibold">
+                <Avatar className="w-11 h-11 cursor-pointer bg-[#eaf6fb] text-[#2563eb] font-semibold border-2 border-[#062a47] shadow">
+                  <AvatarFallback className="bg-[#f3f4f6] text-[#062a47] font-semibold">
                     {getInitial()}
                   </AvatarFallback>
                 </Avatar>
@@ -74,64 +74,63 @@ const Header = () => {
 
               <SheetContent
                 side="right"
-                className="w-72 sm:w-80 bg-[#18181e] border-l border-[#23232b]"
+                className="w-80 bg-white border-l border-[#e3e8ee] rounded-l-3xl shadow-xl"
               >
                 <SheetHeader>
-                  <SheetTitle className="text-2xl font-extrabold text-[#a3e635] flex items-center gap-2">
-                    <LayoutDashboard className="w-6 h-6" />
+                  <SheetTitle className="text-2xl font-extrabold text-[#062a47] flex items-center gap-2">
                     DevZoku
                   </SheetTitle>
                 </SheetHeader>
 
-                <nav className="mt-6 flex flex-col gap-4 text-white text-base font-medium">
+                <nav className="mt-6 p-3 flex flex-col gap-4 text-[#062a47] text-base font-medium">
                   {user?.role === "developer" ? (
                     <>
                       <Link
                         href={`/developer/profile/${user.id}`}
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <User className="w-4 h-4" /> Show Profile
                       </Link>
                       <Link
                         href="/team/joined-teams"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Users className="w-4 h-4" /> Joined Teams
                       </Link>
                       <Link
                         href="/team/create-team"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Plus className="w-4 h-4" /> Create a Team
                       </Link>
                       <Link
                         href="/hackathon/view-all-hackathons"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Rocket className="w-4 h-4" /> Hackathons
                       </Link>
                       <Link
                         href="/team/view-all-teams"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Layers className="w-4 h-4" /> View All Teams
                       </Link>
                       <Link
                         href="/developer/complete-profile"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <BadgeCheck className="w-4 h-4" /> Complete Profile
                       </Link>
                       <Link
                         href="/developer/manage-projects"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Globe className="w-4 h-4" /> Manage Projects
                       </Link>
@@ -141,7 +140,7 @@ const Header = () => {
                           setOpen(false);
                           setRedBadge(false);
                         }}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <span className="relative">
                           <Bell className="w-4 h-4" />
@@ -160,28 +159,28 @@ const Header = () => {
                       <Link
                         href={"/organizer/profile/" + user.id}
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Building2 className="w-4 h-4" /> Show Profile
                       </Link>
                       <Link
                         href="/hackathon/view-all-hackathons"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Rocket className="w-4 h-4" /> Show Hackathons
                       </Link>
                       <Link
                         href="/hackathon/create-hackathon"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <Plus className="w-4 h-4" /> Create Hackathon
                       </Link>
                       <Link
                         href="/organizer/complete-profile"
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 hover:text-[#a3e635] transition-colors"
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
                         <BadgeCheck className="w-4 h-4" /> Complete Profile
                       </Link>
@@ -197,7 +196,7 @@ const Header = () => {
                       handleLogout();
                       setOpen(false);
                     }}
-                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                    className="flex items-center gap-2 bg-[#f75a2f] hover:bg-[#062a47] text-white rounded-xl font-bold shadow"
                   >
                     <LogOut className="w-4 h-4" /> Logout
                   </Button>
@@ -210,7 +209,7 @@ const Header = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 bg-[#23232b] border-[#23232b] text-white hover:bg-[#a3e635] hover:text-black rounded-xl"
+                  className="flex items-center gap-2 bg-white border-[#e3e8ee] text-[#062a47] hover:bg-[#2563eb] hover:text-white rounded-xl font-bold shadow"
                 >
                   <LogIn className="w-4 h-4" /> Login
                 </Button>
@@ -218,7 +217,7 @@ const Header = () => {
               <Link href="/auth/login">
                 <Button
                   size="sm"
-                  className="flex items-center gap-2 bg-[#a3e635] text-black rounded-xl font-bold"
+                  className="flex items-center gap-2 bg-[#2563eb] text-white rounded-xl font-bold shadow"
                 >
                   <UserPlus className="w-4 h-4" /> Signup
                 </Button>
