@@ -40,11 +40,9 @@ services:
       context: ./client
       dockerfile: Dockerfile.dev
     restart: unless-stopped
-    env_file: ./client/.env
     volumes:
       - /client/node_modules
       - /client/.next
-
     command: bun run dev
     networks:
       - devzoku-app
