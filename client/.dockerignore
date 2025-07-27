@@ -14,6 +14,7 @@ out/          # If you're using 'next export' for static HTML
 
 # Log files and temporary files
 *.log
+npm-debug.log*
 bun-debug.log*
 
 # IDE and Editor specific files
