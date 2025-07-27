@@ -16,12 +16,41 @@ services:
       - valkey
       - qdrant
 
+  migrator:
+    build:
+      context: ./server # Backend ke Dockerfile ko use karega
+      dockerfile: Dockerfile
+      target: builder
+    environment:
+      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/DevZoku-db
+    depends_on:
+      - postgres
+    command: bun run db:push # Tumhara migration command
+    networks:
+      - devzoku-app
+    restart: "no"
+
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile # Should be your production Dockerfile
+    container_name: devzoku-worker
+    restart: unless-stopped
+    command: bun worker
+    env_file: ./server/.env
+    networks:
+      - devzoku-app
+    depends_on:
+      - server
+
   # --- Frontend Service (Bun + Next.js) ---
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     networks:
       - devzoku-app
     depends_on:
