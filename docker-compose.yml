@@ -1,16 +1,29 @@
-name: devzoku-app
 services:
-  # --- Backend Service (Bun + ExpressJS) ---
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: devzoku-client
+    restart: unless-stopped
+    env_file: ./client/.env
+    ports:
+      - "3000:3000"
+    networks:
+      - devzoku
+    depends_on:
+      - server
+
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
+    container_name: devzoku-server
     env_file: ./server/.env
     ports:
       - "8000:8000"
     networks:
-      - devzoku-app
+      - devzoku
     depends_on:
       - postgres
       - valkey
@@ -18,47 +31,30 @@ services:
 
   migrator:
     build:
-      context: ./server # Backend ke Dockerfile ko use karega
+      context: ./server
       dockerfile: Dockerfile
       target: builder
     environment:
       - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/DevZoku-db
     depends_on:
       - postgres
-    command: bun run db:push # Tumhara migration command
+    command: bun run db:push
     networks:
-      - devzoku-app
+      - devzoku
     restart: "no"
 
   worker:
     build:
       context: ./server
-      dockerfile: Dockerfile # Should be your production Dockerfile
+      dockerfile: Dockerfile
     container_name: devzoku-worker
     restart: unless-stopped
     command: bun worker
     env_file: ./server/.env
     networks:
-      - devzoku-app
+      - devzoku
     depends_on:
       - server
-
-  # --- Frontend Service (Bun + Next.js) ---
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file: ./client/.env
-    ports:
-      - "3000:3000"
-    networks:
-      - devzoku-app
-    depends_on:
-      - server
-
-  # --- Nginx Service  ---
-  # (Add if you want to serve client via nginx in production)
 
   postgres:
     image: postgres:15
@@ -73,7 +69,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - devzoku-app
+      - devzoku
 
   adminer:
     image: adminer
@@ -81,7 +77,7 @@ services:
     ports:
       - 8080:8080
     networks:
-      - devzoku-app
+      - devzoku
     depends_on:
       - postgres
 
@@ -94,7 +90,7 @@ services:
     volumes:
       - valkey_data:/data
     networks:
-      - devzoku-app
+      - devzoku
 
   qdrant:
     image: qdrant/qdrant
@@ -105,10 +101,10 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
-      - devzoku-app
+      - devzoku
 
 networks:
-  devzoku-app:
+  devzoku:
     driver: bridge
 
 volumes:
