@@ -1,0 +1,87 @@
+name: devzoku-app
+services:
+  # --- Backend Service (Bun + ExpressJS) ---
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./server/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - devzoku-app
+    depends_on:
+      - postgres
+      - valkey
+      - qdrant
+
+  # --- Frontend Service (Bun + Next.js) ---
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - devzoku-app
+    depends_on:
+      - server
+
+  # --- Nginx Service  ---
+  # (Add if you want to serve client via nginx in production)
+
+  postgres:
+    image: postgres:15
+    container_name: devzoku-db
+    restart: always
+    environment:
+      POSTGRES_DB: DevZoku-db
+      POSTGRES_USER: sneha
+      POSTGRES_PASSWORD: sneha
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devzoku-app
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - devzoku-app
+    depends_on:
+      - postgres
+
+  valkey:
+    image: valkey/valkey
+    container_name: devzoku-valkey
+    ports:
+      - 6379:6379
+    restart: always
+    volumes:
+      - valkey_data:/data
+    networks:
+      - devzoku-app
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: devzoku-qdrant
+    ports:
+      - 6333:6333
+    restart: always
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - devzoku-app
+
+networks:
+  devzoku-app:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  valkey_data:
+  qdrant_data:
