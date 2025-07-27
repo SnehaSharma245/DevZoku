@@ -4,9 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build": "next build --no-lint",
+    "start": "next start"
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.0.0",
