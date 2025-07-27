@@ -22,7 +22,8 @@ COPY . .
 # Use a slim, secure base image for the final container
 FROM oven/bun:latest AS production
 
-
+# Set NODE_ENV to production
+ENV NODE_ENV=production
 
 WORKDIR /server
 
@@ -33,10 +34,12 @@ COPY --from=builder /server/package.json /server/bun.lock ./
 RUN bun install --production --frozen-lockfile
 
 COPY --from=builder /server/src ./src
+COPY --from=builder /server/tsconfig.json ./
+COPY --from=builder /server/drizzle.config.ts ./
 COPY --from=builder /server/start.sh .
 
 # Expose the port your application runs on (replace 3000 if needed)
 EXPOSE 8000
 
 # Set the command to run your application
-CMD ["./start.sh"]
+CMD ["bun", "dev"]
