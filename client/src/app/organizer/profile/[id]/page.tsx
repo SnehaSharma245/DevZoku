@@ -5,7 +5,6 @@ import api from "@/utils/api";
 import { Button, Card, CardContent } from "@/components";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Popup } from "@/components/CompleteProfilePopup";
 
 interface OrganizerProfile {
   id: string;
@@ -88,7 +87,6 @@ export default function OrganizerProfilePage() {
 
   return (
     <>
-      <Popup open={showIncompleteModal} onOpenChange={setShowIncompleteModal} />
       <div className="max-w-3xl mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6 text-center">
           Organizer Profile

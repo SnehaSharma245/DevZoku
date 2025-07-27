@@ -7,7 +7,7 @@ import { Button, Card, CardContent } from "@/components";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Popup } from "@/components/CompleteProfilePopup";
+
 import { set } from "react-hook-form";
 import {
   FaGithub,
@@ -132,7 +132,6 @@ function DeveloperDashboard() {
 
   return (
     <>
-      <Popup open={showIncompleteModal} onOpenChange={setShowIncompleteModal} />
       <div className="max-w-5xl mx-auto py-8 px-4">
         {/* Modern Profile Header */}
         <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-[#eaf6fb] to-[#fff] rounded-3xl shadow-lg p-8 mb-8">
