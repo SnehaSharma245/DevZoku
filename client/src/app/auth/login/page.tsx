@@ -3,15 +3,15 @@ import { useAuth } from "@/hooks/useAuth";
 import React from "react";
 import { LogIn } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const Login = () => {
   const handleGoogleLoginForDeveloper = () => {
-    window.location.href =
-      "http://localhost:8000/api/v1/developer/authorization/auth/google";
+    window.location.href = `${API_BASE_URL}/developer/authorization/auth/google`;
   };
 
   const handleGoogleLoginForOrganizer = () => {
-    window.location.href =
-      "http://localhost:8000/api/v1/organizer/authorization/auth/google";
+    window.location.href = `${API_BASE_URL}/organizer/authorization/auth/google`;
   };
 
   const { user } = useAuth();
