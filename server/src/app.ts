@@ -35,6 +35,10 @@ app.use("/api/v1/organizer", organizerRoutes);
 app.use("/api/v1/hackathon", hackathonRoutes);
 app.use("/api/v1/team", teamRoutes);
 
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Welcome to DevZoku API" });
+});
+
 app.use(errorMiddleware);
 
 export { app };
