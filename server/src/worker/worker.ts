@@ -1,15 +1,12 @@
 import { Worker } from "bullmq";
 import { teamRegToHackathonTemplate } from "../templates/teamRegToHackathon";
 import transporter from "../utils/nodemailerUtility";
-import { connection } from "../queues/queue";
-import { buildUserInteractionText } from "../utils/vector/buildUserIteraction";
-import { initialiseVectorStore } from "../lib/vectorStore";
-import { Document } from "@langchain/core/documents";
 import { hackathonResultAnnouncementTemplate } from "../templates/HackathonWinnerAnnouncement";
 
 const hackathonTeamEmailWorker = new Worker(
   "hackathon-emails",
   async (job) => {
+    console.log("Processing job:");
     const {
       email,
       memberName,
@@ -65,7 +62,10 @@ const hackathonTeamEmailWorker = new Worker(
   },
   {
     concurrency: 100,
-    connection: connection,
+    connection: {
+      host: process.env.VALKEY_HOST || "valkey",
+      port: process.env.VALKEY_PORT ? Number(process.env.VALKEY_PORT) : 6379,
+    },
   }
 );
 
