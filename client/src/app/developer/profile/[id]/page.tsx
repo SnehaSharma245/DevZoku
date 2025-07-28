@@ -51,6 +51,12 @@ interface DeveloperProfile {
   location?: Location;
   socialLinks?: SocialLinks;
   projects?: Project[];
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 interface Hackathon {
@@ -63,25 +69,7 @@ interface Hackathon {
 
 function DeveloperDashboard() {
   const { user, handleLogout } = useAuth();
-  const userProfile = user?.profile;
 
-  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
-
-  useEffect(() => {
-    if (user && user.isProfileComplete === false) {
-      setShowIncompleteModal(true); // ✨ show popup automatically
-    }
-  }, [user]);
-
-  if (!user) {
-    window.location.href = "/auth/login";
-    return null; // Prevent rendering if user is not authenticated
-  }
-
-  if (user?.role !== "developer") {
-    window.location.href = "/auth/login";
-    return null; // Prevent rendering if user is not a developer
-  }
   const router = useRouter();
   const { id } = useParams();
 
@@ -96,7 +84,6 @@ function DeveloperDashboard() {
   }>({});
 
   useEffect(() => {
-    if (!user) return;
     const fetchData = async () => {
       try {
         // Fetch developer profile
@@ -120,15 +107,7 @@ function DeveloperDashboard() {
       }
     };
     fetchData();
-  }, [user, id]);
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl">
-        Please login to view your dashboard.
-      </div>
-    );
-  }
+  }, [id]);
 
   return (
     <>
@@ -136,13 +115,13 @@ function DeveloperDashboard() {
         {/* Modern Profile Header */}
         <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-[#eaf6fb] to-[#fff] rounded-3xl shadow-lg p-8 mb-8">
           <div className="flex-shrink-0 w-32 h-32 rounded-full bg-[#2563eb] flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-            {(user?.firstName && user.firstName.charAt(0)) ||
-              (user?.lastName && user.lastName.charAt(0)) ||
+            {(profile?.user?.firstName && profile.user.firstName.charAt(0)) ||
+              (profile?.user?.lastName && profile.user.lastName.charAt(0)) ||
               "U"}
           </div>
           <div className="flex-1">
             <h2 className="text-3xl font-extrabold text-[#062a47] mb-2">
-              {user?.firstName}
+              {profile?.user?.firstName || "Developer"}
             </h2>
             <div className="text-lg text-[#2563eb] font-semibold mb-1">
               {profile?.title || "Developer"}

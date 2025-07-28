@@ -85,7 +85,6 @@ const completeDeveloperProfile = asyncHandler(async (req, res) => {
 
 // controller to fetch profile of a developer by ID
 const fetchDeveloperProfile = asyncHandler(async (req, res) => {
-  const { user } = req;
   const { id } = req.params;
 
   if (!id) {
@@ -100,8 +99,25 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
     .limit(1)
     .execute();
 
-  if (developerProfile.length === 0) {
+  if (developerProfile.length === 0 || !developerProfile[0]) {
     throw new ApiError(404, "Developer profile not found");
+  }
+
+  const user = await db
+    .select({
+      role: users.role,
+      id: users.id,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+    })
+    .from(users)
+    .where(eq(users.id, developerProfile[0].userId))
+    .limit(1)
+    .execute();
+
+  if (user.length === 0 || !user[0]) {
+    throw new ApiError(404, "User not found");
   }
 
   // fetch the participated hackathons
@@ -150,6 +166,7 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
         winnerCount,
         firstRunnerUpCount,
         secondRunnerUpCount,
+        user: user[0],
       },
       "Profile fetched successfully"
     )

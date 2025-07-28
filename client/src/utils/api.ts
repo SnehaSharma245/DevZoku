@@ -14,15 +14,15 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
-const PUBLIC_ROUTES = [
+const PUBLIC_ROUTE_PREFIXES = [
   "/auth/login",
   "/hackathon/view-all-hackathons",
-  "/developer/profile/*",
-  "/organizer/profile/*",
+  "/developer/profile/",
+  "/organizer/profile/",
 ];
 
 const isPublicRoute = (path: string): boolean => {
-  return PUBLIC_ROUTES.includes(path);
+  return PUBLIC_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix));
 };
 
 const getCurrentPath = () => {
