@@ -1,4 +1,3 @@
-name: devzoku-app
 services:
   # --- Backend Service (Bun + ExpressJS) ---
   server:
@@ -14,7 +13,7 @@ services:
     expose:
       - 8000
     networks:
-      - devzoku-app
+      - devzoku
     develop:
       watch:
         - action: sync
@@ -34,6 +33,32 @@ services:
       - valkey
       - qdrant
 
+  migrator:
+    build:
+      context: ./server # Backend ke Dockerfile ko use karega
+      dockerfile: Dockerfile.dev
+    environment:
+      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/DevZoku-db
+    depends_on:
+      - postgres
+    command: bun run db:push # Tumhara migration command
+    networks:
+      - devzoku
+    restart: "no"
+
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev # Should be your production Dockerfile
+    container_name: devzoku-worker
+    restart: unless-stopped
+    command: bun worker
+    env_file: ./server/.env
+    networks:
+      - devzoku
+    depends_on:
+      - server
+
   # --- Frontend Service (Bun + Next.js) ---
   client:
     build:
@@ -45,7 +70,7 @@ services:
       - /client/.next
     command: bun run dev
     networks:
-      - devzoku-app
+      - devzoku
     depends_on:
       - server
     ports:
@@ -67,7 +92,7 @@ services:
           target: /client/Dockerfile
 
   postgres:
-    image: postgres:15
+    image: postgres:17.5-alpine3.22
     restart: always
     environment:
       POSTGRES_DB: DevZoku-db
@@ -78,7 +103,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - devzoku-app
+      - devzoku
 
   adminer:
     image: adminer
@@ -86,17 +111,17 @@ services:
     ports:
       - 8080:8080
     networks:
-      - devzoku-app
+      - devzoku
 
   valkey:
-    image: valkey/valkey
+    image: valkey/valkey:8.1.3-alpine3.22
     ports:
       - 6379:6379
     restart: always
     volumes:
       - valkey_data:/data
     networks:
-      - devzoku-app
+      - devzoku
 
   qdrant:
     image: qdrant/qdrant
@@ -106,10 +131,10 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
-      - devzoku-app
+      - devzoku
 
 networks:
-  devzoku-app:
+  devzoku:
     driver: bridge
 
 volumes:

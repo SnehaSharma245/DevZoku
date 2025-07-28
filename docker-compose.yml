@@ -57,7 +57,7 @@ services:
       - server
 
   postgres:
-    image: postgres:15
+    image: postgres:17.5-alpine3.22
     container_name: devzoku-db
     restart: always
     environment:
@@ -82,7 +82,7 @@ services:
       - postgres
 
   valkey:
-    image: valkey/valkey
+    image: valkey/valkey:8.1.3-alpine3.22
     container_name: devzoku-valkey
     ports:
       - 6379:6379
