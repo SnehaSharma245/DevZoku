@@ -1,4 +1,4 @@
-FROM oven/bun:latest AS builder
+FROM oven/bun:1.2.19 AS builder
 
 WORKDIR /client
 
@@ -13,7 +13,7 @@ RUN bun run build
 # ---
 
 # Production Stage
-FROM oven/bun:latest AS production
+FROM oven/bun:1.2.19-alpine AS production
 WORKDIR /client
 
 COPY package.json bun.lock* ./
