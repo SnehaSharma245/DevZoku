@@ -25,6 +25,10 @@ import { Document } from "@langchain/core/documents";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { initialiseVectorStore } from "../lib/vectorStore";
 import { developers } from "../db/schema/developer.schema";
+import {
+  sendTeamRegistrationEmail,
+  sendHackathonResultEmail,
+} from "../utils/teamRegistrationResponse";
 
 // controller for applying to a hackathon with a team
 const applyToHackathon = asyncHandler(async (req, res) => {
@@ -189,12 +193,21 @@ const applyToHackathon = asyncHandler(async (req, res) => {
     .limit(1)
     .execute();
 
+  if (
+    organizer.length === 0 ||
+    !organizer[0]?.email ||
+    typeof organizer[0].email !== "string" ||
+    organizer[0].email === null
+  ) {
+    throw new ApiError(404, "Organizer not found");
+  }
+
   emails.forEach((member) => {
-    hackathonTeamEmailQueue.add("hackathon-email", {
+    sendTeamRegistrationEmail({
       email: member.email,
       memberName: member.name,
-      teamName: team[0]?.name,
-      hackathonName: hackathon[0]?.title,
+      teamName: team[0]?.name ?? "",
+      hackathonName: hackathon[0]?.title ?? "",
       hackathonStartDate: formatDate(
         hackathon[0]?.startTime
           ? hackathon[0].startTime.toISOString()
@@ -203,9 +216,8 @@ const applyToHackathon = asyncHandler(async (req, res) => {
       hackathonEndDate: formatDate(
         hackathon[0]?.endTime ? hackathon[0].endTime.toISOString() : undefined
       ),
-      organizationName: organizer[0]?.name,
-      organizationEmail: organizer[0]?.email,
-      type: "team-registration",
+      organizationName: organizer[0]?.name || "",
+      organizationEmail: organizer[0]?.email ?? "",
     });
   });
 
@@ -943,7 +955,11 @@ const markWinners = asyncHandler(async (req, res) => {
 
     const newHackathonObj = {
       hackathonId: hackathonId,
-      position,
+      position: position as
+        | "winner"
+        | "firstRunnerUp"
+        | "secondRunnerUp"
+        | "participant",
     };
 
     const updatedHackathons = [
@@ -997,15 +1013,18 @@ const markWinners = asyncHandler(async (req, res) => {
 
   for (const captain of captains) {
     const position = teamIdToPosition[captain.teamId] || "participant";
-    hackathonTeamEmailQueue.add("hackathon-email", {
+    await sendHackathonResultEmail({
       email: captain.email,
       captainName: captain.name,
       teamName: captain.teamName,
-      hackathonName: hackathon[0]?.title,
-      organizationName: organizer[0]?.name,
-      organizationEmail: organizer[0]?.email,
-      position,
-      type: "hackathon-result-announcement",
+      hackathonName: hackathon[0]?.title ?? "",
+      organizationName: organizer[0]?.name ?? "",
+      organizationEmail: organizer[0]?.email ?? "",
+      position: position as
+        | "participant"
+        | "winner"
+        | "firstRunnerUp"
+        | "secondRunnerUp",
     });
   }
 
