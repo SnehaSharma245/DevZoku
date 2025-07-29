@@ -1,11 +1,14 @@
 services:
   client:
+    image: snehas874/devzoku-client:latest
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+        - NEXT_PUBLIC_SOCKET_URI=${NEXT_PUBLIC_SOCKET_URI}
     container_name: devzoku-client
     restart: unless-stopped
-    env_file: ./client/.env
     ports:
       - "3000:3000"
     networks:
@@ -14,12 +17,13 @@ services:
       - server
 
   server:
+    image: snehas874/devzoku-server:latest
     build:
       context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
     container_name: devzoku-server
-    env_file: ./server/.env
+    env_file: .env.server
     ports:
       - "8000:8000"
     networks:
@@ -30,12 +34,13 @@ services:
       - qdrant
 
   migrator:
+    image: snehas874/devzoku-migrator:latest
     build:
       context: ./server
       dockerfile: Dockerfile
       target: builder
     environment:
-      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/DevZoku-db
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
     command: bun run db:push
@@ -43,27 +48,27 @@ services:
       - devzoku
     restart: "no"
 
-  worker:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: devzoku-worker
-    restart: unless-stopped
-    command: bun worker
-    env_file: ./server/.env
-    networks:
-      - devzoku
-    depends_on:
-      - server
+  # worker:
+  #   build:
+  #     context: ./server
+  #     dockerfile: Dockerfile
+  #   container_name: devzoku-worker
+  #   restart: unless-stopped
+  #   command: bun worker
+  #   env_file: ./server/.env
+  #   networks:
+  #     - devzoku
+  #   depends_on:
+  #     - server
 
   postgres:
     image: postgres:17.5-alpine3.22
     container_name: devzoku-db
     restart: always
     environment:
-      POSTGRES_DB: DevZoku-db
-      POSTGRES_USER: sneha
-      POSTGRES_PASSWORD: sneha
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - 5432:5432
     volumes:
