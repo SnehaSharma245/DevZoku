@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 const Home = () => {
   return (
     <main className="bg-white text-gray-800">
-      {/* 🚀 Hero Section */}
+      {/* 🚀 Hero Section update */}
       <section className="min-h-screen flex items-center justify-center text-center px-6 py-24 bg-gradient-to-br from-blue-100 via-white to-purple-100">
         <div className="max-w-5xl">
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-6">
