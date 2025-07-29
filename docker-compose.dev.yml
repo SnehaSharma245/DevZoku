@@ -38,7 +38,7 @@ services:
       context: ./server # Backend ke Dockerfile ko use karega
       dockerfile: Dockerfile.dev
     environment:
-      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/DevZoku-db
+      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/devzoku-db
     depends_on:
       - postgres
     command: bun run db:push # Tumhara migration command
@@ -95,7 +95,7 @@ services:
     image: postgres:17.5-alpine3.22
     restart: always
     environment:
-      POSTGRES_DB: DevZoku-db
+      POSTGRES_DB: devzoku-db
       POSTGRES_USER: sneha
       POSTGRES_PASSWORD: sneha
     ports:
