@@ -31,6 +31,16 @@ services:
       - valkey
       - qdrant
 
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: devzoku-worker
+    env_file: .env.worker
+    restart: unless-stopped
+    networks:
+      - devzoku
+
   migrator:
     build:
       context: ./server

@@ -5,7 +5,7 @@ services:
       context: ./server
       dockerfile: Dockerfile.dev
     restart: unless-stopped
-    env_file: ./server/.env
+    env_file: .env.server
     volumes:
       - /server/node_modules
     ports:
@@ -33,31 +33,28 @@ services:
       - valkey
       - qdrant
 
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: devzoku-worker
+    env_file: .env.worker
+    restart: unless-stopped
+    networks:
+      - devzoku
+
   migrator:
     build:
       context: ./server # Backend ke Dockerfile ko use karega
       dockerfile: Dockerfile.dev
     environment:
-      - DATABASE_URL=postgresql://sneha:sneha@postgres:5432/devzoku-db
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
     command: bun run db:push # Tumhara migration command
     networks:
       - devzoku
     restart: "no"
-
-  worker:
-    build:
-      context: ./server
-      dockerfile: Dockerfile.dev # Should be your production Dockerfile
-    container_name: devzoku-worker
-    restart: unless-stopped
-    command: bun worker
-    env_file: ./server/.env
-    networks:
-      - devzoku
-    depends_on:
-      - server
 
   # --- Frontend Service (Bun + Next.js) ---
   client:
@@ -75,7 +72,6 @@ services:
       - server
     ports:
       - "3000:3000"
-    # Docker watch configuration for live reloading (Docker Desktop specific)
     develop:
       watch:
         - action: sync
