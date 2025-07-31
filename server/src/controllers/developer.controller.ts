@@ -375,13 +375,10 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
         status: statusValue,
       };
     });
-    console.log("Hackathons with status:", hackathonsWithStatus);
-    //return only those which are upcoming or their registration is in progress
+
     const filteredHackathons = hackathonsWithStatus.filter((hack) =>
       ["upcoming", "Registration in Progress"].includes(hack.status)
     );
-
-    console.log("Filtered Hackathons:", filteredHackathons);
 
     return res
       .status(200)
@@ -413,13 +410,18 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
 
   const latestIds = latestNInteractions.map((i) => i.id);
 
+  if (latestNInteractions.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No user interactions found"));
+  }
+
   // Update the user interactions in db with the latest N interactions
   await db
     .delete(userInteractions)
     .where(
       and(
         eq(userInteractions.userId, userId),
-        // id not in latestIds
         notInArray(userInteractions.id, latestIds)
       )
     )
