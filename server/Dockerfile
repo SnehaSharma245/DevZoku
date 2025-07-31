@@ -11,7 +11,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Build your main application
-RUN bun run build # This will create 'dist' folder with your compiled JS files
+RUN bun run build 
 
 # ---- 2. Production Stage ----
 
@@ -31,7 +31,7 @@ RUN bun install --production --frozen-lockfile
 COPY --from=builder /server/dist ./dist
 
 # ** Ye line dobara add karein **
-COPY --from=builder /server/src ./src
+# COPY --from=builder /server/src ./src
 
 
 EXPOSE 8000
