@@ -1,12 +1,10 @@
 import { eq, and, inArray, sql, desc, gt, not } from "drizzle-orm";
 import { db } from "../db";
 import { ApiResponse } from "../utils/ApiResponse";
-import type { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { teamMembers, teams } from "../db/schema/team.schema";
 import { users } from "../db/schema/user.schema";
-import { io } from "..";
 import {
   hackathonPhases,
   hackathons,
@@ -20,15 +18,11 @@ import {
   userHackathonViews,
   userInteractions,
 } from "../db/schema/userInteraction.schema";
-import { buildUserInteractionText } from "../utils/vector/buildUserIteraction";
+
 import { Document } from "@langchain/core/documents";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { initialiseVectorStore } from "../lib/vectorStore";
 import { developers } from "../db/schema/developer.schema";
-import {
-  sendTeamRegistrationEmail,
-  sendHackathonResultEmail,
-} from "../utils/teamRegistrationResponse";
 
 // controller for applying to a hackathon with a team
 const applyToHackathon = asyncHandler(async (req, res) => {
@@ -203,7 +197,25 @@ const applyToHackathon = asyncHandler(async (req, res) => {
   }
 
   emails.forEach((member) => {
-    sendTeamRegistrationEmail({
+    // sendTeamRegistrationEmail({
+    //   email: member.email,
+    //   memberName: member.name,
+    //   teamName: team[0]?.name ?? "",
+    //   hackathonName: hackathon[0]?.title ?? "",
+    //   hackathonStartDate: formatDate(
+    //     hackathon[0]?.startTime
+    //       ? hackathon[0].startTime.toISOString()
+    //       : undefined
+    //   ),
+    //   hackathonEndDate: formatDate(
+    //     hackathon[0]?.endTime ? hackathon[0].endTime.toISOString() : undefined
+    //   ),
+    //   organizationName: organizer[0]?.name || "",
+    //   organizationEmail: organizer[0]?.email ?? "",
+    // });
+
+    // add to queue
+    hackathonTeamEmailQueue.add("hackathon-emails", {
       email: member.email,
       memberName: member.name,
       teamName: team[0]?.name ?? "",
@@ -218,6 +230,7 @@ const applyToHackathon = asyncHandler(async (req, res) => {
       ),
       organizationName: organizer[0]?.name || "",
       organizationEmail: organizer[0]?.email ?? "",
+      type: "team-registration",
     });
   });
 
@@ -466,7 +479,6 @@ const viewHackathonById = asyncHandler(async (req, res) => {
   let orgId;
   if (req.user && req.user.role === "organizer") {
     orgId = req.user?.id;
-    console.log("orgId:", orgId);
   }
 
   if (!id) {
@@ -568,7 +580,7 @@ const viewHackathonById = asyncHandler(async (req, res) => {
 
   if (withTeams === "true" && orgId) {
     // Fetch all teams that have applied to this hackathon
-    console.log("Fetching teams applied to hackathon:", hackathon.id);
+
     const teamsApplied = await db
       .select({ teams: teams })
       .from(teams)
@@ -767,7 +779,6 @@ const createHackathon = asyncHandler(async (req, res) => {
 
 // controller for creating hackathon embeddings (CRON JOB)
 const embedHackathons = asyncHandler(async (req, res) => {
-  console.log("abcd");
   const CRON_SECRET = process.env.CRON_SECRET;
 
   if (!CRON_SECRET) {
@@ -795,7 +806,9 @@ const embedHackathons = asyncHandler(async (req, res) => {
     .execute();
 
   if (fetchRecentHackathons.length === 0) {
-    throw new ApiError(400, "No Recent Hackathons");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "No recent hackathons"));
   }
 
   const doc = new Document({
@@ -816,22 +829,36 @@ const embedHackathons = asyncHandler(async (req, res) => {
   const vecStore = await initialiseVectorStore({
     collectionName: "hackathon-embeddings",
   });
+
   const fiveDaysAgo = new Date(
     Date.now() - 5 * 24 * 60 * 60 * 1000
   ).toISOString();
   // Qdrant example
-  await vecStore.delete({
-    filter: {
-      must: [
-        {
-          key: "embeddedAt",
-          match: { lte: fiveDaysAgo },
-        },
-      ],
-    },
-  });
+  try {
+    // Fix the delete operation filter syntax
+    await vecStore.delete({
+      filter: {
+        must: [
+          {
+            key: "metadata.embeddedAt", // Add metadata prefix
+            range: {
+              lt: fiveDaysAgo, // Use 'lt' instead of 'lte' for less than
+            },
+          },
+        ],
+      },
+    });
+  } catch (error) {
+    console.warn("Error deleting old embeddings:", error);
+    // Continue with adding new documents even if delete fails
+  }
 
-  await vecStore.addDocuments(splits);
+  try {
+    await vecStore.addDocuments(splits);
+  } catch (error) {
+    console.error("Error adding documents to Qdrant:", error);
+    throw new ApiError(500, "Failed to add documents to vector store");
+  }
 
   return res
     .status(200)
@@ -1013,18 +1040,34 @@ const markWinners = asyncHandler(async (req, res) => {
 
   for (const captain of captains) {
     const position = teamIdToPosition[captain.teamId] || "participant";
-    await sendHackathonResultEmail({
+    // await sendHackathonResultEmail({
+    //   email: captain.email,
+    //   captainName: captain.name,
+    //   teamName: captain.teamName,
+    //   hackathonName: hackathon[0]?.title ?? "",
+    //   organizationName: organizer[0]?.name ?? "",
+    //   organizationEmail: organizer[0]?.email ?? "",
+    //   position: position as
+    //     | "participant"
+    //     | "winner"
+    //     | "firstRunnerUp"
+    //     | "secondRunnerUp",
+    // });
+
+    //add to queue
+    hackathonTeamEmailQueue.add("hackathon-emails", {
       email: captain.email,
       captainName: captain.name,
       teamName: captain.teamName,
       hackathonName: hackathon[0]?.title ?? "",
-      organizationName: organizer[0]?.name ?? "",
-      organizationEmail: organizer[0]?.email ?? "",
+      organizationName: organizer[0]?.name || "",
+      organizationEmail: organizer[0]?.email || "",
       position: position as
         | "participant"
         | "winner"
         | "firstRunnerUp"
         | "secondRunnerUp",
+      type: "hackathon-result-announcement",
     });
   }
 
