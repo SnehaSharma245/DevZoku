@@ -90,7 +90,7 @@ function DeveloperDashboard() {
         const profileRes = await api.get(`/developer/developer-profile/${id}`);
 
         const { status, data, message } = profileRes.data;
-        console.log("Profile data:", data);
+
         if (status === 200) {
           setProfile(data);
           setHackathons(data.participatedHackathons || []);

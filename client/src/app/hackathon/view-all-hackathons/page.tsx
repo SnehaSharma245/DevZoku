@@ -19,7 +19,6 @@ import {
 
 function AllHackathons() {
   const { user } = useAuth();
-
   const [showParticipated, setShowParticipated] = useState(false);
   const [showMine, setShowMine] = useState(false);
   const [fetchedHackathons, setFetchedHackathons] = useState<Hackathon[]>([]);
@@ -120,11 +119,12 @@ function AllHackathons() {
   const handleShowRecommendedHackathons = async () => {
     try {
       const res = await api.get("/developer/recommended-hackathons");
+
       const { status, data, message } = res.data;
+
       if (status === 200) {
         setRecommendedHackathons(data);
       }
-      console.log(data);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message ||
