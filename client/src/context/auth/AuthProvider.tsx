@@ -104,12 +104,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         (user.role === "organizer" &&
           !pathname.startsWith("/organizer/complete-profile")))
     ) {
-      window.location.href =
+      router.replace(
         user.role === "developer"
           ? "/developer/complete-profile"
-          : "/organizer/complete-profile";
+          : "/organizer/complete-profile"
+      );
     }
-  }, [user, loading, pathname]);
+  }, [user, loading, pathname, router]);
+
+  // Prevent rendering children until profile is complete
+  if (
+    !loading &&
+    user &&
+    !user.isProfileComplete &&
+    ((user.role === "developer" &&
+      !pathname.startsWith("/developer/complete-profile")) ||
+      (user.role === "organizer" &&
+        !pathname.startsWith("/organizer/complete-profile")))
+  ) {
+    return <LoadingScreen />;
+  }
 
   return loading ? (
     <LoadingScreen />
