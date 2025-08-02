@@ -34,32 +34,30 @@ services:
       - qdrant
 
   migrator:
-    image: snehas874/devzoku-migrator:latest
     build:
       context: ./server
-      dockerfile: Dockerfile
-      target: builder
+      dockerfile: Dockerfile.migrator
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
-    command: bun run db:push
     networks:
       - devzoku
     restart: "no"
 
-  # worker:
-  #   build:
-  #     context: ./server
-  #     dockerfile: Dockerfile
-  #   container_name: devzoku-worker
-  #   restart: unless-stopped
-  #   command: bun worker
-  #   env_file: ./server/.env
-  #   networks:
-  #     - devzoku
-  #   depends_on:
-  #     - server
+  worker:
+    image: snehas874/devzoku-worker:latest
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: devzoku-worker
+    restart: unless-stopped
+    command: bun worker
+    env_file: ./server/.env
+    networks:
+      - devzoku
+    depends_on:
+      - server
 
   postgres:
     image: postgres:17.5-alpine3.22

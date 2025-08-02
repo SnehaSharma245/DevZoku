@@ -61,7 +61,9 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.dev
+    env_file: .env
     restart: unless-stopped
+    container_name: devzoku-client
     volumes:
       - /client/node_modules
       - /client/.next
