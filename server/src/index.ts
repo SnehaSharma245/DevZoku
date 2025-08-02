@@ -8,7 +8,8 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   path: "/socket/",
   cors: {
-    origin: "*",
+    origin: process.env.CORS_ORIGIN?.split(",") || [],
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });

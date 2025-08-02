@@ -12,9 +12,11 @@ import errorMiddleware from "./middlewares/error.middleware";
 
 const app = express();
 
+const allowedOrigins = process.env.CORS_ORIGINS?.split(",") || [];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: allowedOrigins,
     credentials: true,
   })
 );

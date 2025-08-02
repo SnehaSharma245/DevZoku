@@ -40,6 +40,12 @@ interface GoogleUser {
 }
 
 export type Role = "developer" | "organizer";
+const origins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const baseOrigin = origins[0] || "http://localhost:3000";
 
 // Determine user role based on request path
 const getRoleFromPath = (path: string): Role => {
@@ -84,7 +90,7 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
   if (error) {
     console.error("Google OAuth error:", error);
     return res.redirect(
-      `${process.env.CLIENT_URL || "http://localhost:3000"}?error=access_denied`
+      `${baseOrigin || "http://localhost:3000"}?error=access_denied`
     );
   }
 
@@ -207,9 +213,7 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
         : `/organizer/profile/${userObj.id}`;
   }
   // Construct full redirect URL
-  const fullRedirectUrl = `${
-    process.env.CLIENT_URL || "http://localhost:3000"
-  }${redirectPath}`;
+  const fullRedirectUrl = `${baseOrigin}${redirectPath}`;
 
   res
     .cookie("AccessToken", accessToken, {
