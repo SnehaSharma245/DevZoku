@@ -19,7 +19,7 @@ export const withAuth = (
       if (!authChecked) {
         // If we're done loading and there's no user, redirect to login
         if (!loading && !user) {
-          router.push("/auth/login");
+          router.push("/");
           return;
         }
 
