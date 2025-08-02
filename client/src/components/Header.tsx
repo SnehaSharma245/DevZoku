@@ -33,10 +33,12 @@ import {
   LogOut,
 } from "lucide-react";
 import { set } from "react-hook-form";
+import LoginPopup from "@/components/popups/Login";
 
 const Header = () => {
   const { user, handleLogout, redBadge, setRedBadge } = useAuth();
   const [open, setOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const getInitial = () =>
     (user?.role === "developer"
@@ -125,7 +127,7 @@ const Header = () => {
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
-                        <BadgeCheck className="w-4 h-4" /> Complete Profile
+                        <BadgeCheck className="w-4 h-4" /> Edit Profile
                       </Link>
                       <Link
                         href="/developer/manage-projects"
@@ -182,7 +184,7 @@ const Header = () => {
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
                       >
-                        <BadgeCheck className="w-4 h-4" /> Complete Profile
+                        <BadgeCheck className="w-4 h-4" /> Edit Profile
                       </Link>
                     </>
                   )}
@@ -205,27 +207,19 @@ const Header = () => {
             </Sheet>
           ) : (
             <>
-              <Link href="/auth/login">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 bg-white border-[#e3e8ee] text-[#062a47] hover:bg-[#2563eb] hover:text-white rounded-xl font-bold shadow"
-                >
-                  <LogIn className="w-4 h-4" /> Login
-                </Button>
-              </Link>
-              <Link href="/auth/login">
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2 bg-[#2563eb] text-white rounded-xl font-bold shadow"
-                >
-                  <UserPlus className="w-4 h-4" /> Signup
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2  border-[#e3e8ee] text-[#ffffff] bg-[#ff8a65] hover:bg-[#062a47] hover:text-white cursor-pointer  font-bold shadow"
+                onClick={() => setLoginOpen(true)}
+              >
+                <LogIn className="w-4 h-4" /> Login
+              </Button>
             </>
           )}
         </div>
       </header>
+      <LoginPopup open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );
 };

@@ -13,10 +13,11 @@ import {
   FaGithub,
   FaLinkedin,
   FaGlobe,
-  FaTwitter,
   FaDev,
   FaInstagram,
 } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHashnode } from "@fortawesome/free-brands-svg-icons";
 
@@ -110,71 +111,74 @@ function DeveloperDashboard() {
   }, [id]);
 
   return (
-    <>
-      <div className="max-w-5xl mx-auto py-8 px-4">
-        {/* Modern Profile Header */}
-        <div className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-r from-[#eaf6fb] to-[#fff] rounded-3xl shadow-lg p-8 mb-8">
-          <div className="flex-shrink-0 w-32 h-32 rounded-full bg-[#2563eb] flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-3xl w-full mx-auto">
+        {/* Profile Header */}
+        <div className="bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-3xl shadow-2xl border border-[#e3e8ee] p-8 mb-10 flex flex-col items-center">
+          <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center text-white text-5xl font-extrabold shadow-xl border-4 border-white mb-4 ">
             {(profile?.user?.firstName && profile.user.firstName.charAt(0)) ||
               (profile?.user?.lastName && profile.user.lastName.charAt(0)) ||
               "U"}
           </div>
-          <div className="flex-1">
-            <h2 className="text-3xl font-extrabold text-[#062a47] mb-2">
-              {profile?.user?.firstName || "Developer"}
-            </h2>
-            <div className="text-lg text-[#2563eb] font-semibold mb-1">
-              {profile?.title || "Developer"}
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#062a47] mb-2 text-center">
+            {profile?.user?.firstName || "Developer"}
+          </h2>
+          <div className="text-xl text-[#062a47] font-semibold mb-1 text-center">
+            {profile?.title || "Developer"}
+          </div>
+          <div className="text-[#6B7A8F] mb-4 italic text-center">
+            {profile?.bio}
+          </div>
+          <div className="flex gap-6 flex-wrap justify-center mb-2">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#f75a2f] text-xl">
+                {hackathons.length}
+              </span>
+              <span className="text-[#6B7A8F]">Hackathons</span>
             </div>
-            <div className="text-gray-600 mb-4">{profile?.bio}</div>
-            <div className="flex gap-4 flex-wrap mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#f75a2f]">
-                  {hackathons.length}
-                </span>
-                <span className="text-gray-500">Participated Hackathon</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#2563eb]">
-                  {profile?.projects?.length || 0}
-                </span>
-                <span className="text-gray-500">Projects</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#062a47]">
-                  {profile?.skills?.length || 0}
-                </span>
-                <span className="text-gray-500">Skills</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#f75a2f] text-xl">
+                {profile?.projects?.length || 0}
+              </span>
+              <span className="text-[#6B7A8F]">Projects</span>
             </div>
-            <div className="flex gap-2 flex-wrap mt-2">
-              {profile?.skills?.map((s) => (
-                <Badge
-                  key={s}
-                  className="bg-[#eaf6fb] text-[#062a47] font-semibold"
-                >
-                  {s}
-                </Badge>
-              ))}
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#f75a2f] text-xl">
+                {profile?.skills?.length || 0}
+              </span>
+              <span className="text-[#6B7A8F]">Skills</span>
             </div>
+          </div>
+          <div className="flex gap-2 flex-wrap justify-center mt-2">
+            {profile?.skills?.map((s) => (
+              <Badge
+                key={s}
+                className="bg-gradient-to-r from-[#FFB899] to-[#FF6F61] text-white font-semibold shadow
+"
+              >
+                {s}
+              </Badge>
+            ))}
           </div>
         </div>
 
         {/* Social Links Section */}
         {profile?.socialLinks &&
           Object.values(profile.socialLinks).some(Boolean) && (
-            <Card className="mb-8">
+            <Card className="mb-10 rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
               <CardHeader>
-                <CardTitle>Let's Connect</CardTitle>
+                <CardTitle className="text-[#062a47] font-bold text-xl text-center">
+                  Let's Connect
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-4 flex-wrap items-center">
+                <div className="flex gap-6 flex-wrap justify-center items-center">
                   {profile.socialLinks.github && (
                     <a
                       href={profile.socialLinks.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#333] hover:text-[#2563eb] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
                       <FaGithub size={22} />
                       <span className="hidden md:inline">GitHub</span>
@@ -185,7 +189,7 @@ function DeveloperDashboard() {
                       href={profile.socialLinks.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#0077b5] hover:text-[#2563eb] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
                       <FaLinkedin size={22} />
                       <span className="hidden md:inline">LinkedIn</span>
@@ -196,7 +200,7 @@ function DeveloperDashboard() {
                       href={profile.socialLinks.portfolio}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#2563eb] hover:text-[#062a47] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
                       <FaGlobe size={22} />
                       <span className="hidden md:inline">Portfolio</span>
@@ -207,9 +211,9 @@ function DeveloperDashboard() {
                       href={profile.socialLinks.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#1da1f2] hover:text-[#2563eb] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
-                      <FaTwitter size={22} />
+                      <FaXTwitter size={22} />
                       <span className="hidden md:inline">Twitter</span>
                     </a>
                   )}
@@ -218,7 +222,7 @@ function DeveloperDashboard() {
                       href={profile.socialLinks.hashnode}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#2962ff] hover:text-[#2563eb] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
                       <FontAwesomeIcon icon={faHashnode} size="lg" />
                       <span className="hidden md:inline">Hashnode</span>
@@ -229,21 +233,10 @@ function DeveloperDashboard() {
                       href={profile.socialLinks.devto}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#0a0a0a] hover:text-[#2563eb] transition"
+                      className="flex items-center gap-2 text-[#062a47ea] hover:text-[#f75a2f] transition"
                     >
                       <FaDev size={22} />
                       <span className="hidden md:inline">Dev.to</span>
-                    </a>
-                  )}
-                  {profile.socialLinks.instagram && (
-                    <a
-                      href={profile.socialLinks.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#e1306c] hover:text-[#2563eb] transition"
-                    >
-                      <FaInstagram size={22} />
-                      <span className="hidden md:inline">Instagram</span>
                     </a>
                   )}
                 </div>
@@ -252,72 +245,63 @@ function DeveloperDashboard() {
           )}
 
         {/* Experience & Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 flex flex-col items-center">
-            <span className="text-lg font-semibold text-[#2563eb]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <Card className="p-8 flex flex-col items-center rounded-xl shadow-md border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
+            <span className="text-lg font-semibold text-[#062a47]">
               Hackathons Participated
             </span>
-            <span className="text-4xl font-bold mt-2">
+            <span className="text-4xl font-bold mt-2 text-[#f75a2f] drop-shadow">
               {stats.participatedHackathonsCount ?? hackathons.length}
             </span>
           </Card>
-          <Card className="p-6 flex flex-col items-center">
-            <span className="text-lg font-semibold text-[#f75a2f]">
+          <Card className="p-8 flex flex-col items-center rounded-xl shadow-md border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
+            <span className="text-lg font-semibold text-[#062a47]">
               Hackathons with Position
             </span>
-            <span className="text-4xl font-bold mt-2">
+            <span className="text-4xl font-bold mt-2 text-[#f75a2f] drop-shadow">
               {stats.hackathonsWithPositionCount ?? 0}
             </span>
             <div className="flex gap-2 mt-2 text-sm">
-              <span className="text-green-700">
+              <span className="text-[#6B7A8F]">
                 🏆 {stats.winnerCount ?? 0}
               </span>
-              <span className="text-orange-600">
+              <span className="text-[#6B7A8F]">
                 🥈 {stats.firstRunnerUpCount ?? 0}
               </span>
-              <span className="text-blue-700">
+              <span className="text-[#6B7A8F]">
                 🥉 {stats.secondRunnerUpCount ?? 0}
               </span>
             </div>
           </Card>
-          <Card className="p-6 flex flex-col items-center">
-            <span className="text-lg font-semibold text-[#f75a2f]">
-              Projects
-            </span>
-            <span className="text-4xl font-bold mt-2">
-              {profile?.projects?.length || 0}
-            </span>
-          </Card>
-          <Card className="p-6 flex flex-col items-center">
-            <span className="text-lg font-semibold text-[#062a47]">Skills</span>
-            <span className="text-4xl font-bold mt-2">
-              {profile?.skills?.length || 0}
-            </span>
-          </Card>
         </div>
 
         {/* Projects Section */}
-        <Card className="mb-8">
+        <Card className="mb-10 rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
           <CardHeader>
-            <CardTitle>Projects</CardTitle>
+            <CardTitle className="text-[#062a47] font-bold text-xl text-center">
+              Projects
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {profile?.projects && profile.projects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-6">
                 {profile.projects.map((project, idx) => (
                   <div
                     key={idx}
-                    className="border rounded p-4 flex flex-col gap-2 bg-[#f3f4f6]"
+                    className="border rounded-xl p-6 flex flex-col gap-2 bg-gradient-to-r from-[#eaf6fb] to-[#fff] shadow"
                   >
                     <div className="font-semibold text-lg text-[#062a47]">
                       {project.title}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-[#6B7A8F]">
                       {project.description}
                     </div>
                     <div className="flex gap-2 flex-wrap mt-2">
                       {project.techStack.map((tech) => (
-                        <Badge key={tech} className="bg-[#2563eb] text-white">
+                        <Badge
+                          key={tech}
+                          className="bg-gradient-to-r from-[#2563eb] to-[#f75a2f] text-white shadow"
+                        >
                           {tech}
                         </Badge>
                       ))}
@@ -328,7 +312,7 @@ function DeveloperDashboard() {
                           href={project.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 underline text-sm"
+                          className="text-[#062a47] hover:text-[#f75a2f] underline text-sm font-semibold"
                         >
                           Repo
                         </a>
@@ -338,7 +322,7 @@ function DeveloperDashboard() {
                           href={project.demoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-green-600 underline text-sm"
+                          className="text-[#062a47] hover:text-[#f75a2f] underline text-sm font-semibold"
                         >
                           Demo
                         </a>
@@ -348,19 +332,23 @@ function DeveloperDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-gray-500">No projects added yet.</div>
+              <div className="text-[#6B7A8F] text-center">
+                No projects added yet.
+              </div>
             )}
           </CardContent>
         </Card>
 
         {/* Hackathon Domains/Tags Section */}
         {hackathons && hackathons.length > 0 && (
-          <Card className="mb-8">
+          <Card className="mb-10 rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#eaf6fb]">
             <CardHeader>
-              <CardTitle>Hackathon Domains</CardTitle>
+              <CardTitle className="text-[#062a47] font-bold text-xl text-center">
+                Hackathon Domains
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap justify-center">
                 {[
                   ...new Set(
                     hackathons.flatMap((h: any) => h.tags || []).filter(Boolean)
@@ -368,7 +356,7 @@ function DeveloperDashboard() {
                 ].map((tag: string) => (
                   <Badge
                     key={tag}
-                    className="bg-[#eaf6fb] text-[#2563eb] font-semibold"
+                    className="bg-gradient-to-r from-[#2563eb] to-[#f75a2f] text-white font-semibold shadow"
                   >
                     {tag}
                   </Badge>
@@ -378,7 +366,7 @@ function DeveloperDashboard() {
           </Card>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

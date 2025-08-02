@@ -19,7 +19,7 @@ const LeaveTeamPopup: React.FC<LeaveTeamPopupProps> = ({
   const { user } = useAuth();
 
   if (!user) {
-    window.location.href = "/auth/login";
+    window.location.href = "/";
     return null; // Prevent rendering if user is not authenticated
   }
 

@@ -68,12 +68,12 @@ export default function OrganizerProfilePage() {
   }, [user?.id]);
 
   if (!user) {
-    window.location.href = "/auth/login";
+    window.location.href = "/";
     return null;
   }
 
   if (user?.role !== "organizer") {
-    window.location.href = "/auth/login";
+    window.location.href = "/";
     return null;
   }
 

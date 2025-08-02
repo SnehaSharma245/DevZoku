@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import api from "@/utils/api";
 import { toast } from "sonner";
 import AddProjectDialog from "@/components/popups/AddProject";
 import { PlusCircle, FolderOpen, Trash } from "lucide-react";
+import { withAuth } from "@/utils/withAuth";
 
 interface Project {
   id: string;
@@ -17,7 +19,7 @@ interface Project {
   demoUrl?: string;
 }
 
-export default function ManageProjectsPage() {
+function ManageProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false);
@@ -79,7 +81,7 @@ export default function ManageProjectsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-white">
+      <div className="flex justify-center items-center min-h-screen text-[#062a47]">
         Loading projects...
       </div>
     );
@@ -92,85 +94,109 @@ export default function ManageProjectsPage() {
         onClose={() => setAddProjectDialogOpen(false)}
         onAdd={handleAddProject}
       />
-      <div className="max-w-4xl mx-auto py-10 px-4">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <FolderOpen className="w-8 h-8 text-[#a3e635]" />
-            Your Projects
-          </h1>
-          <Button
-            className="bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition flex items-center gap-2"
-            onClick={() => setAddProjectDialogOpen(true)}
-          >
-            <PlusCircle className="w-5 h-5" />
-            Add Project
-          </Button>
-        </div>
-        <div className="grid gap-6">
-          {projects.length === 0 ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="text-center text-gray-400 py-12 rounded-xl border border-[#23232b] w-full bg-[#23232b]">
-                <FolderOpen className="w-10 h-10 mx-auto mb-4 text-[#a3e635]" />
-                <span className="block mb-2 font-semibold text-white">
-                  No projects yet
-                </span>
-                <span className="block mb-4 text-gray-400">
-                  You haven't added any projects. Start by adding your first
-                  project!
-                </span>
-                <Button
-                  className="bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition flex items-center gap-2 justify-self-center"
-                  onClick={() => setAddProjectDialogOpen(true)}
+      <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl w-full mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-[#062a47] tracking-tight flex items-center gap-3">
+              <FolderOpen className="w-8 h-8 text-[#f75a2f]" />
+              Your Projects
+            </h1>
+            <Button
+              className="bg-gradient-to-r from-[#f75a2f] to-[#FF6F61] text-white font-bold rounded-xl hover:shadow-lg transition flex items-center gap-2"
+              onClick={() => setAddProjectDialogOpen(true)}
+            >
+              <PlusCircle className="w-5 h-5" />
+              Add Project
+            </Button>
+          </div>
+
+          <div className="grid gap-6">
+            {projects.length === 0 ? (
+              <Card className="rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
+                <CardContent className="text-center py-12">
+                  <FolderOpen className="w-16 h-16 mx-auto mb-4 text-[#f75a2f]" />
+                  <h3 className="text-xl font-bold text-[#062a47] mb-2">
+                    No projects yet
+                  </h3>
+                  <p className="text-[#6B7A8F] mb-6">
+                    You haven't added any projects. Start by adding your first
+                    project!
+                  </p>
+                  <Button
+                    className="bg-gradient-to-r from-[#f75a2f] to-[#FF6F61] text-white font-bold rounded-xl hover:shadow-lg transition flex items-center gap-2 mx-auto"
+                    onClick={() => setAddProjectDialogOpen(true)}
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    Add Project
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              projects.map((project) => (
+                <Card
+                  key={project.id}
+                  className="rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-r from-[#eaf6fb] to-[#fff]"
                 >
-                  <PlusCircle className="w-5 h-5" />
-                  Add Project
-                </Button>
-              </div>
-            </div>
-          ) : (
-            projects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-[#23232b] border border-[#23232b] rounded-2xl shadow-xl p-6 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-xl font-extrabold text-white">
-                    {project.title}
-                  </h2>
-                  <Trash className="w-5 h-5 text-[#fb923c] cursor-pointer" />
-                </div>
-                <div className="text-gray-300 mb-1">{project.description}</div>
-                <div>
-                  <span className="font-semibold text-white">Tech Stack:</span>{" "}
-                  <span className="text-gray-400">{project.techStack}</span>
-                </div>
-                <div className="flex gap-4 mt-2">
-                  {project.repoUrl && (
-                    <a
-                      href={project.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#a3e635] underline font-semibold"
-                    >
-                      Repo
-                    </a>
-                  )}
-                  {project.demoUrl && (
-                    <a
-                      href={project.demoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#fb923c] underline font-semibold"
-                    >
-                      Demo
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold text-[#062a47]">
+                        {project.title}
+                      </h2>
+                      <Trash className="w-5 h-5 text-[#f75a2f] cursor-pointer hover:text-[#FF6F61] transition" />
+                    </div>
+
+                    <div className="text-[#6B7A8F] mb-4">
+                      {project.description}
+                    </div>
+
+                    <div className="mb-4">
+                      <span className="font-semibold text-[#062a47] block mb-2">
+                        Tech Stack:
+                      </span>
+                      <div className="flex gap-2 flex-wrap">
+                        {typeof project.techStack === "string"
+                          ? project.techStack.split(",").map((tech, idx) => (
+                              <Badge
+                                key={idx}
+                                className="bg-gradient-to-r from-[#2563eb] to-[#f75a2f] text-white shadow"
+                              >
+                                {tech.trim()}
+                              </Badge>
+                            ))
+                          : null}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      {project.repoUrl && (
+                        <a
+                          href={project.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#062a47] hover:text-[#f75a2f] underline font-semibold transition"
+                        >
+                          Repo
+                        </a>
+                      )}
+                      {project.demoUrl && (
+                        <a
+                          href={project.demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#062a47] hover:text-[#f75a2f] underline font-semibold transition"
+                        >
+                          Demo
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </>
   );
 }
+export default withAuth(ManageProjectsPage, "developer");

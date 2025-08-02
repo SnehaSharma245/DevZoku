@@ -4,31 +4,33 @@ import { LayoutDashboard, Home, Info, BookOpen } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#18181e] border-t border-[#23232b] py-6 px-4   shadow-xl">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="text-lg font-extrabold text-[#a3e635] flex items-center gap-2">
-          <LayoutDashboard className="w-6 h-6" />
-          DevZoku
+    <footer className="bg-gradient-to-br from-[#F8FBFD] via-[#FAFCFD] to-[#FFFFFF] border-t border-[#f3f4f6] py-8 px-4 shadow-xl">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="text-2xl font-extrabold flex items-center gap-2 tracking-tight">
+          <LayoutDashboard className="w-7 h-7 text-[#FF8A65]" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9466] to-[#FF6F61]">
+            DevZoku
+          </span>
         </div>
 
-        <div className="flex gap-6 text-base text-white">
+        <div className="flex gap-8 text-base font-semibold">
           <Link
             href="/"
-            className="hover:text-[#a3e635] transition-colors flex items-center gap-1"
+            className="text-[#062a47] hover:text-[#FF8A65] transition-colors flex items-center gap-1"
           >
-            <Home className="w-4 h-4" /> Home
+            <Home className="w-5 h-5" /> Home
           </Link>
           <Link
             href="/about"
-            className="hover:text-[#a3e635] transition-colors flex items-center gap-1"
+            className="text-[#062a47] hover:text-[#FF8A65] transition-colors flex items-center gap-1"
           >
-            <Info className="w-4 h-4" /> About
+            <Info className="w-5 h-5" /> About
           </Link>
           <Link
             href="/guide"
-            className="hover:text-[#a3e635] transition-colors flex items-center gap-1"
+            className="text-[#062a47] hover:text-[#FF8A65] transition-colors flex items-center gap-1"
           >
-            <BookOpen className="w-4 h-4" /> Guide
+            <BookOpen className="w-5 h-5" /> Guide
           </Link>
         </div>
 

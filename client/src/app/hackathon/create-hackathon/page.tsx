@@ -172,15 +172,17 @@ function CreateHackathonPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center pb-16 bg-[#18181e]">
-      <div className="max-w-2xl w-full mx-auto py-10 px-4">
-        <h1 className="text-3xl font-extrabold mb-8 text-center text-white tracking-tight">
-          Create Hackathon
-        </h1>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full mx-auto py-10">
+        <div className="text-center space-y-6 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#062a47] leading-tight mt-3">
+            Create Hackathon
+          </h1>
+        </div>
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-8 bg-[#18181e] rounded-3xl shadow-xl p-8 border border-[#23232b]"
+            className="space-y-8 bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-3xl shadow-2xl p-8 border border-[#e3e8ee]"
           >
             {/* Reset Button */}
             <div className="flex justify-end">
@@ -188,25 +190,26 @@ function CreateHackathonPage() {
                 type="button"
                 onClick={handleReset}
                 variant="outline"
-                className="bg-[#23232b] text-white border-none rounded-xl hover:bg-[#23232b]/80 transition"
+                className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl hover:bg-[#eaf6fb] transition"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
               </Button>
             </div>
-            {/* Poster Upload + AI + Reset */}
+
+            {/* Poster Upload */}
             <div>
-              <FormLabel className="mb-2 block text-white font-semibold">
+              <FormLabel className="mb-2 block text-[#062a47] font-semibold">
                 Poster
               </FormLabel>
               {/* File Info Box */}
               {poster && (
-                <div className="flex items-center max-w-md justify-between text-gray-300 mb-4 bg-[#23232b] p-3 rounded-lg border border-[#a3e635]/10">
+                <div className="flex items-center max-w-md justify-between text-[#6B7A8F] mb-4 bg-[#eaf6fb] p-3 rounded-lg border border-[#e3e8ee]">
                   <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5 text-[#a3e635]" />
+                    <FileText className="h-5 w-5 text-[#f75a2f]" />
                     <span className="text-sm">
                       Selected:{" "}
-                      <span className="font-medium text-[#a3e635]">
+                      <span className="font-medium text-[#f75a2f]">
                         {poster.name}
                       </span>
                     </span>
@@ -223,7 +226,7 @@ function CreateHackathonPage() {
                     >
                       <Trash
                         size={17}
-                        className="text-white hover:text-gray-400 ml-auto cursor-pointer transition-all duration-200"
+                        className="text-[#6B7A8F] hover:text-[#f75a2f] ml-auto cursor-pointer transition-all duration-200"
                       />
                     </button>
                   </div>
@@ -253,7 +256,7 @@ function CreateHackathonPage() {
               {/* Custom Upload Button */}
               <label
                 htmlFor="poster-upload"
-                className={`flex items-center gap-2 px-4 py-2 bg-[#a3e635] hover:bg-lime-400 text-gray-900 font-medium rounded-lg cursor-pointer transition-all duration-300 shadow ${
+                className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] hover:from-[#FF8456] hover:to-[#FF5F51] text-white font-medium rounded-lg cursor-pointer transition-all duration-300 shadow ${
                   form.formState.isSubmitting
                     ? "opacity-50 cursor-not-allowed"
                     : ""
@@ -271,14 +274,14 @@ function CreateHackathonPage() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-semibold">
+                  <FormLabel className="text-[#062a47] font-semibold">
                     Title
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Hackathon title"
-                      className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                      className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                     />
                   </FormControl>
                   <FormMessage />
@@ -293,10 +296,10 @@ function CreateHackathonPage() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Description
                     </FormLabel>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-[#6B7A8F]">
                       {descCharCount}/250
                     </span>
                   </div>
@@ -304,7 +307,7 @@ function CreateHackathonPage() {
                     <Textarea
                       {...field}
                       placeholder="Hackathon description"
-                      className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] resize-none"
+                      className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] resize-none transition"
                       rows={3}
                       maxLength={250}
                       onChange={(e) => {
@@ -325,7 +328,7 @@ function CreateHackathonPage() {
                 name="minTeamSize"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Min Team Size
                     </FormLabel>
                     <FormControl>
@@ -334,7 +337,7 @@ function CreateHackathonPage() {
                         {...field}
                         onChange={(e) => field.onChange(e.target.valueAsNumber)}
                         placeholder="Minimum team size"
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -346,7 +349,7 @@ function CreateHackathonPage() {
                 name="maxTeamSize"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Max Team Size
                     </FormLabel>
                     <FormControl>
@@ -355,7 +358,7 @@ function CreateHackathonPage() {
                         {...field}
                         onChange={(e) => field.onChange(e.target.valueAsNumber)}
                         placeholder="Maximum team size"
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -366,7 +369,7 @@ function CreateHackathonPage() {
 
             {/* Mode Selection */}
             <div>
-              <FormLabel className="mb-2 block text-white font-semibold">
+              <FormLabel className="mb-2 block text-[#062a47] font-semibold">
                 Mode
               </FormLabel>
               <div className="flex gap-6">
@@ -380,12 +383,12 @@ function CreateHackathonPage() {
                           checked={watch("mode") === "online"}
                           onCheckedChange={() => setValue("mode", "online")}
                           id="mode-online"
-                          className="border-[#a3e635] data-[state=checked]:bg-[#a3e635]"
+                          className="border-[#f75a2f] data-[state=checked]:bg-[#f75a2f] data-[state=checked]:border-[#f75a2f]"
                         />
                       </FormControl>
                       <FormLabel
                         htmlFor="mode-online"
-                        className="font-normal text-white"
+                        className="font-normal text-[#062a47]"
                       >
                         Online
                       </FormLabel>
@@ -402,12 +405,12 @@ function CreateHackathonPage() {
                           checked={watch("mode") === "offline"}
                           onCheckedChange={() => setValue("mode", "offline")}
                           id="mode-offline"
-                          className="border-[#a3e635] data-[state=checked]:bg-[#a3e635]"
+                          className="border-[#f75a2f] data-[state=checked]:bg-[#f75a2f] data-[state=checked]:border-[#f75a2f]"
                         />
                       </FormControl>
                       <FormLabel
                         htmlFor="mode-offline"
-                        className="font-normal text-white"
+                        className="font-normal text-[#062a47]"
                       >
                         Offline
                       </FormLabel>
@@ -424,14 +427,14 @@ function CreateHackathonPage() {
                 name="registrationStart"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Registration Start
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
                         {...field}
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -443,14 +446,14 @@ function CreateHackathonPage() {
                 name="registrationEnd"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Registration End
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
                         {...field}
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -464,14 +467,14 @@ function CreateHackathonPage() {
                 name="startTime"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       Start Time
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
                         {...field}
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -483,14 +486,14 @@ function CreateHackathonPage() {
                 name="endTime"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="text-white font-semibold">
+                    <FormLabel className="text-[#062a47] font-semibold">
                       End Time
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
                         {...field}
-                        className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                        className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                       />
                     </FormControl>
                     <FormMessage />
@@ -501,13 +504,13 @@ function CreateHackathonPage() {
 
             {/* Phases */}
             <div>
-              <FormLabel className="mb-2 block text-white font-semibold">
+              <FormLabel className="mb-2 block text-[#062a47] font-semibold">
                 Phases
               </FormLabel>
               {fields.map((field, idx) => (
                 <div
                   key={field.id}
-                  className="border border-[#a3e635]/10 p-4 mb-4 rounded-2xl relative bg-[#23232b]"
+                  className="border border-[#e3e8ee] p-4 mb-4 rounded-2xl relative bg-gradient-to-br from-white via-white to-[#fff9f5]"
                 >
                   <div className="flex gap-4">
                     <FormField
@@ -515,14 +518,14 @@ function CreateHackathonPage() {
                       name={`phases.${idx}.name`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel className="text-white font-semibold">
+                          <FormLabel className="text-[#062a47] font-semibold">
                             Phase Name
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               placeholder="Phase name"
-                              className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
+                              className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -534,14 +537,14 @@ function CreateHackathonPage() {
                       name={`phases.${idx}.startTime`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel className="text-white font-semibold">
+                          <FormLabel className="text-[#062a47] font-semibold">
                             Start Time
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="datetime-local"
                               {...field}
-                              className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -553,14 +556,14 @@ function CreateHackathonPage() {
                       name={`phases.${idx}.endTime`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel className="text-white font-semibold">
+                          <FormLabel className="text-[#062a47] font-semibold">
                             End Time
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="datetime-local"
                               {...field}
-                              className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635]"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -573,14 +576,14 @@ function CreateHackathonPage() {
                     name={`phases.${idx}.description`}
                     render={({ field }) => (
                       <FormItem className="mt-2">
-                        <FormLabel className="text-white font-semibold">
+                        <FormLabel className="text-[#062a47] font-semibold">
                           Description
                         </FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
                             placeholder="Phase description"
-                            className="bg-[#18181e] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] resize-none"
+                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] resize-none transition"
                             rows={2}
                           />
                         </FormControl>
@@ -592,7 +595,7 @@ function CreateHackathonPage() {
                     <button
                       type="button"
                       onClick={() => remove(idx)}
-                      className="absolute top-2 right-2 text-red-400 hover:text-red-600 bg-[#18181e] rounded-full p-1"
+                      className="absolute top-2 right-2 text-[#f75a2f] hover:text-[#FF5F51] bg-[#f7faff] rounded-full p-1 border border-[#e3e8ee]"
                       title="Remove phase"
                     >
                       <Trash size={16} />
@@ -610,7 +613,7 @@ function CreateHackathonPage() {
                     endTime: "",
                   })
                 }
-                className="px-3 py-1 mt-2 bg-[#a3e635] text-black font-semibold rounded-xl hover:bg-lime-400 transition"
+                className="px-3 py-1 mt-2 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-semibold rounded-xl hover:from-[#FF8456] hover:to-[#FF5F51] transition shadow"
               >
                 + Add Phase
               </Button>
@@ -618,20 +621,20 @@ function CreateHackathonPage() {
 
             {/* Tags */}
             <div className="relative">
-              <FormLabel className="mb-2 block text-white font-semibold">
+              <FormLabel className="mb-2 block text-[#062a47] font-semibold">
                 Tags
               </FormLabel>
               <div className="flex flex-wrap gap-2 mb-2">
                 {tags.map((tag, idx) => (
                   <span
                     key={tag + idx}
-                    className="flex items-center bg-[#23232b] text-white px-3 py-1 rounded-full text-sm border border-blue-400"
+                    className="flex items-center bg-[#eaf6fb] text-[#062a47] px-3 py-1 rounded-full text-sm border border-[#f75a2f]"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(idx)}
-                      className="ml-2 text-gray-400 hover:text-red-400"
+                      className="ml-2 text-[#6B7A8F] hover:text-[#f75a2f]"
                       tabIndex={-1}
                     >
                       <Trash size={14} />
@@ -641,17 +644,17 @@ function CreateHackathonPage() {
               </div>
               <button
                 type="button"
-                className="flex items-center gap-2 bg-[#23232b] text-white border border-[#a3e635] rounded-xl px-3 py-2 hover:bg-[#23232b]/80 transition"
+                className="flex items-center gap-2 bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-3 py-2 hover:bg-[#eaf6fb] transition"
                 onClick={() => setTagDropdownOpen((v) => !v)}
               >
                 <ChevronDown className="w-4 h-4" />
                 {tags.length === 0 ? "Select tags" : "Add more tags"}
               </button>
               {tagDropdownOpen && (
-                <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto bg-[#23232b] border border-[#a3e635] rounded-xl shadow-xl p-2">
+                <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto bg-white border border-[#e3e8ee] rounded-xl shadow-xl p-2">
                   {tagSections.map((section, idx) => (
                     <div key={section.label}>
-                      <div className="text-xs font-bold text-[#a3e635] px-2 py-1">
+                      <div className="text-xs font-bold text-[#f75a2f] px-2 py-1">
                         {section.label}
                       </div>
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -661,8 +664,8 @@ function CreateHackathonPage() {
                             type="button"
                             className={`px-3 py-1 rounded-full text-xs font-semibold border ${
                               tags.includes(tag)
-                                ? "bg-[#a3e635] text-black border-[#a3e635] cursor-not-allowed"
-                                : "bg-[#18181e] text-white border-[#23232b] hover:border-[#a3e635] hover:bg-[#23232b]"
+                                ? "bg-[#f75a2f] text-white border-[#f75a2f] cursor-not-allowed"
+                                : "bg-[#f7faff] text-[#062a47] border-[#e3e8ee] hover:border-[#f75a2f] hover:bg-[#eaf6fb]"
                             }`}
                             disabled={tags.includes(tag)}
                             onClick={() => handleSelectTag(tag)}
@@ -672,7 +675,7 @@ function CreateHackathonPage() {
                         ))}
                       </div>
                       {idx !== tagSections.length - 1 && (
-                        <Separator className="my-2 bg-[#23232b]" />
+                        <Separator className="my-2 bg-[#e3e8ee]" />
                       )}
                     </div>
                   ))}
@@ -683,7 +686,7 @@ function CreateHackathonPage() {
             {/* Submit */}
             <Button
               type="submit"
-              className="w-full bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition mt-4"
+              className="w-full bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl hover:from-[#FF8456] hover:to-[#FF5F51] transition mt-4 shadow-lg"
               disabled={creatingHackathon}
             >
               {creatingHackathon ? "Creating..." : "Create Hackathon"}

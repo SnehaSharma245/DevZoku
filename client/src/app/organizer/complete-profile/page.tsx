@@ -12,6 +12,12 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { withAuth } from "@/utils/withAuth";
 import { toast } from "sonner";
@@ -58,7 +64,6 @@ function OrganizerCompleteProfileForm() {
   >([]);
   const [states, setStates] = useState<{ name: string; isoCode: string }[]>([]);
   const [cities, setCities] = useState<{ name: string }[]>([]);
-  const [isAutofilling, setIsAutofilling] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -97,54 +102,73 @@ function OrganizerCompleteProfileForm() {
     }
 
     if (user?.profile && user.role === "organizer" && user.location) {
-      setIsAutofilling(true);
-      const profile = user.profile;
-      const countryCode = user.location.country || "";
-      const stateCode = user.location.state || "";
-      const cityName = user.location.city || "";
-      const address = user.location.address || "";
+      const fetchData = async () => {
+        try {
+          // Fetch countries
+          const fetchedCountries = Country.getAllCountries();
+          setCountries(fetchedCountries);
 
-      // 1. Reset form with all user values
-      reset({
-        organizationName: profile.organizationName || "",
-        bio: profile.bio || "",
-        website: profile.website || "",
-        companyEmail: profile.companyEmail || "",
-        phoneNumber: profile.phoneNumber || "",
-        location: {
-          country: countryCode,
-          state: stateCode,
-          city: cityName,
-          address: user.location.address || "",
-        },
-        socialLinks: {
-          linkedin: profile.socialLinks?.linkedin || "",
-          twitter: profile.socialLinks?.twitter || "",
-          instagram: profile.socialLinks?.instagram || "",
-        },
-      });
+          // Find country object by name or ISO code
+          const countryObj = fetchedCountries.find(
+            (c) =>
+              c.name === user?.location?.country ||
+              c.isoCode === user?.location?.country
+          );
+          const countryCode = countryObj?.isoCode || "";
 
-      // 2. States/cities set karo aur city/address ki value bhi set karo (reset ke baad)
-      setTimeout(() => {
-        if (countryCode) {
-          const fetchedStates = State.getStatesOfCountry(countryCode);
-          setStates(fetchedStates);
-          if (stateCode) {
-            const fetchedCities = City.getCitiesOfState(countryCode, stateCode);
-            setCities(fetchedCities);
-            if (cityName) form.setValue("location.city", cityName);
-          } else {
-            setCities([]);
+          // Find state object and code
+          let stateCode = "";
+          if (countryCode) {
+            const fetchedStates = State.getStatesOfCountry(countryCode);
+            setStates(fetchedStates);
+
+            const stateObj = fetchedStates.find(
+              (s) =>
+                s.name === user?.location?.state ||
+                s.isoCode === user?.location?.state
+            );
+            stateCode = stateObj?.isoCode || "";
+
+            // Find cities if state exists
+            if (stateCode) {
+              const fetchedCities = City.getCitiesOfState(
+                countryCode,
+                stateCode
+              );
+              setCities(fetchedCities);
+            } else {
+              setCities([]);
+            }
           }
-          form.setValue("location.country", countryCode);
-          form.setValue("location.state", stateCode);
-          form.setValue("location.city", cityName);
-          form.setValue("location.address", user?.location?.address || "");
+
+          // Reset form with proper ISO codes for country/state and name for city
+          const formData = {
+            organizationName: user.profile?.organizationName || "",
+            bio: user.profile?.bio || "",
+            website: user.profile?.website || "",
+            companyEmail: user.profile?.companyEmail || "",
+            phoneNumber: user.profile?.phoneNumber || "",
+            location: {
+              country: countryCode,
+              state: stateCode,
+              city: user?.location?.city || "",
+              address: user?.location?.address || "",
+            },
+            socialLinks: {
+              linkedin: user?.profile?.socialLinks?.linkedin || "",
+              twitter: user?.profile?.socialLinks?.twitter || "",
+              instagram: user?.profile?.socialLinks?.instagram || "",
+            },
+          };
+
+          reset(formData);
+        } catch (error) {
+          console.error("Error in autofill:", error);
         }
-        setIsAutofilling(false);
-      }, 0);
+      };
+
+      fetchData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, reset, countries.length]);
 
   // Watch for country/state/city changes
@@ -159,12 +183,7 @@ function OrganizerCompleteProfileForm() {
       setStates([]);
     }
     setCities([]);
-    if (!isAutofilling) {
-      form.setValue("location.state", "");
-      form.setValue("location.city", "");
-      form.setValue("location.address", "");
-    }
-  }, [selectedCountry]);
+  }, [selectedCountry, form]);
 
   useEffect(() => {
     if (selectedCountry && selectedState) {
@@ -172,17 +191,7 @@ function OrganizerCompleteProfileForm() {
     } else {
       setCities([]);
     }
-    if (!isAutofilling) {
-      form.setValue("location.city", "");
-      form.setValue("location.address", "");
-    }
-  }, [selectedState, selectedCountry]);
-
-  useEffect(() => {
-    if (!isAutofilling) {
-      form.setValue("location.address", "");
-    }
-  }, [selectedCity]);
+  }, [selectedState, selectedCountry, form]);
 
   const onSubmit = async (formData: FormData) => {
     try {
@@ -251,396 +260,381 @@ function OrganizerCompleteProfileForm() {
     setStep(2);
   };
 
-  // Show grid branding only if profile is NOT complete
+  // Show centered form UI like developer complete-profile page
   if (!user?.isProfileComplete) {
     return (
-      <div className="min-h-screen w-full">
-        <div className="max-w-6xl mx-auto py-10 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
-            {/* Left Side: Branding, tagline, icons, vertical centering */}
-            <div className="hidden md:flex flex-col justify-center px-10 bg-gradient-to-br from-[#EDF6FA] via-[#D9EAF2] to-[#CFE4EF] rounded-xl shadow-md h-full">
-              <div className="flex flex-col justify-center items-start w-full max-w-md">
-                <span
-                  className="font-extrabold text-4xl tracking-tight text-[#062a47] mb-10"
-                  style={{ letterSpacing: "-1px" }}
-                >
-                  DevZoku
-                </span>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-[#062a47] mb-3">
-                    Complete Your Organization Profile
-                  </h2>
-                  <p className="text-base text-[#062a47] font-medium leading-relaxed">
-                    <span className="font-semibold text-[#f75a2f]">
-                      Stand out
-                    </span>{" "}
-                    in the DevZoku community and get noticed by developers and
-                    organizers alike.
-                  </p>
-                </div>
-                <ul className="text-left text-[#062a47] mb-6 space-y-3 list-disc list-inside marker:text-[#f75a2f]">
-                  <li>
-                    <strong>Showcase</strong> your organization and mission
-                  </li>
-                  <li>
-                    <strong>Connect</strong> with top developers and innovators
-                  </li>
-                  <li>
-                    <strong>Host</strong> exciting hackathons and events
-                  </li>
-                </ul>
-                <div className="mt-2 pl-3 border-l-4 border-[#f75a2f]">
-                  <span className="text-base font-semibold text-[#062a47] italic">
-                    “Organizations who empower devs, build the future.”
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* Right Side: Form (full width on mobile) */}
-            <div className="h-full w-full">
-              {/* Mobile branding header */}
-              <div className="md:hidden mb-8 text-center">
-                <span className="text-3xl font-extrabold text-[#062a47]">
-                  DevZoku
-                </span>
-                <h1 className="text-xl font-bold text-[#062a47] mt-2">
-                  Complete Your Organization Profile
-                </h1>
-              </div>
-              <Form {...form}>
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="space-y-10 bg-white rounded-3xl shadow-2xl p-8 border border-[#e3e8ee]"
-                >
-                  {/* Stepper */}
-                  <div className="flex justify-center mb-8 gap-4">
-                    {/* Step 1 */}
-                    <button
-                      type="button"
-                      className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
-                        step === 1
-                          ? "bg-[#f75a2f] text-white"
-                          : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
-                      }`}
-                      onClick={() => setStep(1)}
-                    >
-                      1. Basic Info
-                    </button>
-                    {/* Step 2 */}
-                    <button
-                      type="button"
-                      className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
-                        step === 2
-                          ? "bg-[#f75a2f] text-white"
-                          : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
-                      }`}
-                      onClick={async () => {
-                        // Validate step 1 fields before allowing navigation
-                        const values = form.getValues();
-                        if (
-                          !values.organizationName ||
-                          !values.companyEmail ||
-                          !values.phoneNumber ||
-                          !values.location?.country ||
-                          !values.location?.state ||
-                          !values.location?.city ||
-                          !values.location?.address
-                        ) {
-                          toast.error("Please complete Compulsory Info first");
-                          return;
-                        }
-                        setStep(2);
-                      }}
-                    >
-                      2. Social Links
-                    </button>
-                  </div>
-                  {/* Step 1: Compulsory Info */}
-                  {step === 1 && (
-                    <Fragment>
-                      <div className="space-y-6">
-                        <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
-                          Organization Information
-                        </h2>
-                        {/* Organization Name */}
-                        <FormField
-                          control={control}
-                          name="organizationName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Organization Name *
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="e.g. DevZoku Inc."
-                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {/* Bio */}
-                        <FormField
-                          control={control}
-                          name="bio"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Organization Bio
-                              </FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  {...field}
-                                  placeholder="Tell us about your organization..."
-                                  className="min-h-[100px] bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {/* Website */}
-                        <FormField
-                          control={control}
-                          name="website"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Website
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="https://yourcompany.com"
-                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {/* Company Email */}
-                        <FormField
-                          control={control}
-                          name="companyEmail"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Company Email *
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="contact@yourcompany.com"
-                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {/* Phone Number */}
-                        <FormField
-                          control={control}
-                          name="phoneNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Phone Number *
-                              </FormLabel>
-                              <FormControl>
-                                <PhoneInput
-                                  {...field}
-                                  defaultCountry="IN"
-                                  international
-                                  countryCallingCodeEditable={true}
-                                  className="bg-[#f7faff] text-black border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] w-full transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {/* Location Dropdowns */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Country */}
-                          <FormField
-                            control={control}
-                            name="location.country"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="capitalize text-[#062a47] font-semibold">
-                                  Country *
-                                </FormLabel>
-                                <FormControl>
-                                  <select
-                                    {...field}
-                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                                  >
-                                    <option value="">Select Country</option>
-                                    {countries.map((country) => (
-                                      <option
-                                        key={country.isoCode}
-                                        value={country.isoCode}
-                                      >
-                                        {country.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          {/* State */}
-                          <FormField
-                            control={control}
-                            name="location.state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="capitalize text-[#062a47] font-semibold">
-                                  State *
-                                </FormLabel>
-                                <FormControl>
-                                  <select
-                                    {...field}
-                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                                    disabled={!selectedCountry}
-                                  >
-                                    <option value="">Select State</option>
-                                    {states.map((state) => (
-                                      <option
-                                        key={state.isoCode}
-                                        value={state.isoCode}
-                                      >
-                                        {state.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          {/* City */}
-                          <FormField
-                            control={control}
-                            name="location.city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="capitalize text-[#062a47] font-semibold">
-                                  City *
-                                </FormLabel>
-                                <FormControl>
-                                  <select
-                                    {...field}
-                                    className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                                    disabled={!selectedState}
-                                  >
-                                    <option value="">Select City</option>
-                                    {cities.map((city) => (
-                                      <option key={city.name} value={city.name}>
-                                        {city.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        {/* Address Field */}
-                        <FormField
-                          control={control}
-                          name="location.address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#062a47] font-semibold">
-                                Address *
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Enter your address"
-                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="flex justify-end mt-8">
-                        <Button
-                          type="button"
-                          onClick={handleNext}
-                          className="bg-[#f75a2f] text-white rounded-xl font-bold shadow hover:bg-[#062a47] transition"
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </Fragment>
-                  )}
-                  {/* Step 2: Social Links */}
-                  {step === 2 && (
-                    <Fragment>
-                      <div className="space-y-6">
-                        <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
-                          Social Links (Optional)
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {["linkedin", "twitter", "instagram"].map((key) => (
-                            <FormField
-                              key={key}
-                              control={control}
-                              name={`socialLinks.${key}` as any}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="capitalize text-[#062a47] font-semibold">
-                                    {key}
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      {...field}
-                                      placeholder={`https://${key}.com/companyname`}
-                                      className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex justify-between mt-8">
-                        <Button
-                          type="button"
-                          onClick={() => setStep(1)}
-                          className="bg-[#062a47] text-white rounded-xl shadow hover:bg-[#f75a2f] transition"
-                        >
-                          Back
-                        </Button>
-                        <Button
-                          type="submit"
-                          className="bg-[#f75a2f] text-white font-bold rounded-xl shadow hover:bg-[#062a47] transition"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting
-                            ? "Saving..."
-                            : "Save Organization Profile"}
-                        </Button>
-                      </div>
-                    </Fragment>
-                  )}
-                </form>
-              </Form>
-            </div>
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl w-full mx-auto">
+          <div className="text-center space-y-6 mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#062a47] leading-tight mt-3">
+              Complete Your Organization Profile
+            </h1>
           </div>
+          <Form {...form}>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-10 bg-white rounded-3xl shadow-2xl p-8 border border-[#e3e8ee]"
+            >
+              {/* Stepper */}
+              <div className="flex justify-center mb-8 gap-4">
+                {/* Step 1 */}
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
+                    step === 1
+                      ? "bg-[#f75a2f] text-white"
+                      : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
+                  }`}
+                  onClick={() => setStep(1)}
+                >
+                  1. Basic Info
+                </button>
+                {/* Step 2 */}
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-xl font-semibold transition shadow ${
+                    step === 2
+                      ? "bg-[#f75a2f] text-white"
+                      : "bg-[#062a47] text-white hover:bg-[#f75a2f] hover:text-white"
+                  }`}
+                  onClick={async () => {
+                    // Validate step 1 fields before allowing navigation
+                    const values = form.getValues();
+                    if (
+                      !values.organizationName ||
+                      !values.companyEmail ||
+                      !values.phoneNumber ||
+                      !values.location?.country ||
+                      !values.location?.state ||
+                      !values.location?.city ||
+                      !values.location?.address
+                    ) {
+                      toast.error("Please complete Compulsory Info first");
+                      return;
+                    }
+                    setStep(2);
+                  }}
+                >
+                  2. Social Links
+                </button>
+              </div>
+              {/* Step 1: Compulsory Info */}
+              {step === 1 && (
+                <Fragment>
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
+                      Organization Information
+                    </h2>
+                    {/* Organization Name */}
+                    <FormField
+                      control={control}
+                      name="organizationName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Organization Name *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="e.g. DevZoku Inc."
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Bio */}
+                    <FormField
+                      control={control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Organization Bio
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Tell us about your organization..."
+                              className="min-h-[100px] bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Website */}
+                    <FormField
+                      control={control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Website
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="https://yourcompany.com"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Company Email */}
+                    <FormField
+                      control={control}
+                      name="companyEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Company Email *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="contact@yourcompany.com"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Phone Number */}
+                    <FormField
+                      control={control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Phone Number *
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <PhoneInput
+                                {...field}
+                                defaultCountry="IN"
+                                international
+                                countryCallingCodeEditable={true}
+                                className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] w-full transition [&>input]:bg-[#f7faff] [&>input]:text-[#062a47] [&>input]:border-none [&>input]:rounded-xl [&>input]:focus:ring-2 [&>input]:focus:ring-[#f75a2f] [&>input]:placeholder:text-[#8ca2c3] [&>.PhoneInputCountry]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:border-none [&>.PhoneInputCountrySelect]:rounded-xl"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Location Dropdowns */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Country DropdownMenu */}
+                      <FormField
+                        control={control}
+                        name="location.country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="capitalize text-[#062a47] font-semibold">
+                              Country *
+                            </FormLabel>
+                            <FormControl>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition">
+                                  {field.value
+                                    ? countries.find(
+                                        (c) => c.isoCode === field.value
+                                      )?.name
+                                    : "Select Country"}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                  {countries.map((country) => (
+                                    <DropdownMenuItem
+                                      key={country.isoCode}
+                                      onClick={() =>
+                                        field.onChange(country.isoCode)
+                                      }
+                                    >
+                                      {country.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {/* State DropdownMenu */}
+                      <FormField
+                        control={control}
+                        name="location.state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="capitalize text-[#062a47] font-semibold">
+                              State *
+                            </FormLabel>
+                            <FormControl>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4  w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition ${
+                                    !selectedCountry
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                  disabled={!selectedCountry}
+                                >
+                                  {field.value
+                                    ? states.find(
+                                        (s) => s.isoCode === field.value
+                                      )?.name
+                                    : "Select State"}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                  {states.map((state) => (
+                                    <DropdownMenuItem
+                                      key={state.isoCode}
+                                      onClick={() =>
+                                        field.onChange(state.isoCode)
+                                      }
+                                    >
+                                      {state.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {/* City DropdownMenu */}
+                      <FormField
+                        control={control}
+                        name="location.city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="capitalize text-[#062a47] font-semibold">
+                              City *
+                            </FormLabel>
+                            <FormControl>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4  w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition ${
+                                    !selectedState
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                  disabled={!selectedState}
+                                >
+                                  {field.value
+                                    ? cities.find((c) => c.name === field.value)
+                                        ?.name
+                                    : "Select City"}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                  {cities.map((city) => (
+                                    <DropdownMenuItem
+                                      key={city.name}
+                                      onClick={() => field.onChange(city.name)}
+                                    >
+                                      {city.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {/* Address Field */}
+                    <FormField
+                      control={control}
+                      name="location.address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#062a47] font-semibold">
+                            Address *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter your address"
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex justify-end mt-8">
+                    <Button
+                      type="button"
+                      onClick={handleNext}
+                      className="bg-[#f75a2f] text-white rounded-xl font-bold shadow hover:bg-[#062a47] transition"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </Fragment>
+              )}
+              {/* Step 2: Social Links */}
+              {step === 2 && (
+                <Fragment>
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
+                      Social Links (Optional)
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {["linkedin", "twitter", "instagram"].map((key) => (
+                        <FormField
+                          key={key}
+                          control={control}
+                          name={`socialLinks.${key}` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="capitalize text-[#062a47] font-semibold">
+                                {key}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={`https://${key}.com/companyname`}
+                                  className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex justify-between mt-8">
+                    <Button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="bg-[#062a47] text-white rounded-xl shadow hover:bg-[#f75a2f] transition"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-[#f75a2f] text-white font-bold rounded-xl shadow hover:bg-[#062a47] transition"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Saving..." : "Save Organization Profile"}
+                    </Button>
+                  </div>
+                </Fragment>
+              )}
+            </form>
+          </Form>
         </div>
       </div>
     );
@@ -648,11 +642,13 @@ function OrganizerCompleteProfileForm() {
 
   // If profile is complete, show edit profile heading and normal form
   return (
-    <div className="min-h-screen w-full">
-      <div className="max-w-2xl mx-auto py-10 px-4">
-        <h1 className="text-3xl font-extrabold mb-8 text-center text-[#062a47] tracking-tight">
-          Edit Organization Profile
-        </h1>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl w-full mx-auto">
+        <div className="text-center space-y-6 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#062a47] leading-tight mt-3">
+            Edit Organization Profile
+          </h1>
+        </div>
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -798,13 +794,15 @@ function OrganizerCompleteProfileForm() {
                           Phone Number *
                         </FormLabel>
                         <FormControl>
-                          <PhoneInput
-                            {...field}
-                            defaultCountry="IN"
-                            international
-                            countryCallingCodeEditable={true}
-                            className="bg-[#f7faff] text-black border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] w-full transition"
-                          />
+                          <div className="relative">
+                            <PhoneInput
+                              {...field}
+                              defaultCountry="IN"
+                              international
+                              countryCallingCodeEditable={true}
+                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] w-full py-1 px-2 transition [&>input]:bg-[#f7faff] [&>input]:text-[#062a47] [&>input]:border-none [&>input]:rounded-xl [&>input]:focus:ring-2 [&>input]:focus:ring-[#f75a2f] [&>input]:placeholder:text-[#8ca2c3] [&>.PhoneInputCountry]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:border-none [&>.PhoneInputCountrySelect]:rounded-xl"
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -812,7 +810,7 @@ function OrganizerCompleteProfileForm() {
                   />
                   {/* Location Dropdowns */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Country */}
+                    {/* Country DropdownMenu */}
                     <FormField
                       control={control}
                       name="location.country"
@@ -822,26 +820,33 @@ function OrganizerCompleteProfileForm() {
                             Country *
                           </FormLabel>
                           <FormControl>
-                            <select
-                              {...field}
-                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                            >
-                              <option value="">Select Country</option>
-                              {countries.map((country) => (
-                                <option
-                                  key={country.isoCode}
-                                  value={country.isoCode}
-                                >
-                                  {country.name}
-                                </option>
-                              ))}
-                            </select>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 py-1  w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition">
+                                {field.value
+                                  ? countries.find(
+                                      (c) => c.isoCode === field.value
+                                    )?.name
+                                  : "Select Country"}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                {countries.map((country) => (
+                                  <DropdownMenuItem
+                                    key={country.isoCode}
+                                    onClick={() =>
+                                      field.onChange(country.isoCode)
+                                    }
+                                  >
+                                    {country.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    {/* State */}
+                    {/* State DropdownMenu */}
                     <FormField
                       control={control}
                       name="location.state"
@@ -851,27 +856,40 @@ function OrganizerCompleteProfileForm() {
                             State *
                           </FormLabel>
                           <FormControl>
-                            <select
-                              {...field}
-                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                              disabled={!selectedCountry}
-                            >
-                              <option value="">Select State</option>
-                              {states.map((state) => (
-                                <option
-                                  key={state.isoCode}
-                                  value={state.isoCode}
-                                >
-                                  {state.name}
-                                </option>
-                              ))}
-                            </select>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 w-full text-left focus:ring-2 py-1 focus:ring-[#f75a2f] transition ${
+                                  !selectedCountry
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                disabled={!selectedCountry}
+                              >
+                                {field.value
+                                  ? states.find(
+                                      (s) => s.isoCode === field.value
+                                    )?.name
+                                  : "Select State"}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                {states.map((state) => (
+                                  <DropdownMenuItem
+                                    key={state.isoCode}
+                                    onClick={() =>
+                                      field.onChange(state.isoCode)
+                                    }
+                                  >
+                                    {state.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    {/* City */}
+                    {/* City DropdownMenu */}
                     <FormField
                       control={control}
                       name="location.city"
@@ -881,18 +899,31 @@ function OrganizerCompleteProfileForm() {
                             City *
                           </FormLabel>
                           <FormControl>
-                            <select
-                              {...field}
-                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] w-full transition"
-                              disabled={!selectedState}
-                            >
-                              <option value="">Select City</option>
-                              {cities.map((city) => (
-                                <option key={city.name} value={city.name}>
-                                  {city.name}
-                                </option>
-                              ))}
-                            </select>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 py-1 w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition ${
+                                  !selectedState
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                disabled={!selectedState}
+                              >
+                                {field.value
+                                  ? cities.find((c) => c.name === field.value)
+                                      ?.name
+                                  : "Select City"}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                                {cities.map((city) => (
+                                  <DropdownMenuItem
+                                    key={city.name}
+                                    onClick={() => field.onChange(city.name)}
+                                  >
+                                    {city.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
