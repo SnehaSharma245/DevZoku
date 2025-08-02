@@ -15,7 +15,7 @@ const api: AxiosInstance = axios.create({
 });
 
 const PUBLIC_ROUTE_PREFIXES = [
-  "/auth/login",
+  "/",
   "/hackathon/view-all-hackathons",
   "/developer/profile/",
   "/organizer/profile/",
@@ -61,7 +61,7 @@ api.interceptors.response.use(
         if (!isPublicRoute(getCurrentPath()) && typeof window !== "undefined") {
           console.error("🔁 Refresh token failed:", refreshError);
 
-          window.location.href = "/auth/login";
+          window.location.href = "/";
         }
       }
     }
