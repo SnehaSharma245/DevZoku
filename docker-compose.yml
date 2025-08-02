@@ -34,6 +34,8 @@ services:
       - qdrant
 
   migrator:
+    image: snehas874/devzoku-migrator:latest
+    container_name: devzoku-migrator
     build:
       context: ./server
       dockerfile: Dockerfile.migrator
@@ -48,12 +50,12 @@ services:
   worker:
     image: snehas874/devzoku-worker:latest
     build:
-      context: ./server
+      context: ./worker
       dockerfile: Dockerfile
     container_name: devzoku-worker
     restart: unless-stopped
-    command: bun worker
-    env_file: .env.server
+    command: bun start
+    env_file: .env.worker
     networks:
       - devzoku
     depends_on:

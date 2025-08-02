@@ -1,14 +1,13 @@
-FROM snehas874/devzoku-server:latest AS server
+# Migrator Stage
 FROM oven/bun:1.2.19 AS migrator
 
-WORKDIR /migrator
+WORKDIR /server
 
-# Reuse already installed dependencies
-COPY --from=server /server/node_modules ./node_modules
+COPY migrator.package.json ./package.json
 
-# Copy only required files for migration
-COPY package.json bun.lock* ./
+RUN bun install
+
+COPY /src/db/schema ./src/db/schema
 COPY drizzle.config.ts ./
-COPY src/db ./src/db
 
-CMD ["bun", "run", "db:push"]
+CMD ["bunx", "drizzle-kit", "push", "--config=drizzle.config.ts"]
