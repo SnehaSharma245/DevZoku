@@ -6,7 +6,6 @@ import { hackathonResultAnnouncementTemplate } from "./templates/HackathonWinner
 const hackathonTeamEmailWorker = new Worker(
   "hackathon-emails",
   async (job) => {
-    console.log("Processing job:");
     const {
       email,
       memberName,
@@ -16,12 +15,12 @@ const hackathonTeamEmailWorker = new Worker(
       hackathonEndDate,
       organizationName,
       organizationEmail,
-      type,
+
       position,
       captainName,
     } = job.data;
 
-    if (type === "team-registration") {
+    if (job.name === "team-registration") {
       const message = teamRegToHackathonTemplate({
         memberName,
         teamName,
@@ -41,7 +40,7 @@ const hackathonTeamEmailWorker = new Worker(
       );
     }
 
-    if (type === "hackathon-result-announcement") {
+    if (job.name === "winner-result") {
       const message = hackathonResultAnnouncementTemplate({
         captainName,
         teamName,
