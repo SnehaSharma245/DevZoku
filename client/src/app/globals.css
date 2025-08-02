@@ -3,6 +3,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #e3e8ee;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #fb7853cc;
+  border-radius: 8px;
+  border: 2px solid #e3e8ee;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #062a47;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #fb7853cc #e3e8ee;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
