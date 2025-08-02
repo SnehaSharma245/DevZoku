@@ -1,0 +1,21 @@
+{
+  "name": "migrator",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/pg": "^8.15.4",
+    "typescript": "^5.4.0",
+    "drizzle-kit": "^0.31.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "db:push": "bunx drizzle-kit push --config=drizzle.config.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.2",
+    "pg": "^8.16.3"
+  }
+}

@@ -44,13 +44,12 @@ services:
   migrator:
     build:
       context: ./server
-      dockerfile: Dockerfile
-      target: builder
+      dockerfile: Dockerfile.migrator
+    container_name: devzoku-migrator
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
-    command: bun run db:push
     networks:
       - devzoku
     restart: "no"
