@@ -215,7 +215,7 @@ const applyToHackathon = asyncHandler(async (req, res) => {
     // });
 
     // add to queue
-    hackathonTeamEmailQueue.add("hackathon-emails", {
+    hackathonTeamEmailQueue.add("team-registration", {
       email: member.email,
       memberName: member.name,
       teamName: team[0]?.name ?? "",
@@ -230,7 +230,6 @@ const applyToHackathon = asyncHandler(async (req, res) => {
       ),
       organizationName: organizer[0]?.name || "",
       organizationEmail: organizer[0]?.email ?? "",
-      type: "team-registration",
     });
   });
 
@@ -1055,7 +1054,7 @@ const markWinners = asyncHandler(async (req, res) => {
     // });
 
     //add to queue
-    hackathonTeamEmailQueue.add("hackathon-emails", {
+    hackathonTeamEmailQueue.add("winner-result", {
       email: captain.email,
       captainName: captain.name,
       teamName: captain.teamName,
@@ -1067,7 +1066,6 @@ const markWinners = asyncHandler(async (req, res) => {
         | "winner"
         | "firstRunnerUp"
         | "secondRunnerUp",
-      type: "hackathon-result-announcement",
     });
   }
 
