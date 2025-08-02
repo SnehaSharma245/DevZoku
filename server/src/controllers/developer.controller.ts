@@ -288,6 +288,7 @@ const addProject = asyncHandler(async (req, res) => {
   }
 
   const newProject = {
+    id: crypto.randomUUID(),
     title,
     description,
     techStack,
@@ -307,6 +308,41 @@ const addProject = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, newProject, "Project added successfully"));
+});
+
+const deleteProject = asyncHandler(async (req, res) => {
+  const { user } = req;
+  const { projectId } = req.body;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+  if (!projectId) {
+    throw new ApiError(400, "Project ID is required");
+  }
+  // Get current projects
+  const [developer] = await db
+    .select({ projects: developers.projects })
+    .from(developers)
+    .where(eq(developers.userId, user.id))
+    .limit(1)
+    .execute();
+  if (!developer) {
+    throw new ApiError(404, "Developer profile not found");
+  }
+  // Filter out the project to be deleted
+  const updatedProjects = (developer.projects || []).filter(
+    (project) => project.id !== projectId
+  );
+  // Update developer's projects
+  await db
+    .update(developers)
+    .set({ projects: updatedProjects, updatedAt: new Date() })
+    .where(eq(developers.userId, user.id))
+    .execute();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Project deleted successfully"));
 });
 
 // controller for llm tag extraction
@@ -542,4 +578,5 @@ export {
   fetchProjects,
   addProject,
   getRecommendedHackathons,
+  deleteProject,
 };

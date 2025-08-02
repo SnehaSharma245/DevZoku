@@ -6,6 +6,7 @@ import {
   fetchProjects,
   addProject,
   getRecommendedHackathons,
+  deleteProject,
 } from "../controllers/developer.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -18,6 +19,7 @@ router.delete("/notifications/:id", verifyJWT, notificationHandling);
 router.get("/projects", verifyJWT, fetchProjects);
 router.post("/add-project", verifyJWT, addProject);
 router.get("/recommended-hackathons", verifyJWT, getRecommendedHackathons);
+router.delete("/delete-project", verifyJWT, deleteProject);
 
 // unprotected route
 router.get("/developer-profile/:id", fetchDeveloperProfile);

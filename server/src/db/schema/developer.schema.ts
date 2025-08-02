@@ -30,6 +30,7 @@ export const developers = pgTable("developers", {
   }>(),
   projects: json("projects").$type<
     {
+      id: string;
       title: string;
       description: string;
       techStack: string[];
