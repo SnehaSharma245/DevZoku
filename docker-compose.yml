@@ -53,7 +53,7 @@ services:
     container_name: devzoku-worker
     restart: unless-stopped
     command: bun worker
-    env_file: ./server/.env
+    env_file: .env.server
     networks:
       - devzoku
     depends_on:
