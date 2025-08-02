@@ -403,6 +403,12 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     .where(eq(userInteractions.userId, userId))
     .execute();
 
+  if (fetchedUserInteractions.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No user interactions found"));
+  }
+
   // fetch latest N interactions
   const latestNInteractions = [...fetchedUserInteractions]
     .sort((a: any, b: any) => b.createdAt - a.createdAt)
@@ -444,9 +450,25 @@ Respond strictly with a JSON array of hackathon IDs, and nothing else.
 
   const vectorResults = await vecStore.similaritySearch(PROMPT, 5);
 
-  const response =
-    await llm.invoke(`Return only the hackathon ids in the form of array which are comma separated. The ids can be lesser than the hackathons in the vector store. But return only those hackathons which are relevant to the user interactions.
-Context: ${vectorResults.map((doc: any) => doc.pageContent).join("\n")}`);
+  if (vectorResults.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No relevant hackathons found"));
+  }
+
+  const response = await llm.invoke(`You are a hackathon recommendation system. 
+Based on the user interactions and hackathon context provided, return ONLY the relevant hackathon IDs.
+
+IMPORTANT: Return the hackathon IDs as a simple comma-separated string format like this:
+id1,id2,id3
+
+Do NOT return JSON array format like ["id1","id2","id3"]
+Do NOT include any brackets, quotes, or additional text
+Do NOT include explanations or other content
+
+Context: ${vectorResults.map((doc: any) => doc.pageContent).join("\n")}
+
+Return only comma-separated hackathon IDs that are relevant to the user interactions:`);
 
   // Extract hackathon IDs from the response
   const hackathonIds = response.text.split(",").map((id: string) => id.trim());
