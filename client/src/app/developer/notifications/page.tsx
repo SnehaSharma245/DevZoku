@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { X, Bell } from "lucide-react";
 import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`);
 
 interface Notification {
@@ -17,7 +18,7 @@ interface Notification {
 }
 
 function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, setNotifications } = useAuth();
   const [filterType, setFilterType] = useState<
     "all" | "invitation-sent" | "invitation-accepted"
   >("all");
@@ -31,7 +32,9 @@ function NotificationsPage() {
       const { status, data, message } = res.data;
 
       if (status === 200) {
-        setNotifications(data || []);
+        if (setNotifications) {
+          setNotifications(data || []);
+        }
       }
     } catch (error: any) {
       toast.error(
@@ -40,6 +43,7 @@ function NotificationsPage() {
       console.error("Error fetching notifications:", error);
     }
   };
+
   useEffect(() => {
     fetchNotifications();
   }, []);
@@ -51,7 +55,9 @@ function NotificationsPage() {
       const { status, data, message } = res.data;
       if (status === 200) {
         toast.success(message || "Notification deleted successfully");
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        if (setNotifications) {
+          setNotifications((prev) => prev.filter((n) => n.id !== id));
+        }
       }
     } catch (error: any) {
       toast.error(
@@ -64,8 +70,8 @@ function NotificationsPage() {
   // Filter notifications by type
   const filteredNotifications =
     filterType === "all"
-      ? notifications
-      : notifications.filter((n) => n.type === filterType);
+      ? notifications ?? []
+      : (notifications ?? []).filter((n) => n.type === filterType);
 
   return (
     <div className="min-h-screen flex  px-4 sm:px-6 lg:px-8 mt-4">
@@ -129,7 +135,7 @@ function NotificationsPage() {
                 <div className="font-semibold text-[#FF6F61] mb-1 text-lg">
                   {notification.type
                     .replace(/-/g, " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                    .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                 </div>
                 {notification.type === "invitation-sent" ? (
                   <Link href={`/team/joined-teams/${notification.teamId}`}>
