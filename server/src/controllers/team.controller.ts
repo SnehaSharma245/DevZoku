@@ -399,7 +399,7 @@ const sendInvitation = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         sendInvitation[0],
-        "Inivitation forwarded successfully"
+        "Invitation forwarded successfully"
       )
     );
 });
