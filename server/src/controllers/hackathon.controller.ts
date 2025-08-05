@@ -765,6 +765,26 @@ const createHackathon = asyncHandler(async (req, res) => {
         .values(phasesToInsert);
       if (!phaseInsertion)
         throw new ApiError(500, "Failed to create hackathon phases");
+
+      //update organizer's totalHackathons
+      const [organizer] = await tx
+        .select()
+        .from(organizers)
+        .where(eq(organizers.userId, user.id))
+        .limit(1)
+        .execute();
+
+      if (!organizer) {
+        throw new ApiError(404, "Organizer not found");
+      }
+
+      await tx
+        .update(organizers)
+        .set({
+          totalEventsOrganized: (organizer?.totalEventsOrganized ?? 0) + 1,
+        })
+        .where(eq(organizers.userId, user.id))
+        .returning();
     }
 
     // Return the newly created hackathon
