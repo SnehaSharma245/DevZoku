@@ -142,18 +142,27 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
   const hackathonsWithPositionCount =
     winnerCount + firstRunnerUpCount + secondRunnerUpCount;
 
-  const participatedHackathons = await db
-    .select({ tags: hackathons.tags })
-    .from(hackathons)
-    .where(
-      participatedHackathonIds.length > 0
-        ? inArray(
-            hackathons.id,
-            participatedHackathonIds.map((h: any) => h.hackathonId)
-          )
-        : undefined
-    )
-    .execute();
+  let hackathonDomainTags: any = [];
+  if (participatedHackathonIds.length > 0) {
+    const tagsResult = await db
+      .select({ tags: hackathons.tags })
+      .from(hackathons)
+      .where(
+        inArray(
+          hackathons.id,
+          participatedHackathonIds.map((h: any) => h.hackathonId)
+        )
+      )
+      .execute();
+
+    const allTags = tagsResult
+      .map((row: any) => row.tags)
+      .flat()
+      .filter(Boolean);
+
+    const distinctTags = Array.from(new Set(allTags));
+    hackathonDomainTags = distinctTags;
+  }
 
   return res.status(200).json(
     new ApiResponse(
@@ -162,7 +171,7 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
         ...developerProfile[0],
         participatedHackathonsCount,
         hackathonsWithPositionCount,
-        participatedHackathons,
+        hackathonDomainTags,
         winnerCount,
         firstRunnerUpCount,
         secondRunnerUpCount,
@@ -310,6 +319,7 @@ const addProject = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, newProject, "Project added successfully"));
 });
 
+// controller to delete a project from the developer's profile
 const deleteProject = asyncHandler(async (req, res) => {
   const { user } = req;
   const { projectId } = req.body;
