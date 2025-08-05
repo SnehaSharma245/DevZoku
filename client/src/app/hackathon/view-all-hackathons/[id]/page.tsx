@@ -11,18 +11,11 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"; // apne Dialog component ka import path sahi karein
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import type { Hackathon } from "@/types/hackathon.types";
 import type { Phases } from "@/types/hackathon.types";
 import MarkingWinnerPopup from "@/components/popups/MarkingWinnerPopup";
-
-interface TeamMember {
-  userId: string;
-  teamId: string;
-  name?: string;
-  email?: string;
-}
 
 interface Team {
   id: string;
@@ -190,10 +183,10 @@ function ParticularHackathon() {
         onClose={() => setIsMarkingWinnersPopupOpen(false)}
       />
       <div className="min-h-screen flex items-center justify-center py-10 px-2">
-        <div className="max-w-3xl w-full bg-[#18181e] rounded-3xl shadow-xl border border-[#23232b] p-8">
+        <div className="max-w-3xl w-full  rounded-3xl shadow-xl border border-[#fff9f5] p-8">
           <div className="flex flex-col md:flex-row gap-8">
             {poster && (
-              <div className="w-full md:w-72 aspect-[3/2] rounded-2xl shadow border border-[#23232b] overflow-hidden bg-[#23232b] flex-shrink-0">
+              <div className="w-full md:w-72 aspect-[3/2] rounded-2xl shadow border border-[#fff9f5] overflow-hidden bg-[#fff9f5] flex-shrink-0 flex items-center justify-center">
                 <img
                   src={poster}
                   alt={title}
@@ -202,12 +195,14 @@ function ParticularHackathon() {
               </div>
             )}
             <div className="flex-1">
-              <h1 className="text-3xl font-extrabold mb-2 text-white">
+              <h1 className="text-3xl font-extrabold mb-2 text-[#062a47]">
                 {title}
               </h1>
               {organizationName && (
-                <div className="mb-2 text-sm text-gray-400">
-                  <span className="font-semibold text-white">Organizer:</span>{" "}
+                <div className="mb-2 text-sm text-[#6B7A8F]">
+                  <span className="font-semibold text-[#062a47]">
+                    Organizer:
+                  </span>{" "}
                   {organizationName}
                 </div>
               )}
@@ -217,23 +212,32 @@ function ParticularHackathon() {
                   tags.map((tag) => (
                     <span
                       key={tag}
-                      className="bg-[#23232b] text-[#a3e635] px-3 py-1 rounded-full text-xs font-semibold border border-[#a3e635]"
+                      className="bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white px-3 py-1 rounded-full text-xs font-semibold border border-[#FF9466] shadow"
                     >
-                      #{tag}
+                      {tag}
                     </span>
                   ))}
               </div>
               {status && (
                 <div className="mb-2">
-                  <span className="font-semibold text-white">Status:</span>{" "}
+                  <span className="font-semibold text-[#062a47]">Status:</span>{" "}
                   <span
-                    className={
-                      status === "upcoming"
-                        ? "text-blue-400"
-                        : status === "ongoing"
-                        ? "text-[#a3e635]"
-                        : "text-gray-400"
-                    }
+                    className="inline-block px-2 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      color: "#fff",
+                      background:
+                        status === "upcoming"
+                          ? "#FFE2D1"
+                          : status === "ongoing"
+                          ? "#FFC7A6"
+                          : status === "completed"
+                          ? "#FFA883"
+                          : status === "Registration in Progress"
+                          ? "#FFD5BB"
+                          : status === "Registration ended"
+                          ? "#FFBA94"
+                          : "#E6B89C",
+                    }}
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </span>
@@ -241,24 +245,26 @@ function ParticularHackathon() {
               )}
               {mode && (
                 <div className="mb-2">
-                  <span className="font-semibold text-white">Mode:</span>{" "}
-                  <span className="text-gray-300">{mode}</span>
+                  <span className="font-semibold text-[#062a47]">Mode:</span>{" "}
+                  <span className="text-[#6B7A8F]">{mode}</span>
                 </div>
               )}
               {(minTeamSize || maxTeamSize) && (
                 <div className="mb-2">
-                  <span className="font-semibold text-white">Team Size:</span>{" "}
-                  <span className="text-gray-300">
+                  <span className="font-semibold text-[#062a47]">
+                    Team Size:
+                  </span>{" "}
+                  <span className="text-[#6B7A8F]">
                     {minTeamSize ?? "-"} - {maxTeamSize ?? "-"}
                   </span>
                 </div>
               )}
               {dateCompleted && (
                 <div className="mb-2">
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[#062a47]">
                     Completed On:
                   </span>{" "}
-                  <span className="text-gray-300">
+                  <span className="text-[#6B7A8F]">
                     {formatDateTime(dateCompleted)}
                   </span>
                 </div>
@@ -267,48 +273,50 @@ function ParticularHackathon() {
           </div>
 
           <div className="mt-8">
-            <h2 className="text-xl font-bold mb-2 text-white">Description</h2>
-            <p className="text-gray-300">
+            <h2 className="text-xl font-bold mb-2 text-[#062a47]">
+              Description
+            </h2>
+            <p className="text-[#6B7A8F]">
               {description || "No description provided."}
             </p>
           </div>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             {(registrationStart || registrationEnd) && (
-              <div className="bg-[#23232b] rounded-xl p-4 border border-[#23232b]">
-                <h3 className="font-semibold text-white mb-2">
+              <div className="bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] rounded-xl p-4 border border-[#fff9f5] shadow">
+                <h3 className="font-semibold text-[#062a47] mb-2">
                   Registration Window
                 </h3>
                 <div>
-                  <span className="text-gray-400">Start:</span>{" "}
-                  <span className="text-white">
+                  <span className="text-[#6B7A8F]">Start:</span>{" "}
+                  <span className="text-[#062a47]">
                     {registrationStart
                       ? formatDateTime(registrationStart)
                       : "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">End:</span>{" "}
-                  <span className="text-white">
+                  <span className="text-[#6B7A8F]">End:</span>{" "}
+                  <span className="text-[#062a47]">
                     {registrationEnd ? formatDateTime(registrationEnd) : "-"}
                   </span>
                 </div>
               </div>
             )}
             {(startTime || endTime) && (
-              <div className="bg-[#23232b] rounded-xl p-4 border border-[#23232b]">
-                <h3 className="font-semibold text-white mb-2">
+              <div className="bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] rounded-xl p-4 border border-[#fff9f5] shadow">
+                <h3 className="font-semibold text-[#062a47] mb-2">
                   Hackathon Window
                 </h3>
                 <div>
-                  <span className="text-gray-400">Start:</span>{" "}
-                  <span className="text-white">
+                  <span className="text-[#6B7A8F]">Start:</span>{" "}
+                  <span className="text-[#062a47]">
                     {startTime ? formatDateTime(startTime) : "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">End:</span>{" "}
-                  <span className="text-white">
+                  <span className="text-[#6B7A8F]">End:</span>{" "}
+                  <span className="text-[#062a47]">
                     {endTime ? formatDateTime(endTime) : "-"}
                   </span>
                 </div>
@@ -318,21 +326,23 @@ function ParticularHackathon() {
 
           {phases && phases.length > 0 && (
             <div className="mt-10">
-              <h2 className="text-xl font-bold mb-4 text-white">Phases</h2>
-              <ol className="relative border-l-2 border-[#a3e635]/30 ml-4">
+              <h2 className="text-xl font-bold mb-4 text-[#062a47]">Phases</h2>
+              <ol className="relative border-l-2 border-[#FF9466]/30 ml-4">
                 {phases
                   .sort((a, b) => a.order - b.order)
                   .map((phase, idx) => (
                     <li key={phase.id} className="mb-10 ml-6">
-                      <span className="absolute -left-4 flex items-center justify-center w-8 h-8 bg-[#a3e635] text-black font-bold rounded-full ring-8 ring-[#18181e] shadow">
+                      <span className="absolute -left-4 flex items-center justify-center w-8 h-8 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-full ring-8 ring-[#fff9f5] shadow">
                         {idx + 1}
                       </span>
                       <div className="flex flex-col gap-1">
-                        <div className="font-semibold text-lg text-white">
+                        <div className="font-semibold text-lg text-[#062a47]">
                           {phase.title}
                         </div>
-                        <div className="text-gray-300">{phase.description}</div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-[#6B7A8F]">
+                          {phase.description}
+                        </div>
+                        <div className="text-xs text-[#FF9466]">
                           {formatDateTime(phase.startTime)} -{" "}
                           {formatDateTime(phase.endTime)}
                         </div>
@@ -347,11 +357,11 @@ function ParticularHackathon() {
             <div className="mt-10 flex flex-col md:flex-row gap-4">
               <Button
                 onClick={handleRegistration}
-                className="bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition w-full md:w-auto"
+                className="bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl hover:opacity-90 transition w-full md:w-auto shadow"
               >
                 Apply Now
               </Button>
-              <Button className="bg-[#23232b] text-white border border-[#a3e635] rounded-xl hover:bg-[#23232b]/80 transition w-full md:w-auto">
+              <Button className="bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] text-[#FF6F61] border border-[#FF9466] rounded-xl hover:bg-[#FF9466]/10 transition w-full md:w-auto shadow">
                 Share to Teams
               </Button>
             </div>
@@ -363,7 +373,7 @@ function ParticularHackathon() {
             hackathonDetails?.positionHolders === null && (
               <div className="mt-10">
                 <Button
-                  className="bg-[#a3e635] text-black font-bold rounded-xl px-6 py-3 hover:bg-lime-400 transition inline-block"
+                  className="bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl px-6  hover:opacity-90 transition inline-block shadow"
                   onClick={handleWinnerDialogOpen}
                 >
                   Mark Winners
@@ -377,9 +387,9 @@ function ParticularHackathon() {
               open={isJoinedTeamsDialogOpen}
               onOpenChange={setIsJoinedTeamsDialogOpen}
             >
-              <DialogContent className="max-w-3xl w-full bg-[#18181e] border border-[#23232b] rounded-2xl">
-                <DialogTitle className="text-white">Your Teams</DialogTitle>
-                <DialogDescription className="text-gray-400">
+              <DialogContent className="max-w-3xl w-full bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] border border-[#fff9f5] rounded-2xl shadow-xl">
+                <DialogTitle className="text-[#062a47]">Your Teams</DialogTitle>
+                <DialogDescription className="text-[#6B7A8F]">
                   {isLoading
                     ? "Loading..."
                     : teamsArray.length > 0
@@ -401,17 +411,17 @@ function ParticularHackathon() {
                       return (
                         <div
                           key={team.id}
-                          className="flex flex-col border border-[#23232b] rounded-xl px-4 py-3 w-full bg-[#23232b]"
+                          className="flex flex-col border border-[#fff9f5] rounded-xl px-4 py-3 w-full bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] shadow"
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-semibold text-white">
+                              <div className="font-semibold text-[#062a47]">
                                 {team.name}
                               </div>
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-[#6B7A8F]">
                                 Max Team size: {team.teamSize}
                               </div>
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-[#6B7A8F]">
                                 Current Member Count: {team.currentMemberCount}
                               </div>
                             </div>
@@ -419,7 +429,7 @@ function ParticularHackathon() {
                             <Button
                               onClick={() => handleApplyByTeam(team.id)}
                               disabled={isLoading}
-                              className="ml-4 bg-[#a3e635] text-black font-semibold rounded-xl hover:bg-lime-400 transition"
+                              className="ml-4 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-semibold rounded-xl hover:opacity-90 transition shadow"
                             >
                               Apply by this
                             </Button>
