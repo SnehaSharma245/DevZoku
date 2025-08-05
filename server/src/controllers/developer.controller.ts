@@ -187,6 +187,7 @@ const fetchDeveloperProfile = asyncHandler(async (req, res) => {
 const notificationHandling = asyncHandler(async (req, res) => {
   const { user } = req;
   const { id } = req.params;
+  const { deleteOnlyNotification } = req.query;
   if (!user) {
     throw new ApiError(401, "User not authenticated");
   }
@@ -224,12 +225,12 @@ const notificationHandling = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, [], "No notifications found"));
   }
 
-  if (id) {
-    // find the notification by id and delete it
-    const updatedNotifications = dev.notifications?.filter(
-      (notification) => notification.id !== id
-    );
+  // find the notification by id and delete it
+  const updatedNotifications = dev.notifications?.filter(
+    (notification) => notification.id !== id
+  );
 
+  if (id && deleteOnlyNotification === "false") {
     // if the type of notification is "invitation-sent", remove the user id from the team's pending invitations
     if (
       dev.notifications?.find((notification) => notification.id === id)
@@ -279,6 +280,22 @@ const notificationHandling = asyncHandler(async (req, res) => {
         .execute();
     }
 
+    const notificationAfterRemoval = await db
+      .update(developers)
+      .set({ notifications: updatedNotifications })
+      .where(eq(developers.userId, user.id))
+      .execute();
+
+    if (!notificationAfterRemoval) {
+      throw new ApiError(500, "Failed to delete notification");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Notification deleted successfully"));
+  }
+
+  if (id && deleteOnlyNotification === "true") {
     const notificationAfterRemoval = await db
       .update(developers)
       .set({ notifications: updatedNotifications })
