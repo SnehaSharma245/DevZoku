@@ -167,7 +167,9 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
     }
   } else {
     if (existingUsers[0] && existingUsers[0].role !== role) {
-      throw new ApiError(403, "User already exists with a different role");
+      return res.redirect(
+        `${baseOrigin}/?toast=User already exists with a different role`
+      );
     }
     userObj = existingUsers[0];
   }
