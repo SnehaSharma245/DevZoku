@@ -241,9 +241,9 @@ const viewAllTeams = asyncHandler(async (req, res) => {
     .orderBy(desc(teams.createdAt))
     .execute();
 
-  const particularTeam = joinedTeamsWithDetails.find(
-    (team) => team.team.id === id
-  );
+  const particularTeam =
+    joinedTeamsWithDetails.find((team) => team.team.id === id) ||
+    allTeams.find((team) => team.team.id === id);
 
   if (id) {
     if (!particularTeam) {
@@ -636,6 +636,60 @@ const leaveTeam = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Left team successfully"));
 });
 
+const editTeam = asyncHandler(async (req: Request, res: Response) => {
+  const { user } = req;
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    teamSize,
+    isAcceptingInvites,
+    skillsNeeded,
+    captainId,
+  } = req.body;
+  if (!user) {
+    throw new ApiError(401, "User not authenticated");
+  }
+  if (user.role !== "developer") {
+    throw new ApiError(403, "Access denied. Only developers can edit teams.");
+  }
+  if (!id) {
+    throw new ApiError(400, "Team ID is required");
+  }
+  // Check if the team exists
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, id))
+    .execute();
+  if (!team) {
+    throw new ApiError(404, "Team not found");
+  }
+  // Check if the user is the captain of the team
+  if (team.captainId !== user.id) {
+    throw new ApiError(403, "Only the team captain can edit the team");
+  }
+  // Update the team
+  const updatedTeam = await db
+    .update(teams)
+    .set({
+      name,
+      description,
+      teamSize,
+      isAcceptingInvites,
+      skillsNeeded: skillsNeeded || "",
+      ...(captainId && captainId !== team.captainId ? { captainId } : {}),
+    })
+    .where(eq(teams.id, id))
+    .returning();
+  if (!updatedTeam || updatedTeam.length === 0) {
+    throw new ApiError(500, "Failed to update the team");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedTeam[0], "Team updated successfully"));
+});
+
 export {
   createTeam,
   checkTeamNameUnique,
@@ -645,4 +699,5 @@ export {
   fetchPendingInvitesAndAcceptThem,
   fetchSentInvitations,
   leaveTeam,
+  editTeam,
 };

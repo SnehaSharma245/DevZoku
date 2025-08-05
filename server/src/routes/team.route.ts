@@ -8,6 +8,7 @@ import {
   fetchPendingInvitesAndAcceptThem,
   fetchSentInvitations,
   leaveTeam,
+  editTeam,
 } from "../controllers/team.controller";
 import { verifyJWT } from "../middlewares/auth.middleware";
 
@@ -27,5 +28,6 @@ router.post(
 );
 router.get("/sent-invitations", verifyJWT, fetchSentInvitations);
 router.delete("/leave-team", verifyJWT, leaveTeam);
+router.put("/edit/:id", verifyJWT, editTeam);
 
 export default router;
