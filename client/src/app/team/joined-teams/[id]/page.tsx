@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components";
 import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
+import { Bell } from "lucide-react";
 
 export interface PendingInvites {
   id: string;
@@ -70,49 +71,57 @@ function TeamDetailPage() {
   };
 
   return (
-    <div className="py-10 px-2 max-w-xl mx-auto">
-      <h1 className="text-2xl font-extrabold text-white tracking-tight mb-8 flex items-center gap-2">
-        Pending Invites
-      </h1>
-      {pendingInvites && pendingInvites.length > 0 ? (
-        <div>
-          <h2 className="text-lg font-semibold text-[#a3e635] mb-4">
-            {teamName}
-          </h2>
-          <ul className="space-y-4">
-            {pendingInvites.map((invite) => (
-              <li
-                key={invite.id}
-                className="flex items-center justify-between border border-[#23232b] rounded-xl px-5 py-4 shadow"
-              >
-                <div>
-                  <Link href={`/developer/profile/${invite.id}`}>
-                    <span className="font-semibold text-white">
-                      {invite.firstName}
-                    </span>
-                  </Link>
-                  <span className="text-gray-400 text-sm ml-2">
-                    ({invite.email})
-                  </span>
-                </div>
-                <Button
-                  className={`bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition ml-4 ${
-                    inviteAccepted ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  onClick={() => handleAcceptInvite(invite.id)}
-                  disabled={inviteAccepted}
+    <div className="min-h-screen flex px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-4xl w-full mx-auto">
+        {/* Header */}
+        <div className="rounded-3xl mb-10 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white">
+            <Bell className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-[#062a47] tracking-tight">
+            Pending Invites
+          </h1>
+        </div>
+        {pendingInvites && pendingInvites.length > 0 ? (
+          <div>
+            <h2 className="text-lg font-semibold text-[#FF6F61] mb-4">
+              {teamName}
+            </h2>
+            <ul className="space-y-6">
+              {pendingInvites.map((invite) => (
+                <li
+                  key={invite.id}
+                  className="flex items-center justify-between bg-gradient-to-r from-[#fff9f5] to-[#f8f8f8] border border-[#eaf6fb] rounded-xl px-6 py-5 shadow-lg transition hover:border-[#FF9466]"
                 >
-                  Accept Invite
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="text-gray-400 text-center py-12 rounded-xl border border-[#23232b]">
-          No pending invites
-        </div>
-      )}
+                  <div>
+                    <Link href={`/developer/profile/${invite.id}`}>
+                      <span className="font-semibold text-[#FF6F61] hover:underline">
+                        {invite.firstName}
+                      </span>
+                    </Link>
+                    <span className="text-[#6B7A8F] text-sm ml-2">
+                      ({invite.email})
+                    </span>
+                  </div>
+                  <Button
+                    className={`bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl hover:opacity-90 transition ml-4 ${
+                      inviteAccepted ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() => handleAcceptInvite(invite.id)}
+                    disabled={inviteAccepted}
+                  >
+                    Accept Invite
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="text-[#6B7A8F] text-center py-12 bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-xl border border-[#eaf6fb] shadow">
+            No pending invites
+          </div>
+        )}
+      </div>
     </div>
   );
 }

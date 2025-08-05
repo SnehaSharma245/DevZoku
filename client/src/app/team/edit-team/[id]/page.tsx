@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Input, Textarea, Button, Switch } from "@/components/index";
-import { X } from "lucide-react";
+import { X, Users } from "lucide-react";
 import { withAuth } from "@/utils/withAuth";
 import api from "@/utils/api";
 import { toast } from "sonner";
@@ -152,178 +152,187 @@ function EditTeamPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center pb-16">
-      <div className="max-w-2xl w-full mx-auto py-10 px-4">
-        <h1 className="text-3xl font-extrabold mb-8 text-center text-white tracking-tight">
-          Edit Your Team
-        </h1>
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-8 bg-[#18181e] rounded-3xl shadow-xl p-8 border border-[#23232b]"
-        >
-          {/* Team Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-1">
-              Team Name *
-            </label>
-            <Input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              minLength={3}
-              maxLength={255}
-              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
-              placeholder="Enter team name"
-            />
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-3xl w-full mx-auto">
+        {/* Card-style container */}
+        <div className="bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-3xl shadow-2xl border border-[#e3e8ee] p-8 mb-10 flex flex-col items-center">
+          {/* Team Logo Avatar */}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white mb-4">
+            <Users className="text-white w-10 h-10" />
           </div>
-          {/* Description */}
-          <div>
-            <div className="flex justify-between items-center">
-              <label className="block text-sm font-semibold text-gray-300">
-                Description
-              </label>
-              <span className="text-xs text-gray-400">{descCharCount}/250</span>
-            </div>
-            <Textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              maxLength={250}
-              rows={3}
-              className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] resize-none"
-              placeholder="What's your team about?"
-            />
-          </div>
-          {/* Skills Needed */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-1">
-              Skills Needed
-            </label>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#062a47] mb-2 text-center">
+            Edit Your Team
+          </h1>
+        </div>
+        {/* Form Card */}
+        <div className="bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-3xl shadow-xl border border-[#e3e8ee] p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Team Name */}
             <div>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {skills.map((skill, idx) => (
-                  <span
-                    key={skill + idx}
-                    className="flex items-center bg-[#23232b] text-white px-3 py-1 rounded-full text-sm"
-                  >
-                    {skill}
-                    <button
-                      type="button"
-                      className="ml-2 text-gray-400 hover:text-red-400"
-                      onClick={() => {
-                        const updated = skills.filter((_, i) => i !== idx);
-                        setSkills(updated);
-                      }}
-                      tabIndex={-1}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <Input
-                placeholder="Type a skill and press Enter"
-                className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && skillInput.trim() !== "") {
-                    e.preventDefault();
-                    const val = skillInput.trim();
-                    if (!skills.includes(val)) {
-                      setSkills([...skills, val]);
-                    }
-                    setSkillInput("");
-                  }
-                }}
-              />
-            </div>
-          </div>
-          {/* Team Size & Accepting Invites */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-300 mb-1">
-                Team Size
+              <label className="block text-sm font-semibold text-[#062a47] mb-1">
+                Team Name *
               </label>
               <Input
-                type="number"
-                name="teamSize"
-                value={form.teamSize}
+                type="text"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                min={1}
-                max={20}
-                className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888]"
-                placeholder="Enter number of members"
+                required
+                minLength={3}
+                maxLength={255}
+                className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] rounded-xl placeholder:text-[#888]"
+                placeholder="Enter team name"
               />
             </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300 mb-1">
-                <Switch
-                  checked={form.isAcceptingInvites}
-                  onCheckedChange={(checked) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      isAcceptingInvites: checked,
-                    }))
-                  }
-                  className="data-[state=checked]:bg-[#a3e635] data-[state=unchecked]:bg-[#23232b]"
-                />
-                Accepting Members
-              </label>
+            {/* Description */}
+            <div>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-semibold text-[#062a47]">
+                  Description
+                </label>
+                <span className="text-xs text-gray-400">
+                  {descCharCount}/250
+                </span>
+              </div>
+              <Textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                maxLength={250}
+                rows={3}
+                className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] rounded-xl placeholder:text-[#888] resize-none"
+                placeholder="What's your team about?"
+              />
             </div>
-          </div>
-          <div className="flex gap-4">
-            {/* accordion for team members */}
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="team-members">
-                <AccordionTrigger className="text-sm font-semibold text-gray-300">
-                  Change Captain
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-400">
-                  {team.team_members.length > 0 ? (
-                    <ul className="space-y-2">
-                      {team.team_members.map((member) => (
-                        <li
-                          key={member.userId}
-                          className="flex items-center gap-2"
-                        >
-                          <input
-                            type="checkbox"
-                            name="captain"
-                            value={member.userId}
-                            checked={selectedCaptain === member.userId}
-                            onChange={() => setSelectedCaptain(member.userId)}
-                            className="accent-[#a3e635] w-4 h-4"
-                          />
-                          <span>
-                            {member.name}{" "}
-                            {member.lastName ? member.lastName : ""}
-                            {team.captain.id === member.userId && (
-                              <span className="ml-2 text-xs text-[#a3e635]">
-                                (Current Captain)
-                              </span>
-                            )}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-500">No members in this team.</p>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-          <Button
-            type="submit"
-            className="w-full bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : "Save Changes"}
-          </Button>
-        </form>
+            {/* Skills Needed */}
+            <div>
+              <label className="block text-sm font-semibold text-[#062a47] mb-1">
+                Skills Needed
+              </label>
+              <div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {skills.map((skill, idx) => (
+                    <span
+                      key={skill + idx}
+                      className="flex items-center bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-3 py-1 rounded-full text-sm font-semibold shadow"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        className="ml-2 text-gray-200 hover:text-red-400"
+                        onClick={() => {
+                          const updated = skills.filter((_, i) => i !== idx);
+                          setSkills(updated);
+                        }}
+                        tabIndex={-1}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <Input
+                  placeholder="Type a skill and press Enter"
+                  className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] rounded-xl placeholder:text-[#888]"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && skillInput.trim() !== "") {
+                      e.preventDefault();
+                      const val = skillInput.trim();
+                      if (!skills.includes(val)) {
+                        setSkills([...skills, val]);
+                      }
+                      setSkillInput("");
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            {/* Team Size & Accepting Invites */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-[#062a47] mb-1">
+                  Team Size
+                </label>
+                <Input
+                  type="number"
+                  name="teamSize"
+                  value={form.teamSize}
+                  onChange={handleChange}
+                  min={1}
+                  max={20}
+                  className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] rounded-xl placeholder:text-[#888]"
+                  placeholder="Enter number of members"
+                />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 text-sm font-semibold text-[#062a47] mb-1">
+                  <Switch
+                    checked={form.isAcceptingInvites}
+                    onCheckedChange={(checked) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        isAcceptingInvites: checked,
+                      }))
+                    }
+                    className="data-[state=checked]:bg-[#f75a2f] data-[state=unchecked]:bg-[#eaf6fb]"
+                  />
+                  Accepting Members
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              {/* accordion for team members */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="team-members">
+                  <AccordionTrigger className="text-sm font-semibold text-[#062a47]">
+                    Change Captain
+                  </AccordionTrigger>
+                  <AccordionContent className="text-[#6B7A8F]">
+                    {team.team_members.length > 0 ? (
+                      <ul className="space-y-2">
+                        {team.team_members.map((member) => (
+                          <li
+                            key={member.userId}
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="captain"
+                              value={member.userId}
+                              checked={selectedCaptain === member.userId}
+                              onChange={() => setSelectedCaptain(member.userId)}
+                              className="accent-[#f75a2f] w-4 h-4"
+                            />
+                            <span>
+                              {member.name}{" "}
+                              {member.lastName ? member.lastName : ""}
+                              {team.captain.id === member.userId && (
+                                <span className="ml-2 text-xs text-[#f75a2f]">
+                                  (Current Captain)
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500">No members in this team.</p>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#f75a2f] text-white font-bold rounded-xl hover:bg-[#FF9466] transition"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

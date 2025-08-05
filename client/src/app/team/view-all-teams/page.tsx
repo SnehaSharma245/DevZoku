@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Users } from "lucide-react";
 
 interface TeamBrief {
   team: {
@@ -15,6 +16,7 @@ interface TeamBrief {
     requiredMemberCount: number;
     currentMemberCount: number;
     isAcceptingInvites: boolean;
+    skillsNeeded?: string;
   };
 
   captain: {
@@ -32,7 +34,9 @@ function ViewAllTeams() {
 
   const [teams, setTeams] = useState<TeamBrief[]>([]);
   const [invitationSent, setInvitationSent] = useState<boolean>(false);
-  const [search, setSearch] = useState(""); // <-- Add search state
+  const [search, setSearch] = useState("");
+  const [skillFilterInput, setSkillFilterInput] = useState("");
+  const [skillFilters, setSkillFilters] = useState<string[]>([]);
 
   const fetchAllTeams = async () => {
     try {
@@ -78,9 +82,44 @@ function ViewAllTeams() {
     }
   };
 
-  const filteredTeams = teams.filter((team) =>
-    normalize(team.team.name).includes(normalize(search))
-  );
+  // Add skill on Enter/comma
+  const handleSkillInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (
+      (e.key === "Enter" || e.key === ",") &&
+      skillFilterInput.trim() !== ""
+    ) {
+      e.preventDefault();
+      const skillsToAdd = skillFilterInput
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s && !skillFilters.includes(s));
+      if (skillsToAdd.length > 0) {
+        setSkillFilters([...skillFilters, ...skillsToAdd]);
+      }
+      setSkillFilterInput("");
+    }
+  };
+
+  // Remove skill filter
+  const removeSkillFilter = (idx: number) => {
+    setSkillFilters(skillFilters.filter((_, i) => i !== idx));
+  };
+
+  // Filter teams by search and required skills
+  const filteredTeams = teams.filter((team) => {
+    const matchesSearch = normalize(team.team.name).includes(normalize(search));
+    const teamSkills = team.team.skillsNeeded
+      ? team.team.skillsNeeded.split(",").map((s) => s.trim().toLowerCase())
+      : [];
+    const matchesSkills =
+      skillFilters.length === 0 ||
+      skillFilters.every((filterSkill) =>
+        teamSkills.includes(filterSkill.toLowerCase())
+      );
+    return matchesSearch && matchesSkills;
+  });
 
   if (!teams) {
     return <p className="text-center text-gray-500 text-lg">Loading...</p>;
@@ -88,29 +127,61 @@ function ViewAllTeams() {
 
   if (teams.length === 0) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center">
-        <p className="text-gray-400 text-lg bg-[#23232b] px-6 py-4 rounded-xl shadow border border-[#23232b]">
-          No teams found
-        </p>
+      <div className="min-h-[40vh] flex items-center justify-center ">
+        <div className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] px-8 py-6 rounded-2xl shadow-xl border border-[#FF9466] flex flex-col items-center">
+          <p className="text-white text-lg font-bold mb-2">No teams found</p>
+          <span className="text-white text-sm opacity-80">
+            Try changing your search or filters.
+          </span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#18181e] py-10 px-2">
-      <div className="max-w-4xl mx-auto mb-6">
+    <div className="min-h-screen py-10 px-2">
+      <div className="max-w-4xl mx-auto mb-6 flex flex-col gap-4">
         <input
           type="text"
           placeholder="Search team by title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#23232b] text-white border-none rounded-xl focus:ring-2 focus:ring-[#a3e635] placeholder:text-[#888] px-3 py-2 w-full"
+          className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#888] px-3 py-2 w-full"
         />
+        {/* Skill filter input */}
+        <div>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {skillFilters.map((skill, idx) => (
+              <span
+                key={skill + idx}
+                className="flex items-center bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-3 py-1 rounded-full text-sm font-semibold shadow"
+              >
+                {skill}
+                <button
+                  type="button"
+                  className="ml-2 text-gray-200 hover:text-red-400"
+                  onClick={() => removeSkillFilter(idx)}
+                  tabIndex={-1}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            type="text"
+            placeholder="Filter by skills (comma separated, press Enter)..."
+            value={skillFilterInput}
+            onChange={(e) => setSkillFilterInput(e.target.value)}
+            onKeyDown={handleSkillInputKeyDown}
+            className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border border-[#e3e8ee] rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#888]"
+          />
+        </div>
       </div>
       <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {filteredTeams.length === 0 ? (
           <div className="col-span-full flex justify-center">
-            <p className="text-gray-400 text-lg bg-[#23232b] px-6 py-4 rounded-xl shadow border border-[#23232b]">
+            <p className="text-gray-400 text-lg bg-gradient-to-br from-white via-white to-[#fff9f5] px-6 py-4 rounded-xl shadow border border-[#e3e8ee]">
               No teams found
             </p>
           </div>
@@ -118,35 +189,56 @@ function ViewAllTeams() {
           filteredTeams.map((team, key) => (
             <div
               key={team.team.id}
-              className="bg-[#23232b] border border-[#23232b] rounded-2xl shadow-xl p-6 flex flex-col gap-3"
+              className="bg-gradient-to-br from-white via-white to-[#fff9f5] border border-[#e3e8ee] rounded-2xl shadow-xl p-6 flex flex-col gap-3 items-center"
             >
-              <h2 className="text-xl font-extrabold text-white mb-1 cursor-pointer hover:underline">
+              {/* Team Logo Avatar */}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white mb-2">
+                <Users className="text-white w-5 h-5" />
+              </div>
+              <h2 className="text-xl font-extrabold text-[#062a47] mb-1 cursor-pointer hover:underline text-center">
                 <Link href={`/team/view-all-teams/${team.team.id}`}>
                   {team.team.name}
                 </Link>
               </h2>
-              <p className="text-gray-300 text-sm mb-1">
+              <p className="text-[#6B7A8F] text-sm mb-1 text-center">
                 Required Member Count:{" "}
-                <span className="font-semibold">
+                <span className="font-semibold text-[#f75a2f]">
                   {Number(team.team.requiredMemberCount)}
                 </span>
               </p>
-              <p className="text-gray-300 text-sm mb-1">
+              <p className="text-[#6B7A8F] text-sm mb-1 text-center">
                 Current Member Count:{" "}
-                <span className="font-semibold">
+                <span className="font-semibold text-[#f75a2f]">
                   {Number(team.team.currentMemberCount)}
                 </span>
               </p>
-              <p className="text-gray-400 text-xs mb-2">
+              {/* Show skills for each team */}
+              {team.team.skillsNeeded && (
+                <div className="flex flex-wrap gap-2 mb-1 justify-center">
+                  {team.team.skillsNeeded
+                    .split(",")
+                    .map((skill) => skill.trim())
+                    .filter(Boolean)
+                    .map((skill) => (
+                      <span
+                        key={skill}
+                        className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-2 py-0.5 rounded-full text-xs font-semibold shadow"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                </div>
+              )}
+              <p className="text-[#6B7A8F] text-xs mb-2 text-center">
                 Captain:{" "}
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#062a47]">
                   {team.captain.firstName}
                 </span>{" "}
                 (<span>{team.captain.email}</span>)
               </p>
               <Button
                 disabled={!team.team.isAcceptingInvites}
-                className={`mt-auto w-full bg-[#a3e635] text-black font-bold rounded-xl hover:bg-lime-400 transition ${
+                className={`mt-auto w-full bg-[#f75a2f] text-white font-bold rounded-xl hover:bg-[#FF9466] transition ${
                   !team.team.isAcceptingInvites
                     ? "opacity-50 cursor-not-allowed"
                     : ""
