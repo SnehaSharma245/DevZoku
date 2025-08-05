@@ -1,4 +1,4 @@
-import { eq, is } from "drizzle-orm";
+import { desc, eq, is } from "drizzle-orm";
 import { db } from "../db";
 import { organizers } from "../db/schema/organizer.schema";
 import { users } from "../db/schema/user.schema";
@@ -7,6 +7,7 @@ import { completeOrganizerProfileSchema } from "../zod-schema/organizer.schema";
 import type { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
+import { hackathons } from "../db/schema/hackathon.schema";
 
 // Controller for completing organizer profile
 const completeOrganizerProfile = asyncHandler(async (req, res) => {
@@ -95,8 +96,23 @@ const fetchOrganizerProfile = asyncHandler(async (req, res) => {
   const organizerProfile = await db
     .select()
     .from(organizers)
-    .where(eq(organizers.userId, id))
+    .where(eq(organizers.userId, id as string))
     .then((results) => results[0]);
+
+  let location = null;
+
+  // get location details from users table
+  if (organizerProfile) {
+    const userProfile = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, organizerProfile.userId as string))
+      .then((results) => results[0]);
+
+    if (userProfile) {
+      location = userProfile.location;
+    }
+  }
 
   if (!organizerProfile) {
     throw new ApiError(404, "Organizer profile not found");
@@ -107,10 +123,58 @@ const fetchOrganizerProfile = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        organizerProfile,
+        { organizerProfile, location },
         "Organizer profile fetched successfully"
       )
     );
 });
 
-export { completeOrganizerProfile, fetchOrganizerProfile };
+const fetchHackathonsOrganized = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError(400, "Organizer ID is required");
+  }
+
+  const retrievedUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .execute();
+
+  if (!retrievedUser || retrievedUser.length === 0) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // fetch latest 5 hackathons organized by the user
+
+  const organizedHackathons = await db
+    .select()
+    .from(hackathons)
+    .where(eq(hackathons.createdBy, id))
+    .orderBy(desc(hackathons.createdAt))
+    .limit(5)
+    .execute();
+
+  if (!organizedHackathons || organizedHackathons.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(404, [], "No hackathons organized by this user"));
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        organizedHackathons,
+        "Hackathons organized fetched successfully"
+      )
+    );
+});
+
+export {
+  completeOrganizerProfile,
+  fetchOrganizerProfile,
+  fetchHackathonsOrganized,
+};
