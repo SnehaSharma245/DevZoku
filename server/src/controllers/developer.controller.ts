@@ -235,27 +235,48 @@ const notificationHandling = asyncHandler(async (req, res) => {
       dev.notifications?.find((notification) => notification.id === id)
         ?.type === "invitation-sent"
     ) {
-      // Fetch the current pendingInvitesFromUsers array
+      const notificationToDelete = dev.notifications?.find(
+        (notification) => notification.id === id
+      );
+
+      if (!notificationToDelete) {
+        throw new ApiError(404, "Notification not found");
+      }
+
+      const teamId = notificationToDelete?.teamId;
+
+      if (!teamId) {
+        throw new ApiError(400, "Team ID is required to remove invitation");
+      }
+
+      // Fetch the current pendingInvitesFromUsers array for the team
       const [team] = await db
         .select({ pendingInvitesFromUsers: teams.pendingInvitesFromUsers })
         .from(teams)
-        .where(eq(teams.id, id))
+        .where(eq(teams.id, teamId))
         .limit(1)
         .execute();
 
-      if (team) {
-        const updatedPendingInvites = (
-          team.pendingInvitesFromUsers || []
-        ).filter((inviteUserId: string) => inviteUserId !== user.id);
-
-        await db
-          .update(teams)
-          .set({
-            pendingInvitesFromUsers: updatedPendingInvites,
-          })
-          .where(eq(teams.id, id))
-          .execute();
+      if (!team) {
+        throw new ApiError(404, "Team not found");
       }
+
+      if (!team.pendingInvitesFromUsers) {
+        throw new ApiError(400, "No pending invites found for this team");
+      }
+
+      const updatedPendingInvites = team.pendingInvitesFromUsers.filter(
+        (inviteUserId: string) =>
+          inviteUserId !== notificationToDelete.developerId
+      );
+
+      await db
+        .update(teams)
+        .set({
+          pendingInvitesFromUsers: updatedPendingInvites,
+        })
+        .where(eq(teams.id, teamId))
+        .execute();
     }
 
     const notificationAfterRemoval = await db

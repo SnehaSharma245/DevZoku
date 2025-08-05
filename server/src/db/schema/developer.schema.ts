@@ -52,6 +52,7 @@ export const developers = pgTable("developers", {
           createdAt: string;
           teamId?: string;
           hackathonId?: string;
+          developerId?: string;
         }[]
       | null
     >()

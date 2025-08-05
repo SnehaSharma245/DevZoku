@@ -360,6 +360,7 @@ const sendInvitation = asyncHandler(async (req, res) => {
     id: crypto.randomUUID(),
     type: "invitation-sent" as "invitation-sent",
     message: `${user.firstName} has sent an invitation to join the team ${sendInvitation[0]?.name}`,
+    developerId: user.id,
     createdAt: new Date().toISOString(),
     teamId: teamId,
   };
