@@ -12,6 +12,7 @@ import { userInteractions } from "../db/schema/userInteraction.schema";
 import { llm } from "../lib/llm";
 import { initialiseVectorStore } from "../lib/vectorStore";
 import hackathonStatusChecker from "../utils/hackathonStatusChecker";
+import { teams } from "../db/schema/team.schema";
 
 // Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(async (req, res) => {
@@ -228,6 +229,34 @@ const notificationHandling = asyncHandler(async (req, res) => {
     const updatedNotifications = dev.notifications?.filter(
       (notification) => notification.id !== id
     );
+
+    // if the type of notification is "invitation-sent", remove the user id from the team's pending invitations
+    if (
+      dev.notifications?.find((notification) => notification.id === id)
+        ?.type === "invitation-sent"
+    ) {
+      // Fetch the current pendingInvitesFromUsers array
+      const [team] = await db
+        .select({ pendingInvitesFromUsers: teams.pendingInvitesFromUsers })
+        .from(teams)
+        .where(eq(teams.id, id))
+        .limit(1)
+        .execute();
+
+      if (team) {
+        const updatedPendingInvites = (
+          team.pendingInvitesFromUsers || []
+        ).filter((inviteUserId: string) => inviteUserId !== user.id);
+
+        await db
+          .update(teams)
+          .set({
+            pendingInvitesFromUsers: updatedPendingInvites,
+          })
+          .where(eq(teams.id, id))
+          .execute();
+      }
+    }
 
     const notificationAfterRemoval = await db
       .update(developers)
