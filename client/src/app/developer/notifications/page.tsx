@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import api from "@/utils/api";
 import { toast } from "sonner";
-import { X, Bell } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ interface Notification {
   message: string;
   teamId?: string;
   createdAt: string;
+  developerId?: string;
 }
 
 function NotificationsPage() {
@@ -48,9 +49,21 @@ function NotificationsPage() {
     fetchNotifications();
   }, []);
 
-  const handleDeleteNotification = async (id: string) => {
+  const handleDeleteNotification = async ({
+    id,
+    deleteOnlyNotification,
+  }: {
+    id: string;
+    deleteOnlyNotification: boolean;
+  }) => {
     try {
-      const res = await api.delete(`/developer/notifications/${id}`);
+      const res = deleteOnlyNotification
+        ? await api.delete(
+            `/developer/notifications/${id}?deleteOnlyNotification=true`
+          )
+        : await api.delete(
+            `/developer/notifications/${id}?deleteOnlyNotification=false`
+          );
 
       const { status, data, message } = res.data;
       if (status === 200) {
@@ -64,6 +77,40 @@ function NotificationsPage() {
         error?.response?.data?.message || "Failed to delete notification"
       );
       console.error("Error deleting notification:", error);
+    }
+  };
+
+  // Placeholder handlers for accept/reject
+  const handleAcceptInvitation = async ({
+    teamId,
+    developerId,
+    notificationId,
+  }: {
+    teamId: string;
+    developerId: string;
+    notificationId?: string;
+  }) => {
+    try {
+      const response = await api.post(
+        `team/fetch-invites-and-accept/${teamId}?pendingUserId=${developerId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      const { status, data, message } = response.data;
+      if (status === 200) {
+        toast.success(message || "Invitation accepted");
+        if (setNotifications) {
+          setNotifications((prev) =>
+            prev.filter((n) => n.id !== notificationId)
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error("Error accepting invitation:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to accept invitation"
+      );
     }
   };
 
@@ -129,46 +176,126 @@ function NotificationsPage() {
           {filteredNotifications.map((notification) => (
             <li
               key={notification.id}
-              className="flex items-center justify-between bg-gradient-to-r from-[#fff9f5] to-[#f8f8f8] border border-[#eaf6fb] rounded-xl px-6 py-5 shadow-lg transition hover:border-[#FF9466]"
+              className="relative flex flex-row sm:flex-row items-start justify-between bg-gradient-to-r from-[#fff9f5] to-[#f8f8f8] border border-[#eaf6fb] rounded-xl px-6 py-5 shadow-lg transition hover:border-[#FF9466]"
             >
-              <div>
-                <div className="font-semibold text-[#FF6F61] mb-1 text-lg">
-                  {notification.type
-                    .replace(/-/g, " ")
-                    .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                </div>
-                {notification.type === "invitation-sent" ? (
-                  <Link href={`/team/joined-teams/${notification.teamId}`}>
-                    <div className="text-[#062a47] font-medium hover:underline">
-                      {notification.message}
-                    </div>
-                  </Link>
-                ) : notification.type === "invitation-accepted" ? (
-                  <Link href={`/team/view-all-teams/${notification.teamId}`}>
-                    <div className="text-[#062a47] font-medium hover:underline">
-                      {notification.message}
-                    </div>
-                  </Link>
-                ) : (
-                  <div className="text-[#062a47] font-medium">
-                    {notification.message}
+              <div className="flex-1">
+                {/* Type badge and date on same line, bin icon at top right */}
+                <div className="flex flex-row items-center justify-between mb-1">
+                  <div className="flex flex-row items-center gap-5">
+                    <span className="flex py-1 rounded-full text-lg font-semibold text-[#FF6F61]">
+                      {notification.type
+                        .replace(/-/g, " ")
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    </span>
+                    <span className="text-xs text-[#6B7A8F]">
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                )}
-                <div className="text-xs text-[#6B7A8F] mt-2">
-                  {new Date(notification.createdAt).toLocaleString()}
+                  {/* Bin icon top right */}
+                  <button
+                    className="p-2 rounded-full hover:bg-red-100 transition border border-red-200 cursor-pointer"
+                    title="Delete notification "
+                    aria-label="Delete notification"
+                    onClick={() =>
+                      handleDeleteNotification({
+                        id: notification.id,
+                        deleteOnlyNotification: true,
+                      })
+                    }
+                  >
+                    <Trash2 size={18} className="text-red-400" />
+                  </button>
                 </div>
+                {/* Message and profile button, profile button below message */}
+                {notification.type === "invitation-sent" ? (
+                  <>
+                    <Link href={`/team/joined-teams/${notification.teamId}`}>
+                      <div className="text-[#062a47] font-medium hover:underline">
+                        {notification.message}
+                      </div>
+                    </Link>
+                    {/* Accept, Reject, and Profile buttons in a single horizontal line, small size */}
+                    <div className="flex flex-row gap-2 mt-3 items-center">
+                      <button
+                        onClick={() =>
+                          handleAcceptInvitation({
+                            teamId: notification.teamId,
+                            developerId: notification.developerId,
+                            notificationId: notification.id,
+                          })
+                        }
+                        className="h-7 min-w-[60px] px-2 rounded-full border border-green-200 bg-white text-green-700 font-semibold text-xs flex items-center justify-center transition hover:bg-green-50 hover:border-green-400 cursor-pointer"
+                        title="Accept invitation"
+                        aria-label="Accept invitation"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="h-7 min-w-[60px] px-2 rounded-full border border-red-200 bg-white text-red-600 font-semibold text-xs flex items-center justify-center transition hover:bg-red-50 hover:border-red-400 cursor-pointer"
+                        title="Reject invitation"
+                        aria-label="Reject invitation"
+                        onClick={() =>
+                          handleDeleteNotification({
+                            id: notification.id,
+                            deleteOnlyNotification: false,
+                          })
+                        }
+                      >
+                        Reject
+                      </button>
+                      {notification.developerId && (
+                        <Link
+                          href={`/developer/profile/${notification.developerId}`}
+                          className="h-full"
+                        >
+                          <button
+                            className="h-7 min-w-[60px] px-2 rounded-full border border-[#FF9466] bg-white text-[#FF9466] font-semibold text-xs flex items-center justify-center transition hover:bg-[#fff2e0] hover:border-[#FF6F61] hover:text-[#FF6F61] cursor-pointer"
+                            title="View Developer Profile"
+                            type="button"
+                          >
+                            Profile
+                          </button>
+                        </Link>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-[#062a47] font-medium">
+                      {notification.type === "invitation-accepted" ? (
+                        <Link
+                          href={`/team/view-all-teams/${notification.teamId}`}
+                        >
+                          <div className="hover:underline">
+                            {notification.message}
+                          </div>
+                        </Link>
+                      ) : (
+                        notification.message
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-              <button
-                onClick={() => handleDeleteNotification(notification.id)}
-                className="group ml-4 p-2 rounded-full hover:bg-[#FF6F61] transition cursor-pointer"
-                title="Delete notification"
-                aria-label="Delete notification"
-              >
-                <X
-                  size={20}
-                  className="text-[#FF6F61] group-hover:text-[#fff5f4]"
-                />
-              </button>
+
+              {/* For non-invitation-sent notifications, show delete on mobile too */}
+              {notification.type !== "invitation-sent" && (
+                <div className="flex sm:hidden mt-2 gap-2">
+                  <button
+                    className="p-2 rounded-full hover:bg-red-100 transition border border-red-200 cursor-pointer"
+                    title="Delete notification"
+                    aria-label="Delete notification"
+                    onClick={() =>
+                      handleDeleteNotification({
+                        id: notification.id,
+                        deleteOnlyNotification: true,
+                      })
+                    }
+                  >
+                    <Trash2 size={18} className="text-red-400" />
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
