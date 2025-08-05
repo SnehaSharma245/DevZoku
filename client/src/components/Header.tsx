@@ -130,6 +130,13 @@ const Header = () => {
                         <BadgeCheck className="w-4 h-4" /> Edit Profile
                       </Link>
                       <Link
+                        href="/team/sent-invitations"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
+                      >
+                        <BadgeCheck className="w-4 h-4" /> Sent Invitations
+                      </Link>
+                      <Link
                         href="/developer/manage-projects"
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2 hover:text-[#f75a2f] transition-colors"
@@ -172,6 +179,7 @@ const Header = () => {
                       >
                         <Rocket className="w-4 h-4" /> Show Hackathons
                       </Link>
+
                       <Link
                         href="/hackathon/create-hackathon"
                         onClick={() => setOpen(false)}
