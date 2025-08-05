@@ -82,13 +82,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         socket.on("invitation-accepted", (notification: Notification) => {
           toast(notification.message);
           setRedBadge(true);
-          setNotifications((prev) => [...prev, notification]);
+          setNotifications((prev) => [notification, ...(prev ?? [])]);
         });
 
         socket.on("new-invitation", (notification: Notification) => {
           toast(notification.message);
           setRedBadge(true);
-          setNotifications((prev) => [...prev, notification]);
+          setNotifications((prev) => [notification, ...(prev ?? [])]);
         });
       }
     }
