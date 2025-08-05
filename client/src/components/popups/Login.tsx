@@ -52,8 +52,8 @@ const Login = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-gradient-to-br from-[#F8FBFD] via-[#FAFCFD] to-[#FFFFFF] rounded-3xl shadow-2xl border border-[#f3f4f6] max-w-lg w-full p-8 relative flex flex-col items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs">
+      <div className="bg-gradient-to-br from-[#F8FBFD] via-[#FAFCFD] to-[#ffffff] rounded-3xl shadow-2xl border border-[#fdebca]  max-w-lg w-full p-8 mx-2 relative flex flex-col items-center">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-[#062a47] hover:text-[#FF8A65] text-xl font-bold"

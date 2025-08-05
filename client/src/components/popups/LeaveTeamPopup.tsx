@@ -25,17 +25,33 @@ const LeaveTeamPopup: React.FC<LeaveTeamPopupProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-2xl">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-        <h2 className="text-lg font-semibold mb-2 text-red-600">Leave Team</h2>
-        <p className="mb-4 text-gray-700">
+      <div className="bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-sm mx-4 border border-[#fff9f5] flex flex-col gap-6 flex-shrink-0 flex-grow-0 justify-center items-center">
+        <h2 className="text-xl font-bold mb-3 text-[#FF6F61]">Leave Team</h2>
+        <p className="mb-6 text-[#6B7A8F] text-center">
           Are you sure you want to leave
-          {teamName ? ` the team "${teamName}"` : " this team"}?
+          {teamName ? (
+            <span className="font-semibold text-[#FF9466]">
+              {" "}
+              the team "{teamName}"
+            </span>
+          ) : (
+            " this team"
+          )}
+          ?
         </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end gap-3 w-full">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-xl border-[#FF9466] text-[#FF6F61] hover:bg-[#FF9466]/10"
+          >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            className="rounded-xl bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold hover:opacity-90"
+          >
             Yes, Leave
           </Button>
         </div>
