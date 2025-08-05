@@ -95,6 +95,8 @@ function OrganizerCompleteProfileForm() {
     watch,
   } = form;
 
+  const bioValue = watch("bio") || "";
+
   // Autofill logic
   useEffect(() => {
     if (countries.length === 0) {
@@ -197,6 +199,15 @@ function OrganizerCompleteProfileForm() {
     try {
       setIsSubmitting(true);
 
+      // Find full names for country, state, city
+      const countryObj = countries.find(
+        (c) => c.isoCode === formData.location.country
+      );
+      const stateObj = states.find(
+        (s) => s.isoCode === formData.location.state
+      );
+      const cityObj = cities.find((c) => c.name === formData.location.city);
+
       // Format formData to match API expectations
       const formattedData = {
         organizationName: formData.organizationName.trim(),
@@ -210,9 +221,9 @@ function OrganizerCompleteProfileForm() {
             .map(([key, value]) => [key, value?.trim()])
         ),
         location: {
-          country: formData.location.country.trim(),
-          state: formData.location.state.trim(),
-          city: formData.location.city.trim(),
+          country: countryObj?.name || formData.location.country.trim(),
+          state: stateObj?.name || formData.location.state.trim(),
+          city: cityObj?.name || formData.location.city.trim(),
           address: formData.location.address.trim(),
         },
       };
@@ -322,9 +333,6 @@ function OrganizerCompleteProfileForm() {
               {step === 1 && (
                 <Fragment>
                   <div className="space-y-6">
-                    <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
-                      Organization Information
-                    </h2>
                     {/* Organization Name */}
                     <FormField
                       control={control}
@@ -346,17 +354,23 @@ function OrganizerCompleteProfileForm() {
                       )}
                     />
                     {/* Bio */}
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xl font-bold text-[#062a47] pb-2">
+                        Organization Bio
+                      </FormLabel>
+                      <span className="text-sm text-[#8ca2c3]">
+                        {bioValue.length}/250
+                      </span>
+                    </div>
                     <FormField
                       control={control}
                       name="bio"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[#062a47] font-semibold">
-                            Organization Bio
-                          </FormLabel>
                           <FormControl>
                             <Textarea
                               {...field}
+                              maxLength={250}
                               placeholder="Tell us about your organization..."
                               className="min-h-[100px] bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
                             />
@@ -701,9 +715,6 @@ function OrganizerCompleteProfileForm() {
             {step === 1 && (
               <Fragment>
                 <div className="space-y-6">
-                  <h2 className="text-xl font-bold text-[#062a47] border-b border-[#e3e8ee] pb-2">
-                    Organization Information
-                  </h2>
                   {/* Organization Name */}
                   <FormField
                     control={control}
@@ -717,7 +728,7 @@ function OrganizerCompleteProfileForm() {
                           <Input
                             {...field}
                             placeholder="e.g. DevZoku Inc."
-                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            className="bg-[#f7faff] text-[#062a47] rounded-xl placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -725,19 +736,25 @@ function OrganizerCompleteProfileForm() {
                     )}
                   />
                   {/* Bio */}
+                  <div className="flex items-center justify-between">
+                    <FormLabel className=" font-semibold text-[#062a47] ">
+                      Organization Bio
+                    </FormLabel>
+                    <span className="text-sm text-[#8ca2c3]">
+                      {bioValue.length}/250
+                    </span>
+                  </div>
                   <FormField
                     control={control}
                     name="bio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[#062a47] font-semibold">
-                          Organization Bio
-                        </FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
+                            maxLength={250}
                             placeholder="Tell us about your organization..."
-                            className="min-h-[100px] bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            className="min-h-[100px] bg-[#f7faff] text-[#062a47] \ rounded-xl\ placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -757,7 +774,7 @@ function OrganizerCompleteProfileForm() {
                           <Input
                             {...field}
                             placeholder="https://yourcompany.com"
-                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            className="bg-[#f7faff] text-[#062a47]  rounded-xl placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -777,7 +794,7 @@ function OrganizerCompleteProfileForm() {
                           <Input
                             {...field}
                             placeholder="contact@yourcompany.com"
-                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            className="bg-[#f7faff] text-[#062a47]  rounded-xl placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -800,7 +817,7 @@ function OrganizerCompleteProfileForm() {
                               defaultCountry="IN"
                               international
                               countryCallingCodeEditable={true}
-                              className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] w-full py-1 px-2 transition [&>input]:bg-[#f7faff] [&>input]:text-[#062a47] [&>input]:border-none [&>input]:rounded-xl [&>input]:focus:ring-2 [&>input]:focus:ring-[#f75a2f] [&>input]:placeholder:text-[#8ca2c3] [&>.PhoneInputCountry]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:border-none [&>.PhoneInputCountrySelect]:rounded-xl"
+                              className="bg-[#f7faff] text-[#062a47]  rounded-xl placeholder:text-[#8ca2c3] w-full  transition [&>input]:bg-[#f7faff] [&>input]:text-[#062a47] [&>input]:border-none [&>input]:rounded-xl [&>input]:focus:ring-2 [&>input]:focus:ring-[#f75a2f] [&>input]:placeholder:text-[#8ca2c3] [&>.PhoneInputCountry]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:bg-[#f7faff] [&>.PhoneInputCountrySelect]:border-none [&>.PhoneInputCountrySelect]:rounded-xl"
                             />
                           </div>
                         </FormControl>
@@ -821,7 +838,7 @@ function OrganizerCompleteProfileForm() {
                           </FormLabel>
                           <FormControl>
                             <DropdownMenu>
-                              <DropdownMenuTrigger className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 py-1  w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition">
+                              <DropdownMenuTrigger className="bg-[#f7faff] text-[#062a47] focus:ring-[2px] focus:ring-[#f75a2f]  rounded-xl px-4 py-1  w-full text-left  transition">
                                 {field.value
                                   ? countries.find(
                                       (c) => c.isoCode === field.value
@@ -858,7 +875,7 @@ function OrganizerCompleteProfileForm() {
                           <FormControl>
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 w-full text-left focus:ring-2 py-1 focus:ring-[#f75a2f] transition ${
+                                className={`bg-[#f7faff] text-[#062a47] rounded-xl px-4 py-1 w-full text-left focus:ring-2  transition ${
                                   !selectedCountry
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
@@ -901,7 +918,7 @@ function OrganizerCompleteProfileForm() {
                           <FormControl>
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className={`bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl px-4 py-1 w-full text-left focus:ring-2 focus:ring-[#f75a2f] transition ${
+                                className={`bg-[#f7faff] text-[#062a47] rounded-xl px-4 py-1 w-full text-left focus:ring-2  transition ${
                                   !selectedState
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
@@ -943,7 +960,7 @@ function OrganizerCompleteProfileForm() {
                           <Input
                             {...field}
                             placeholder="Enter your address"
-                            className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                            className="bg-[#f7faff] text-[#062a47] rounded-xl placeholder:text-[#8ca2c3] transition"
                           />
                         </FormControl>
                         <FormMessage />
@@ -984,7 +1001,7 @@ function OrganizerCompleteProfileForm() {
                               <Input
                                 {...field}
                                 placeholder={`https://${key}.com/companyname`}
-                                className="bg-[#f7faff] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#8ca2c3] transition"
+                                className="bg-[#f7faff] text-[#062a47] rounded-xl placeholder:text-[#8ca2c3] transition"
                               />
                             </FormControl>
                             <FormMessage />
