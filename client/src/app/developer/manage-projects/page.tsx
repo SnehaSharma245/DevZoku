@@ -27,11 +27,8 @@ function ManageProjectsPage() {
   const fetchProjects = async () => {
     try {
       const res = await api.get("/developer/projects");
-      // Console log shows: res.data.data is always an array
       const { status, data } = res.data;
       if (status === 201) {
-        console.log("Fetched projects:", data);
-
         setProjects(Array.isArray(data) ? data : data.data || []);
       } else {
         setProjects([]);

@@ -68,53 +68,54 @@ function NotificationsPage() {
       : notifications.filter((n) => n.type === filterType);
 
   return (
-    <div className="min-h-screen bg-[#18181e] py-10 px-2">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-full bg-[#a3e635] flex items-center justify-center shadow">
-            <Bell className="w-6 h-6 text-[#23232b]" />
+    <div className="min-h-screen flex  px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-4xl w-full mx-auto">
+        {/* Header */}
+        <div className="rounded-3xl mb-10 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white">
+            <Bell className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-[#062a47] tracking-tight">
             Notifications
           </h1>
         </div>
         {/* Filter Buttons */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3 mb-8 ">
           <button
-            className={`px-4 py-1 rounded-full text-sm font-semibold border ${
+            className={`px-6 py-2 rounded-full text-sm font-semibold border transition shadow ${
               filterType === "all"
-                ? "bg-[#a3e635] text-black border-[#a3e635]"
-                : "bg-[#23232b] text-white border-[#23232b] hover:border-[#a3e635]"
+                ? "bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white border-[#FF9466]"
+                : "bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border-[#eaf6fb] hover:border-[#FF9466]"
             }`}
             onClick={() => setFilterType("all")}
           >
             All
           </button>
           <button
-            className={`px-4 py-1 rounded-full text-sm font-semibold border ${
+            className={`px-6 py-2 rounded-full text-sm font-semibold border transition shadow ${
               filterType === "invitation-sent"
-                ? "bg-[#a3e635] text-black border-[#a3e635]"
-                : "bg-[#23232b] text-white border-[#23232b] hover:border-[#a3e635]"
+                ? "bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white border-[#FF9466]"
+                : "bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border-[#eaf6fb] hover:border-[#FF9466]"
             }`}
             onClick={() => setFilterType("invitation-sent")}
           >
             Invitation Sent
           </button>
           <button
-            className={`px-4 py-1 rounded-full text-sm font-semibold border ${
+            className={`px-6 py-2 rounded-full text-sm font-semibold border transition shadow ${
               filterType === "invitation-accepted"
-                ? "bg-[#a3e635] text-black border-[#a3e635]"
-                : "bg-[#23232b] text-white border-[#23232b] hover:border-[#a3e635]"
+                ? "bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white border-[#FF9466]"
+                : "bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border-[#eaf6fb] hover:border-[#FF9466]"
             }`}
             onClick={() => setFilterType("invitation-accepted")}
           >
             Invitation Accepted
           </button>
         </div>
-        <ul className="space-y-4">
+        <ul className="space-y-6">
           {filteredNotifications.length === 0 && (
             <li>
-              <div className="text-gray-400 text-center py-12 bg-[#23232b] rounded-xl border border-[#23232b]">
+              <div className="text-[#6B7A8F] text-center py-12 bg-gradient-to-br from-white via-white to-[#fff9f5] rounded-xl border border-[#eaf6fb] shadow">
                 No notifications.
               </div>
             </li>
@@ -122,34 +123,45 @@ function NotificationsPage() {
           {filteredNotifications.map((notification) => (
             <li
               key={notification.id}
-              className="flex items-center justify-between bg-[#23232b] border border-[#23232b] rounded-xl px-5 py-4 shadow transition hover:border-[#a3e635]"
+              className="flex items-center justify-between bg-gradient-to-r from-[#fff9f5] to-[#f8f8f8] border border-[#eaf6fb] rounded-xl px-6 py-5 shadow-lg transition hover:border-[#FF9466]"
             >
               <div>
-                <div className="font-semibold text-[#a3e635] mb-1">
-                  {notification.type}
+                <div className="font-semibold text-[#FF6F61] mb-1 text-lg">
+                  {notification.type
+                    .replace(/-/g, " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </div>
                 {notification.type === "invitation-sent" ? (
                   <Link href={`/team/joined-teams/${notification.teamId}`}>
-                    <div className="text-white">{notification.message}</div>
+                    <div className="text-[#062a47] font-medium hover:underline">
+                      {notification.message}
+                    </div>
                   </Link>
                 ) : notification.type === "invitation-accepted" ? (
                   <Link href={`/team/view-all-teams/${notification.teamId}`}>
-                    <div className="text-white">{notification.message}</div>
+                    <div className="text-[#062a47] font-medium hover:underline">
+                      {notification.message}
+                    </div>
                   </Link>
                 ) : (
-                  <div className="text-white">{notification.message}</div>
+                  <div className="text-[#062a47] font-medium">
+                    {notification.message}
+                  </div>
                 )}
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs text-[#6B7A8F] mt-2">
                   {new Date(notification.createdAt).toLocaleString()}
                 </div>
               </div>
               <button
                 onClick={() => handleDeleteNotification(notification.id)}
-                className="ml-4 p-2 rounded-full hover:bg-[#18181e] transition"
+                className="group ml-4 p-2 rounded-full hover:bg-[#FF6F61] transition cursor-pointer"
                 title="Delete notification"
                 aria-label="Delete notification"
               >
-                <X size={20} className="text-red-400" />
+                <X
+                  size={20}
+                  className="text-[#FF6F61] group-hover:text-[#fff5f4]"
+                />
               </button>
             </li>
           ))}

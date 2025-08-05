@@ -60,14 +60,6 @@ interface DeveloperProfile {
   };
 }
 
-interface Hackathon {
-  id: string;
-  title: string;
-  status: string;
-  startTime?: string;
-  endTime?: string;
-}
-
 function DeveloperDashboard() {
   const { user, handleLogout } = useAuth();
 
@@ -75,13 +67,13 @@ function DeveloperDashboard() {
   const { id } = useParams();
 
   const [profile, setProfile] = useState<DeveloperProfile | null>(null);
-  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [stats, setStats] = useState<{
     participatedHackathonsCount?: number;
     hackathonsWithPositionCount?: number;
     winnerCount?: number;
     firstRunnerUpCount?: number;
     secondRunnerUpCount?: number;
+    hackathonDomainTags?: string[];
   }>({});
 
   useEffect(() => {
@@ -94,13 +86,13 @@ function DeveloperDashboard() {
 
         if (status === 200) {
           setProfile(data);
-          setHackathons(data.participatedHackathons || []);
           setStats({
             participatedHackathonsCount: data.participatedHackathonsCount,
             hackathonsWithPositionCount: data.hackathonsWithPositionCount,
             winnerCount: data.winnerCount,
             firstRunnerUpCount: data.firstRunnerUpCount,
             secondRunnerUpCount: data.secondRunnerUpCount,
+            hackathonDomainTags: data.hackathonDomainTags,
           });
         }
       } catch (error: any) {
@@ -132,7 +124,7 @@ function DeveloperDashboard() {
           <div className="flex gap-6 flex-wrap justify-center mb-2">
             <div className="flex items-center gap-2">
               <span className="font-bold text-[#f75a2f] text-xl">
-                {hackathons.length}
+                {stats.participatedHackathonsCount || 0}
               </span>
               <span className="text-[#6B7A8F]">Hackathons</span>
             </div>
@@ -251,7 +243,7 @@ function DeveloperDashboard() {
               Hackathons Participated
             </span>
             <span className="text-4xl font-bold mt-2 text-[#f75a2f] drop-shadow">
-              {stats.participatedHackathonsCount ?? hackathons.length}
+              {stats.participatedHackathonsCount ?? 0}
             </span>
           </Card>
           <Card className="p-8 flex flex-col items-center rounded-xl shadow-md border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
@@ -338,25 +330,19 @@ function DeveloperDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Hackathon Domains/Tags Section */}
-        {hackathons && hackathons.length > 0 && (
-          <Card className="mb-10 rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#eaf6fb]">
+        {stats.hackathonDomainTags && stats.hackathonDomainTags.length > 0 && (
+          <Card className="mb-10 rounded-2xl shadow-lg border border-[#eaf6fb] bg-gradient-to-br from-white via-white to-[#fff9f5]">
             <CardHeader>
               <CardTitle className="text-[#062a47] font-bold text-xl text-center">
-                Hackathon Domains
+                Hackathon Domain Tags
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {[
-                  ...new Set(
-                    hackathons.flatMap((h: any) => h.tags || []).filter(Boolean)
-                  ),
-                ].map((tag: string) => (
+              <div className="flex gap-2 flex-wrap justify-center mt-2">
+                {stats.hackathonDomainTags?.map((tag, idx) => (
                   <Badge
-                    key={tag}
-                    className="bg-gradient-to-r from-[#2563eb] to-[#f75a2f] text-white font-semibold shadow"
+                    key={tag + idx}
+                    className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white font-semibold shadow"
                   >
                     {tag}
                   </Badge>
