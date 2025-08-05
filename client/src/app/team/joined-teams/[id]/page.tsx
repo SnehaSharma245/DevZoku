@@ -26,7 +26,7 @@ function TeamDetailPage() {
   const [inviteAccepted, setInviteAccepted] = useState<boolean>(false);
   const fetchPendingInvites = async () => {
     try {
-      const response = await api.post(`team/fetch-invites-and-accept/${id}`, {
+      const response = await api.post(`/team/fetch-invites-and-accept/${id}`, {
         withCredentials: true,
       });
 
