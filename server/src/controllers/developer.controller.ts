@@ -190,7 +190,7 @@ const notificationHandling = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User not authenticated");
   }
 
-  // Fetch the developer's notifications
+  // Fetch the developer's notifications in descending order
   const [dev] = await db
     .select({ notifications: developers.notifications })
     .from(developers)
@@ -200,6 +200,21 @@ const notificationHandling = asyncHandler(async (req, res) => {
 
   if (!dev) {
     throw new ApiError(404, "Developer not found");
+  }
+
+  let notifications = dev.notifications ?? [];
+
+  notifications = notifications
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+  if (notifications.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No notifications found"));
   }
 
   if (dev?.notifications?.length === 0) {
@@ -231,7 +246,7 @@ const notificationHandling = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     status: 200,
-    data: dev.notifications,
+    data: notifications,
     message: "Notifications fetched successfully",
   });
 });
