@@ -514,6 +514,25 @@ const fetchPendingInvitesAndAcceptThem = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to remove user from pending invites");
   }
 
+  //remove the notification from the team captain
+  const [captain] = await db
+    .select({ notifications: developers.notifications })
+    .from(developers)
+    .where(eq(developers.userId, user.id))
+    .limit(1)
+    .execute();
+
+  const updatedCaptainNotifications =
+    captain?.notifications?.filter(
+      (n) => n.type !== "invitation-sent" || n.teamId !== (teamId as string)
+    ) || [];
+
+  const updatedCaptainNotificationInDb = await db
+    .update(developers)
+    .set({ notifications: updatedCaptainNotifications })
+    .where(eq(developers.userId, user.id))
+    .execute();
+
   return res
     .status(200)
     .json(
