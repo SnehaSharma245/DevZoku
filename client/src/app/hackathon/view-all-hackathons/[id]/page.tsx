@@ -61,6 +61,7 @@ function ParticularHackathon() {
 
         if (status === 200) {
           setHackathonDetails(data);
+          console.log("Hackathon Details:", data);
           const participatingTeams = data.teamsApplied
             ? data.teamsApplied.flatMap((item: any) =>
                 Array.isArray(item.teams) ? item.teams : [item.teams]
@@ -158,6 +159,7 @@ function ParticularHackathon() {
   const tags = hackathonDetails?.tags;
   const registrationStart = hackathonDetails?.registrationStart;
   const registrationEnd = hackathonDetails?.registrationEnd;
+  const totalTeams = hackathonDetails?.totalTeams || 0;
   const startTime = hackathonDetails?.startTime;
   const endTime = hackathonDetails?.endTime;
   const minTeamSize = hackathonDetails?.minTeamSize;
@@ -257,6 +259,14 @@ function ParticularHackathon() {
                   <span className="text-[#6B7A8F]">
                     {minTeamSize ?? "-"} - {maxTeamSize ?? "-"}
                   </span>
+                </div>
+              )}
+              {totalTeams > 0 && (
+                <div className="mb-2">
+                  <span className="font-semibold text-[#062a47]">
+                    Total Teams:
+                  </span>{" "}
+                  <span className="text-[#6B7A8F]">{totalTeams}</span>
                 </div>
               )}
               {dateCompleted && (

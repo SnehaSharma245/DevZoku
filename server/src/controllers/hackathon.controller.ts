@@ -618,16 +618,26 @@ const viewHackathonById = asyncHandler(async (req, res) => {
       )
     );
   }
+  // fetch total teams participating in this hackathon
+  const totalTeams = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(teamHackathons)
+    .where(eq(teamHackathons.hackathonId, hackathon.id))
+    .execute();
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { ...hackathon, organizer: organizer[0], phases, status: statusValue },
-        "Hackathon fetched successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        ...hackathon,
+        organizer: organizer[0],
+        phases,
+        status: statusValue,
+        totalTeams: totalTeams[0]?.count ? totalTeams[0].count : 0,
+      },
+      "Hackathon fetched successfully"
+    )
+  );
 });
 
 // controller for creating hackathon

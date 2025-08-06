@@ -8,6 +8,7 @@ export interface Hackathon {
   organizationName?: string;
   startTime: string;
   endTime: string;
+  totalTeams?: number;
   participants?: string[];
   status?:
     | "upcoming"

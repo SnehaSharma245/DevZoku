@@ -455,15 +455,11 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     .where(eq(developers.userId, userId))
     .execute();
 
-  console.log("Recommended Hackathons:", recommendedHackathons);
-
   const recommendedHackObjects = Array.isArray(
     recommendedHackathons?.recommendedHackIds
   )
     ? recommendedHackathons.recommendedHackIds
     : [];
-
-  console.log("Recommended Hackathon Objects:", recommendedHackObjects);
 
   const developerSkills = Array.isArray(recommendedHackathons?.skills)
     ? recommendedHackathons.skills.join(", ")
@@ -478,16 +474,11 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     return createdAtDate >= start && createdAtDate <= end;
   });
 
-  console.log("Recent Hackathon Objects:", recentHackObjects);
-
   const recentHackIds = recentHackObjects.map((obj) => obj.hackathonId);
-
-  console.log("Recent Hackathon IDs:", recentHackIds);
 
   let recommendedHackathonsData: any[] = [];
 
   if (recentHackIds.length > 0) {
-    console.log("Updating recommended hackathons in DB...");
     await db
       .update(developers)
       .set({ recommendedHackathonIds: recentHackObjects })
@@ -499,8 +490,6 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
       .from(hackathons)
       .where(inArray(hackathons.id, recentHackIds))
       .execute();
-
-    console.log("Recommended Hackathons Data:", recommendedHackathonsData);
 
     if (recommendedHackathonsData.length === 0) {
       return res
