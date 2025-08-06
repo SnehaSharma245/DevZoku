@@ -852,9 +852,7 @@ const embedHackathons = asyncHandler(async (req, res) => {
   const fiveDaysAgo = new Date(
     Date.now() - 5 * 24 * 60 * 60 * 1000
   ).toISOString();
-  // Qdrant example
   try {
-    // Fix the delete operation filter syntax
     await vecStore.delete({
       filter: {
         must: [
@@ -1096,6 +1094,55 @@ const markWinners = asyncHandler(async (req, res) => {
     );
 });
 
+// controller to get upcoming hackathons
+const getUpcomingHackathons = asyncHandler(async (req, res) => {
+  // Fetch all hackathons that are upcoming
+  const upcomingHackathons = await db
+    .select()
+    .from(hackathons)
+    .where(gt(hackathons.registrationStart, new Date()))
+    .orderBy(hackathons.startTime)
+    .execute();
+
+  // If no upcoming hackathons found
+  if (upcomingHackathons.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No upcoming hackathons found"));
+  }
+
+  // fetch organization name for each hackathon and map them with hackathon
+  const organizerIds = upcomingHackathons.map((h) => h.createdBy);
+  const organizer = await db
+    .select({
+      userId: organizers.userId,
+      organizationName: organizers.organizationName,
+    })
+    .from(organizers)
+    .where(inArray(organizers.userId, organizerIds))
+    .execute();
+
+  const upcomingHackathonsWithOrganizers = upcomingHackathons.map(
+    (hackathon) => {
+      const org = organizer.find((org) => org.userId === hackathon.createdBy);
+      return {
+        ...hackathon,
+        organizationName: org?.organizationName || "Unknown",
+      };
+    }
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        upcomingHackathonsWithOrganizers,
+        "Upcoming hackathons fetched"
+      )
+    );
+});
+
 export {
   applyToHackathon,
   viewAllHackathons,
@@ -1103,4 +1150,5 @@ export {
   createHackathon,
   embedHackathons,
   markWinners,
+  getUpcomingHackathons,
 };

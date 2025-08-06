@@ -3,6 +3,7 @@ import {
   applyToHackathon,
   createHackathon,
   embedHackathons,
+  getUpcomingHackathons,
   markWinners,
   viewAllHackathons,
   viewHackathonById,
@@ -27,6 +28,7 @@ router.post("/mark-winners", verifyJWT, markWinners);
 // unprotected routes
 router.get("/view-all-hackathons", viewAllHackathons);
 router.get("/hackathon/:id", viewHackathonById);
+router.get("/upcoming-hackathons", getUpcomingHackathons);
 
 //cron routes
 router.post("/embed-hackathons", embedHackathons);
