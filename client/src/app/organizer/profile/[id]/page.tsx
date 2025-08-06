@@ -87,8 +87,10 @@ export default function OrganizerProfilePage() {
       const res = await api.get(`/organizer/organized-hackathons/${user?.id}`);
       const { status, data } = res.data;
 
+      console.log(data);
+
       if (status === 200) {
-        setOrganizedEvents(data.events);
+        setOrganizedEvents(data);
       }
     } catch (error: any) {
       toast.error(
@@ -96,6 +98,10 @@ export default function OrganizerProfilePage() {
       );
     }
   };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   if (!user) {
     window.location.href = "/";
@@ -210,10 +216,10 @@ export default function OrganizerProfilePage() {
                 <CarouselContent>
                   {organizedEvents.map((event) => (
                     <CarouselItem key={event.id} className="px-2">
-                      <div className="bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] border border-[#fff9f5] rounded-2xl shadow flex flex-col p-4 h-full">
-                        <div className="w-full aspect-[3/2] rounded-xl overflow-hidden mb-2 bg-[#fff9f5] border border-[#fff9f5]">
+                      <div className="bg-gradient-to-r from-[#fff9f5] to-[#fff9f5] border border-[#fff9f5] rounded-2xl shadow flex flex-col items-center p-4 h-full">
+                        <div className="w-full rounded-xl overflow-hidden mb-2 bg-[#fff9f5] border border-[#fff9f5] ">
                           <img
-                            className="w-full h-full object-cover"
+                            className="w-32 h-20 object-cover mx-auto" // width 128px, height 80px, center
                             src={event.poster}
                             alt={event.title}
                           />
@@ -272,8 +278,11 @@ export default function OrganizerProfilePage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-0 -translate-y-1/2 top-1/2 absolute" />
-                <CarouselNext className="right-0 -translate-y-1/2 top-1/2 absolute" />
+                <div className="relative mt-6 h-12 flex items-center">
+                  <CarouselPrevious className="absolute left-0 bottom-0 bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition" />
+
+                  <CarouselNext className="absolute right-0 bottom-0 bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition" />
+                </div>
               </Carousel>
             </div>
           ) : (

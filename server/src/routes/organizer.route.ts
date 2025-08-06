@@ -11,7 +11,7 @@ const router = Router();
 
 // Protected route
 router.post("/complete-profile", verifyJWT, completeOrganizerProfile);
-router.get("/organized-hackathons", verifyJWT, fetchHackathonsOrganized);
+router.get("/organized-hackathons/:id", fetchHackathonsOrganized);
 
 // unprotected route
 router.get("/profile/:id", fetchOrganizerProfile);
