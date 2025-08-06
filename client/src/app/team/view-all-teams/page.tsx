@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Users, X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface TeamBrief {
   team: {
@@ -128,128 +129,158 @@ function ViewAllTeams() {
 
   if (teams.length === 0) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center ">
-        <div className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] px-8 py-6 rounded-2xl shadow-xl border border-[#FF9466] flex flex-col items-center">
-          <p className="text-white text-lg font-bold mb-2">No teams found</p>
-          <span className="text-white text-sm opacity-80">
-            Try changing your search or filters.
-          </span>
+      <div className="min-h-screen w-full flex flex-col">
+        <div className="max-w-7xl w-full mx-auto pt-6 sm:pt-8 lg:pt-12 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24">
+            <div className="text-center bg-white rounded-2xl p-8 sm:p-12 shadow-lg border border-[#e3e8ee] max-w-md">
+              <p className="text-[#8ca2c3] text-base sm:text-lg mb-6">
+                No teams found. Try changing your search or filters.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-10 px-2">
-      <div className="max-w-4xl mx-auto mb-6 flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Search team by title..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border border-[#e3e8ee] rounded-xl focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#888] px-3 py-2 w-full"
-        />
-        {/* Skill filter input */}
-        <div>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {skillFilters.map((skill, idx) => (
-              <span
-                key={skill + idx}
-                className="flex items-center bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-3 py-1 rounded-full text-sm font-semibold shadow"
-              >
-                {skill}
-                <button
-                  type="button"
-                  className="ml-2 text-gray-200 hover:text-red-400"
-                  onClick={() => removeSkillFilter(idx)}
-                  tabIndex={-1}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
+    <div className="min-h-screen w-full flex flex-col">
+      <div className="max-w-7xl w-full mx-auto pt-6 sm:pt-8 lg:pt-12 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-6 sm:mb-8 lg:mb-10 text-center text-[#062a47] tracking-tight">
+          All Teams
+        </h1>
+
+        {/* Search and Filter Section */}
+        <div className="max-w-4xl w-full mx-auto mb-6 sm:mb-8 flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Filter by skills (Type a skill & press Enter)..."
-            value={skillFilterInput}
-            onChange={(e) => setSkillFilterInput(e.target.value)}
-            onKeyDown={handleSkillInputKeyDown}
-            className="bg-gradient-to-br from-white via-white to-[#fff9f5] text-[#062a47] border border-[#e3e8ee] rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-[#f75a2f] placeholder:text-[#888]"
+            placeholder="Search team by title..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-white text-[#062a47] border border-[#e3e8ee] focus:ring-2 focus:ring-[#f75a2f] focus:border-transparent placeholder:text-[#8ca2c3] shadow-sm transition text-sm sm:text-base"
           />
+
+          {/* Skill filter input */}
+          <div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {skillFilters.map((skill, idx) => (
+                <span
+                  key={skill + idx}
+                  className="flex items-center bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-3 py-1 rounded-full text-sm font-semibold shadow"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    className="ml-2 text-gray-200 hover:text-red-400"
+                    onClick={() => removeSkillFilter(idx)}
+                    tabIndex={-1}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Filter by skills (Type a skill & press Enter)..."
+              value={skillFilterInput}
+              onChange={(e) => setSkillFilterInput(e.target.value)}
+              onKeyDown={handleSkillInputKeyDown}
+              className="w-full px-4 py-3 rounded-xl bg-white text-[#062a47] border border-[#e3e8ee] focus:ring-2 focus:ring-[#f75a2f] focus:border-transparent placeholder:text-[#8ca2c3] shadow-sm transition text-sm sm:text-base"
+            />
+          </div>
         </div>
-      </div>
-      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+
         {filteredTeams.length === 0 ? (
-          <div className="col-span-full flex justify-center">
-            <p className="text-gray-400 text-lg bg-gradient-to-br from-white via-white to-[#fff9f5] px-6 py-4 rounded-xl shadow border border-[#e3e8ee]">
-              No teams found
-            </p>
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24">
+            <div className="text-center bg-white rounded-2xl p-8 sm:p-12 shadow-lg border border-[#e3e8ee] max-w-md">
+              <p className="text-[#8ca2c3] text-base sm:text-lg mb-6">
+                No teams found matching your search.
+              </p>
+            </div>
           </div>
         ) : (
-          filteredTeams.map((team, key) => (
-            <div
-              key={team.team.id}
-              className="bg-gradient-to-br from-white via-white to-[#fff9f5] border border-[#e3e8ee] rounded-2xl shadow-xl p-6 flex flex-col gap-3 items-start"
-            >
-              {/* Team Logo Avatar */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white mb-2">
-                <Users className="text-white w-5 h-5" />
-              </div>
-              <h2 className="text-xl font-extrabold text-[#062a47] mb-1 cursor-pointer hover:underline text-center">
-                <Link href={`/team/view-all-teams/${team.team.id}`}>
-                  {team.team.name}
-                </Link>
-              </h2>
-              <p className="text-[#6B7A8F] text-sm mb-1 text-center">
-                Required Member Count:{" "}
-                <span className="font-semibold text-[#f75a2f]">
-                  {Number(team.team.requiredMemberCount)}
-                </span>
-              </p>
-              <p className="text-[#6B7A8F] text-sm mb-1 text-center">
-                Current Member Count:{" "}
-                <span className="font-semibold text-[#f75a2f]">
-                  {Number(team.team.currentMemberCount)}
-                </span>
-              </p>
-
-              <p className="text-[#6B7A8F] text-xs mb-2 ">
-                Captain:{" "}
-                <span className="font-semibold text-[#062a47]">
-                  {team.captain.firstName}
-                </span>{" "}
-                (<span>{team.captain.email}</span>)
-              </p>
-              {/* Show skills for each team as a button with popup */}
-              {team.team.skillsNeeded && team.team.skillsNeeded.trim() ? (
-                <button
-                  onClick={() => setShowSkillsFor(team.team.id)}
-                  className="inline-block bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white font-semibold py-1 px-3 rounded-full hover:from-[#062a47] hover:to-[#0a3a5c] transition-all duration-300 shadow-sm hover:shadow-md text-xs cursor-pointer mb-1"
-                  type="button"
-                >
-                  Show Skills Required
-                </button>
-              ) : (
-                <div className="w-full bg-gray-100 text-gray-500 font-medium py-1.5 px-3 rounded-full text-center text-xs mb-1">
-                  No specific skills required
-                </div>
-              )}
-              <Button
-                disabled={!team.team.isAcceptingInvites}
-                className={`mt-auto w-full bg-[#f75a2f] text-white font-bold rounded-xl hover:bg-[#FF9466] transition ${
-                  !team.team.isAcceptingInvites
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-                onClick={() => handleSendingInvite(team.team.id)}
+          <div className="grid grid-cols md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            {filteredTeams.map((team, key) => (
+              <Card
+                key={team.team.id}
+                className="bg-white border border-[#e3e8ee] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-[max-content] "
               >
-                Send Invitation To Join
-              </Button>
-            </div>
-          ))
+                <CardContent className="p-4 sm:p-6 flex-1 flex flex-col ">
+                  {/* Team Logo Avatar and Send Invitation Button */}
+                  <div className="flex items-center justify-center mb-2 w-full">
+                    <Link href={`/team/view-all-teams/${team.team.id}`}>
+                      <h2 className="text-lg sm:text-xl lg:text-2xl font-bold cursor-pointer text-[#f75a2f] hover:text-[#062a47] text-center transition-colors mb-2 line-clamp-2">
+                        {team.team.name}
+                      </h2>
+                    </Link>
+                  </div>
+
+                  {/* Team Stats */}
+                  <div className="flex gap-2 mb-2 items-center justify-center">
+                    <span className="bg-gradient-to-r from-[#f7faff] to-[#fff5f0] text-[#062a47] px-3 py-1.5 rounded-full text-xs font-medium border border-[#e3e8ee] text-center">
+                      Required: {Number(team.team.requiredMemberCount)}
+                    </span>
+                    <span className="bg-gradient-to-r from-[#f7faff] to-[#fff5f0] text-[#062a47] px-3 py-1.5 rounded-full text-xs font-medium border border-[#e3e8ee] text-center">
+                      Current: {Number(team.team.currentMemberCount)}
+                    </span>
+                  </div>
+
+                  <p className="text-[#8ca2c3] text-xs mb-4 text-center ">
+                    Captain:{" "}
+                    <span className="font-semibold text-[#062a47]">
+                      {team.captain.firstName}
+                    </span>
+                    <br />
+                    <span className="text-xs">({team.captain.email})</span>
+                  </p>
+
+                  {/* Show Skills Button and Send Invitation Button */}
+                  <div className="mb-4 flex flex-row gap-2 justify-center sm:flex-col sm:items-stretch sm:justify-start">
+                    {team.team.skillsNeeded && team.team.skillsNeeded.trim() ? (
+                      <button
+                        onClick={() => setShowSkillsFor(team.team.id)}
+                        className="bg-gradient-to-r from-[#f75a2f] to-[#ff6b3d] text-white font-semibold py-2 px-2 rounded-full hover:from-[#062a47] hover:to-[#0a3a5c] transition-all duration-300 shadow-sm hover:shadow-md text-xs cursor-pointer text-center flex-1 sm:w-[max-content]"
+                        type="button"
+                        style={{ minHeight: 32 }}
+                      >
+                        Show Skills Required
+                      </button>
+                    ) : (
+                      <div
+                        className="bg-gray-100 text-gray-500 font-medium py-2 px-2 rounded-full text-center text-xs flex-1 sm:w-full"
+                        style={{ minHeight: 32 }}
+                      >
+                        No specific skills required
+                      </div>
+                    )}
+                    <Button
+                      disabled={!team.team.isAcceptingInvites}
+                      className={`bg-gradient-to-r from-[#f75a2f] to-[#ff6b3d] text-white font-semibold rounded-full hover:from-[#062a47] hover:to-[#0a3a5c] transition-all duration-300 shadow-sm hover:shadow-md text-xs flex-1 sm:w-[max-content] ${
+                        !team.team.isAcceptingInvites
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      style={{
+                        height: 32,
+                        minHeight: 32,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        paddingLeft: 12,
+                        paddingRight: 12,
+                      }}
+                      onClick={() => handleSendingInvite(team.team.id)}
+                    >
+                      Send Invitation
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
+
       {/* Skills Popup */}
       {showSkillsFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -280,7 +311,7 @@ function ViewAllTeams() {
                     skills.map((skill, idx) => (
                       <span
                         key={skill + idx}
-                        className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-4 py-2 rounded-full text-sm font-semibold shadow-sm"
+                        className="bg-gradient-to-r from-[#f75a2f] to-[#ff6b3d] text-white px-4 py-2 rounded-full text-sm font-semibold shadow-sm"
                       >
                         {skill}
                       </span>
