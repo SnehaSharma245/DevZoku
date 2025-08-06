@@ -13,6 +13,7 @@ import { llm } from "../lib/llm";
 import { initialiseVectorStore } from "../lib/vectorStore";
 import hackathonStatusChecker from "../utils/hackathonStatusChecker";
 import { teams } from "../db/schema/team.schema";
+import { fi } from "zod/v4/locales";
 
 // Controller to handle completing a developer's profile
 const completeDeveloperProfile = asyncHandler(async (req, res) => {
@@ -454,11 +455,15 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     .where(eq(developers.userId, userId))
     .execute();
 
+  console.log("Recommended Hackathons:", recommendedHackathons);
+
   const recommendedHackObjects = Array.isArray(
     recommendedHackathons?.recommendedHackIds
   )
     ? recommendedHackathons.recommendedHackIds
     : [];
+
+  console.log("Recommended Hackathon Objects:", recommendedHackObjects);
 
   const developerSkills = Array.isArray(recommendedHackathons?.skills)
     ? recommendedHackathons.skills.join(", ")
@@ -473,11 +478,16 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     return createdAtDate >= start && createdAtDate <= end;
   });
 
+  console.log("Recent Hackathon Objects:", recentHackObjects);
+
   const recentHackIds = recentHackObjects.map((obj) => obj.hackathonId);
+
+  console.log("Recent Hackathon IDs:", recentHackIds);
 
   let recommendedHackathonsData: any[] = [];
 
   if (recentHackIds.length > 0) {
+    console.log("Updating recommended hackathons in DB...");
     await db
       .update(developers)
       .set({ recommendedHackathonIds: recentHackObjects })
@@ -489,6 +499,8 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
       .from(hackathons)
       .where(inArray(hackathons.id, recentHackIds))
       .execute();
+
+    console.log("Recommended Hackathons Data:", recommendedHackathonsData);
 
     if (recommendedHackathonsData.length === 0) {
       return res
@@ -510,10 +522,12 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
       };
     });
 
+    console.log("Hackathons with Status:", hackathonsWithStatus);
+
     const filteredHackathons = hackathonsWithStatus.filter((hack) =>
       ["upcoming", "Registration in Progress"].includes(hack.status)
     );
-
+    console.log("Filtered Hackathons:", filteredHackathons);
     return res
       .status(200)
       .json(
@@ -537,11 +551,7 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     .where(eq(userInteractions.userId, userId))
     .execute();
 
-  if (fetchedUserInteractions.length === 0) {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, [], "No user interactions found"));
-  }
+  console.log("Fetched User Interactions:", fetchedUserInteractions);
 
   // fetch latest N interactions
   const latestNInteractions = [...fetchedUserInteractions]
@@ -550,11 +560,7 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
 
   const latestIds = latestNInteractions.map((i) => i.id);
 
-  if (latestNInteractions.length === 0) {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, [], "No user interactions found"));
-  }
+  console.log("Latest N Interactions:", latestNInteractions);
 
   // Update the user interactions in db with the latest N interactions
   await db
@@ -574,9 +580,15 @@ Registered Tags: ${latestNInteractions
 Preferred Mode: ${latestNInteractions.map((i) => i.mode).join(", ")}
 Developer Skills: ${developerSkills}
 
-From the given context, return ONLY those hackathon IDs that are highly relevant to the user's registered tags and preferred mode and developer skills.
-Do NOT include any hackathon that is not clearly relevant to the user's interests.
-Respond strictly with a JSON array of hackathon IDs, and nothing else.
+From the given context, return ONLY those hackathon IDs that are highly relevant to the user's registered tags, preferred mode, and skills, whichever is available and consider combination of all available ones. 
+
+IMPORTANT:
+- Each hackathon object has an "id" field which is the ONLY valid hackathon ID. It is a UUID in this format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (e.g., 87ed97b5-6893-4c84-a4eb-91f26d538ac7).
+- Don't return hackathons that are not relevant to the user's interests.
+- Ignore any other UUIDs, such as those in "createdBy" or "organizerId" fields. Do NOT use them as hackathon IDs, even if they look like UUIDs.
+- Do NOT include any hackathon that is not clearly relevant to the user's interests.
+- Do NOT return any short or numeric IDs (like "2", "3", "4f77bde").
+- Respond strictly with a JSON array of hackathon UUIDs from the "id" field, and nothing else.
 `;
 
   const vecStore = await initialiseVectorStore({
@@ -585,30 +597,43 @@ Respond strictly with a JSON array of hackathon IDs, and nothing else.
 
   const vectorResults = await vecStore.similaritySearch(PROMPT, 5);
 
+  console.log("Vector Search Results:", vectorResults);
+
   if (vectorResults.length === 0) {
     return res
       .status(200)
       .json(new ApiResponse(200, [], "No relevant hackathons found"));
   }
 
-  const response = await llm.invoke(`You are a hackathon recommendation system. 
-Based on the user interactions and hackathon context provided, return ONLY the relevant hackathon IDs.
+  const response = await llm.invoke(`You are a hackathon recommendation system.
+Given the context, return only the relevant hackathon IDs.
 
-IMPORTANT: Return the hackathon IDs as a simple comma-separated string format like this:
-id1,id2,id3
+Rules:
+- Use only the "id" field from each hackathon object (UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+- Ignore "createdBy" or "organizerId" fields, even if they look like UUIDs.
+- Do not return short or numeric IDs.
+- Output: comma-separated UUIDs only (id1,id2,id3), no brackets, quotes, or extra text.
 
-Context: ${vectorResults.map((doc: any) => doc.pageContent).join("\n")}
+Context:
+${vectorResults.map((doc: any) => doc.pageContent).join("\n")}
+`);
 
-Return only comma-separated hackathon IDs that are relevant to the user interactions:`);
-
-  // Extract hackathon IDs from the response
-  const hackathonIds = response.text.split(",").map((id: string) => id.trim());
+  const hackathonIds = response.text
+    .split(",")
+    .map((id: string) => id.trim())
+    .filter((id: string) =>
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        id
+      )
+    );
 
   if (!hackathonIds || hackathonIds.length === 0) {
     return res
       .status(200)
       .json(new ApiResponse(200, [], "No recommended hackathons found"));
   }
+
+  console.log("Recommended Hackathon IDs:", hackathonIds);
 
   const latestRecommendedHackathonObjects = hackathonIds.map((id) => ({
     hackathonId: id,
