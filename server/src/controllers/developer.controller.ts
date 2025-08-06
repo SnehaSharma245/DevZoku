@@ -446,7 +446,10 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
   const userId = user.id;
 
   const [recommendedHackathons] = await db
-    .select({ recommendedHackIds: developers.recommendedHackathonIds })
+    .select({
+      recommendedHackIds: developers.recommendedHackathonIds,
+      skills: developers.skills,
+    })
     .from(developers)
     .where(eq(developers.userId, userId))
     .execute();
@@ -456,6 +459,10 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
   )
     ? recommendedHackathons.recommendedHackIds
     : [];
+
+  const developerSkills = Array.isArray(recommendedHackathons?.skills)
+    ? recommendedHackathons.skills.join(", ")
+    : "";
 
   const start = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
   const end = new Date();
@@ -471,7 +478,6 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
   let recommendedHackathonsData: any[] = [];
 
   if (recentHackIds.length > 0) {
-    // add latest recommended hackathons to the developer's profile and remove the old ones
     await db
       .update(developers)
       .set({ recommendedHackathonIds: recentHackObjects })
@@ -566,8 +572,9 @@ Registered Tags: ${latestNInteractions
     .map((i) => (i.registeredTags || []).join(", "))
     .join("; ")}
 Preferred Mode: ${latestNInteractions.map((i) => i.mode).join(", ")}
+Developer Skills: ${developerSkills}
 
-From the given context, return ONLY those hackathon IDs that are highly relevant to the user's registered tags and preferred mode.
+From the given context, return ONLY those hackathon IDs that are highly relevant to the user's registered tags and preferred mode and developer skills.
 Do NOT include any hackathon that is not clearly relevant to the user's interests.
 Respond strictly with a JSON array of hackathon IDs, and nothing else.
 `;
@@ -589,10 +596,6 @@ Based on the user interactions and hackathon context provided, return ONLY the r
 
 IMPORTANT: Return the hackathon IDs as a simple comma-separated string format like this:
 id1,id2,id3
-
-Do NOT return JSON array format like ["id1","id2","id3"]
-Do NOT include any brackets, quotes, or additional text
-Do NOT include explanations or other content
 
 Context: ${vectorResults.map((doc: any) => doc.pageContent).join("\n")}
 
