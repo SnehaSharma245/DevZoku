@@ -59,39 +59,39 @@ const Features = () => {
   const organizerFeatures = [
     {
       icon: <Calendar className="w-8 h-8" />,
-      title: "Complete Event Management",
+      title: "Complete Hackathon Management",
       description:
-        "Create and manage hackathons with custom phases, registration periods, and detailed event information.",
-    },
-    {
-      icon: <BarChart3 className="w-8 h-8" />,
-      title: "Participant Analytics",
-      description:
-        "Get insights into participant engagement, team formations, and event performance with detailed analytics.",
+        "Easily create and manage hackathons with custom phases, registration windows, and team size limits.",
     },
     {
       icon: <Settings className="w-8 h-8" />,
       title: "Flexible Event Configuration",
       description:
-        "Set team size limits, choose online/offline modes, add custom tags, and configure multiple competition phases.",
+        "Set team limits, modes, tags, domains, posters, and multiple competition phases with ease.",
+    },
+    {
+      icon: <Users className="w-8 h-8" />,
+      title: "Team & Participant Management",
+      description:
+        "Track registrations live, view teams, and manage applications effortlessly.",
+    },
+    {
+      icon: <Trophy className="w-8 h-8" />,
+      title: "Winner Declaration System",
+      description:
+        "Select winners and send automated email notifications to all participants.",
     },
     {
       icon: <Globe className="w-8 h-8" />,
-      title: "Global Reach",
+      title: "Professional Organization Profile",
       description:
-        "Reach developers worldwide with location-based filtering and comprehensive event discovery features.",
+        "Build detailed profiles with bio, social links, and showcase past events.",
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: "Real-time Management",
+      title: "Event Discovery & Promotion",
       description:
-        "Monitor registrations, manage participants, and update event details in real-time with instant notifications.",
-    },
-    {
-      icon: <Heart className="w-8 h-8" />,
-      title: "Community Building",
-      description:
-        "Foster developer communities with networking features and post-event engagement opportunities.",
+        "Boost visibility with smart filters, tag-based search, and upcoming event highlights.",
     },
   ];
 
