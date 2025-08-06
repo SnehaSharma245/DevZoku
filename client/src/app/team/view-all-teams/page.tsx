@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 
 interface TeamBrief {
   team: {
@@ -37,6 +37,7 @@ function ViewAllTeams() {
   const [search, setSearch] = useState("");
   const [skillFilterInput, setSkillFilterInput] = useState("");
   const [skillFilters, setSkillFilters] = useState<string[]>([]);
+  const [showSkillsFor, setShowSkillsFor] = useState<string | null>(null);
 
   const fetchAllTeams = async () => {
     try {
@@ -170,7 +171,7 @@ function ViewAllTeams() {
           </div>
           <input
             type="text"
-            placeholder="Filter by skills (comma separated, press Enter)..."
+            placeholder="Filter by skills (Type a skill & press Enter)..."
             value={skillFilterInput}
             onChange={(e) => setSkillFilterInput(e.target.value)}
             onKeyDown={handleSkillInputKeyDown}
@@ -189,7 +190,7 @@ function ViewAllTeams() {
           filteredTeams.map((team, key) => (
             <div
               key={team.team.id}
-              className="bg-gradient-to-br from-white via-white to-[#fff9f5] border border-[#e3e8ee] rounded-2xl shadow-xl p-6 flex flex-col gap-3 items-center"
+              className="bg-gradient-to-br from-white via-white to-[#fff9f5] border border-[#e3e8ee] rounded-2xl shadow-xl p-6 flex flex-col gap-3 items-start"
             >
               {/* Team Logo Avatar */}
               <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center shadow-xl border-4 border-white mb-2">
@@ -212,30 +213,28 @@ function ViewAllTeams() {
                   {Number(team.team.currentMemberCount)}
                 </span>
               </p>
-              {/* Show skills for each team */}
-              {team.team.skillsNeeded && (
-                <div className="flex flex-wrap gap-2 mb-1 justify-center">
-                  {team.team.skillsNeeded
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean)
-                    .map((skill) => (
-                      <span
-                        key={skill}
-                        className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-2 py-0.5 rounded-full text-xs font-semibold shadow"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                </div>
-              )}
-              <p className="text-[#6B7A8F] text-xs mb-2 text-center">
+
+              <p className="text-[#6B7A8F] text-xs mb-2 ">
                 Captain:{" "}
                 <span className="font-semibold text-[#062a47]">
                   {team.captain.firstName}
                 </span>{" "}
                 (<span>{team.captain.email}</span>)
               </p>
+              {/* Show skills for each team as a button with popup */}
+              {team.team.skillsNeeded && team.team.skillsNeeded.trim() ? (
+                <button
+                  onClick={() => setShowSkillsFor(team.team.id)}
+                  className="inline-block bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white font-semibold py-1 px-3 rounded-full hover:from-[#062a47] hover:to-[#0a3a5c] transition-all duration-300 shadow-sm hover:shadow-md text-xs cursor-pointer mb-1"
+                  type="button"
+                >
+                  Show Skills Required
+                </button>
+              ) : (
+                <div className="w-full bg-gray-100 text-gray-500 font-medium py-1.5 px-3 rounded-full text-center text-xs mb-1">
+                  No specific skills required
+                </div>
+              )}
               <Button
                 disabled={!team.team.isAcceptingInvites}
                 className={`mt-auto w-full bg-[#f75a2f] text-white font-bold rounded-xl hover:bg-[#FF9466] transition ${
@@ -251,6 +250,54 @@ function ViewAllTeams() {
           ))
         )}
       </div>
+      {/* Skills Popup */}
+      {showSkillsFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e3e8ee]">
+              <h3 className="text-lg font-bold text-[#062a47]">
+                Skills Required
+              </h3>
+              <button
+                onClick={() => setShowSkillsFor(null)}
+                className="text-[#8ca2c3] hover:text-[#f75a2f] transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const team = filteredTeams.find(
+                    (item) => item.team.id === showSkillsFor
+                  )?.team;
+                  const skills = team?.skillsNeeded
+                    ?.split(",")
+                    .map((skill) => skill.trim())
+                    .filter(Boolean);
+
+                  return skills && skills.length > 0 ? (
+                    skills.map((skill, idx) => (
+                      <span
+                        key={skill + idx}
+                        className="bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] text-white px-4 py-2 rounded-full text-sm font-semibold shadow-sm"
+                      >
+                        {skill}
+                      </span>
+                    ))
+                  ) : (
+                    <div className="text-center w-full">
+                      <p className="text-[#8ca2c3] text-sm">
+                        No specific skills required for this team.
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
