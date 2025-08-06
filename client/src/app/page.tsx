@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import Features from "@/components/landing-page-components/Features";
 import CallToAction from "@/components/landing-page-components/CallToAction";
 import UpcomingHackathonsCarousel from "@/components/landing-page-components/UpcomingHackathonsCarousel";
+import FAQ from "@/components/landing-page-components/FAQ";
 
 const Home = () => {
   const searchParams = useSearchParams();
@@ -22,6 +23,7 @@ const Home = () => {
       <HeroSection />
       <Features />
       <UpcomingHackathonsCarousel />
+      <FAQ />
       <CallToAction />
     </>
   );
