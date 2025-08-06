@@ -830,20 +830,30 @@ const embedHackathons = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, {}, "No recent hackathons"));
   }
 
-  const doc = new Document({
-    pageContent: JSON.stringify(fetchRecentHackathons),
-    metadata: {
-      type: "hackathon-embeddings",
-      embeddedAt: new Date().toISOString(),
-    },
-  });
+  const docs = fetchRecentHackathons.map(
+    (hackathon) =>
+      new Document({
+        pageContent: JSON.stringify({
+          id: hackathon.id, // UUID
+          title: hackathon.title,
+          tags: hackathon.tags,
+          mode: hackathon.mode,
+          minTeamSize: hackathon.minTeamSize,
+          maxTeamSize: hackathon.maxTeamSize,
+        }),
+        metadata: {
+          type: "hackathon-embeddings",
+          embeddedAt: new Date().toISOString(),
+        },
+      })
+  );
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 500,
     chunkOverlap: 100,
   });
 
-  const splits = await splitter.splitDocuments([doc]);
+  const splits = await splitter.splitDocuments(docs);
 
   const vecStore = await initialiseVectorStore({
     collectionName: "hackathon-embeddings",
