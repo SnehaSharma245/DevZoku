@@ -61,7 +61,6 @@ function ParticularHackathon() {
 
         if (status === 200) {
           setHackathonDetails(data);
-          console.log("Hackathon Details:", data);
           const participatingTeams = data.teamsApplied
             ? data.teamsApplied.flatMap((item: any) =>
                 Array.isArray(item.teams) ? item.teams : [item.teams]

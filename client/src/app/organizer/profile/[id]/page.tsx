@@ -87,8 +87,6 @@ export default function OrganizerProfilePage() {
       const res = await api.get(`/organizer/organized-hackathons/${user?.id}`);
       const { status, data } = res.data;
 
-      console.log(data);
-
       if (status === 200) {
         setOrganizedEvents(data);
       }

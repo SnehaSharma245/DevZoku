@@ -511,12 +511,10 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
       };
     });
 
-    console.log("Hackathons with Status:", hackathonsWithStatus);
-
     const filteredHackathons = hackathonsWithStatus.filter((hack) =>
       ["upcoming", "Registration in Progress"].includes(hack.status)
     );
-    console.log("Filtered Hackathons:", filteredHackathons);
+
     return res
       .status(200)
       .json(
@@ -540,16 +538,12 @@ const getRecommendedHackathons = asyncHandler(async (req, res) => {
     .where(eq(userInteractions.userId, userId))
     .execute();
 
-  console.log("Fetched User Interactions:", fetchedUserInteractions);
-
   // fetch latest N interactions
   const latestNInteractions = [...fetchedUserInteractions]
     .sort((a: any, b: any) => b.createdAt - a.createdAt)
     .slice(0, 10);
 
   const latestIds = latestNInteractions.map((i) => i.id);
-
-  console.log("Latest N Interactions:", latestNInteractions);
 
   // Update the user interactions in db with the latest N interactions
   await db
@@ -586,8 +580,6 @@ IMPORTANT:
 
   const vectorResults = await vecStore.similaritySearch(PROMPT, 5);
 
-  console.log("Vector Search Results:", vectorResults);
-
   if (vectorResults.length === 0) {
     return res
       .status(200)
@@ -621,8 +613,6 @@ ${vectorResults.map((doc: any) => doc.pageContent).join("\n")}
       .status(200)
       .json(new ApiResponse(200, [], "No recommended hackathons found"));
   }
-
-  console.log("Recommended Hackathon IDs:", hackathonIds);
 
   const latestRecommendedHackathonObjects = hackathonIds.map((id) => ({
     hackathonId: id,

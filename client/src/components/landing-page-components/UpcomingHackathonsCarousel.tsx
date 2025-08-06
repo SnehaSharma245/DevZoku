@@ -75,7 +75,6 @@ const UpcomingHackathonsCarousel: React.FC = () => {
     try {
       const response = await api.get("/hackathon/upcoming-hackathons");
       const { status, data } = response.data;
-      console.log("Upcoming Hackathons:", data);
       if (status === 200) {
         setHackathons(data);
       }
