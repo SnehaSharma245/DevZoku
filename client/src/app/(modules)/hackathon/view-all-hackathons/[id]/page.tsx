@@ -55,7 +55,7 @@ function ParticularHackathon() {
           user && user.role === "organizer" ? "?withTeams=true" : "";
         const endpoint = user
           ? `/hackathon/hackathon-auth/${id}${withTeamsParam}`
-          : `/hackathon/hackathon/${id}$`;
+          : `/hackathon/hackathon/${id}`;
         const res = await api.get(endpoint);
         const { status, data, message } = res.data;
 
