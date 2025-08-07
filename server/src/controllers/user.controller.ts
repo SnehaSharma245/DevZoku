@@ -49,10 +49,10 @@ const baseOrigin = origins[0] || "http://localhost:3000";
 
 // Determine user role based on request path
 const getRoleFromPath = (path: string): Role => {
-  if (path.includes("/api/v1/developer")) {
+  if (path.includes("/developer")) {
     return "developer";
   }
-  if (path.includes("/api/v1/organizer")) {
+  if (path.includes("/organizer")) {
     return "organizer";
   }
 
@@ -66,9 +66,9 @@ const googleAuth = asyncHandler(async (req, res) => {
   const REDIRECT_URI =
     role === "developer"
       ? process.env.GOOGLE_REDIRECT_URI_DEVELOPER ||
-        "http://localhost:8000/api/v1/developer/authorization/auth/google/callback"
+        "http://localhost:8000/developer/authorization/auth/google/callback"
       : process.env.GOOGLE_REDIRECT_URI_ORGANIZER ||
-        "http://localhost:8000/api/v1/organizer/authorization/auth/google/callback";
+        "http://localhost:8000/organizer/authorization/auth/google/callback";
 
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${
     process.env.GOOGLE_CLIENT_ID
@@ -101,9 +101,9 @@ const signUpWithGoogle = asyncHandler(async (req, res) => {
   const REDIRECT_URI =
     role === "developer"
       ? process.env.GOOGLE_REDIRECT_URI_DEVELOPER ||
-        "http://localhost:8000/api/v1/developer/authorization/auth/google/callback"
+        "http://localhost:8000/developer/authorization/auth/google/callback"
       : process.env.GOOGLE_REDIRECT_URI_ORGANIZER ||
-        "http://localhost:8000/api/v1/organizer/authorization/auth/google/callback";
+        "http://localhost:8000/organizer/authorization/auth/google/callback";
 
   // Exchange code for access token
   const tokenResponse = await axios.post<GoogleTokenResponse>(

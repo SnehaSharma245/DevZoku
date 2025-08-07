@@ -27,17 +27,17 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 
 // authorization routes
-app.use("/api/v1/developer/authorization", userRoutes);
-app.use("/api/v1/organizer/authorization", userRoutes);
+app.use("/developer/authorization", userRoutes);
+app.use("/organizer/authorization", userRoutes);
 
 // main application routes
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/developer", developerRoutes);
-app.use("/api/v1/organizer", organizerRoutes);
-app.use("/api/v1/hackathon", hackathonRoutes);
-app.use("/api/v1/team", teamRoutes);
+app.use("/users", userRoutes);
+app.use("/developer", developerRoutes);
+app.use("/organizer", organizerRoutes);
+app.use("/hackathon", hackathonRoutes);
+app.use("/team", teamRoutes);
 
-app.get("/api/v1/", (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to DevZoku API" });
 });
 
