@@ -1,4 +1,4 @@
-import { eq, and, inArray, sql, desc, gt, not } from "drizzle-orm";
+import { eq, and, inArray, sql, desc, gt, not, lt, or } from "drizzle-orm";
 import { db } from "../db";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
@@ -1120,7 +1120,12 @@ const getUpcomingHackathons = asyncHandler(async (req, res) => {
   const upcomingHackathons = await db
     .select()
     .from(hackathons)
-    .where(gt(hackathons.registrationStart, new Date()))
+    .where(
+      or(
+        gt(hackathons.registrationStart, new Date()),
+        lt(hackathons.registrationEnd, new Date())
+      )
+    )
     .orderBy(hackathons.startTime)
     .execute();
 
