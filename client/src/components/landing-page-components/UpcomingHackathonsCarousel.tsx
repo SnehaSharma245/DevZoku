@@ -102,98 +102,110 @@ const UpcomingHackathonsCarousel: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative overflow-hidden">
-      {/* Decorative background shapes for Carousel */}
-      <div className="pointer-events-none select-none absolute inset-0 z-0">
-        <div className="absolute top-[12%] left-[10%] w-20 h-20 bg-[#FF9466]/10 rotate-12 rounded-lg"></div>
-        <div className="absolute top-[12%] right-[12%] w-24 h-24 bg-[#2563eb]/20 rounded-full"></div>
-        <div className="absolute bottom-[18%] left-[22%] w-14 h-14 bg-[#FF9466]/20 rotate-45 rounded-lg"></div>
-        <div className="absolute bottom-[8%] right-[20%] w-16 h-16 bg-[#2563eb]/20 rounded-full"></div>
-        <div className="absolute top-[30%] left-[38%] w-10 h-10 bg-[#FF9466]/20 rounded-full"></div>
-        <div className="absolute top-[25%] right-[28%] w-12 h-12 bg-[#FF6F61]/15 rotate-12 rounded-lg"></div>
-      </div>
-      <div className="mb-10 text-center relative ">
-        <h2 className="text-3xl sm:text-4xl font-bold text-[#062a47] mb-2">
-          Upcoming Hackathons
-        </h2>
-        <p className="text-[#6B7A8F] text-lg">
-          Don&apos;t miss your chance to participate and innovate!
-        </p>
-      </div>
-      <div className="relative flex flex-col items-center z-10">
-        <div className="w-full flex justify-center">
-          <div className="w-full max-w-5xl">
-            <Carousel opts={{ loop: true }} ref={carouselRef}>
-              <CarouselContent>
-                {hackathons.map((hackathon) => (
-                  <CarouselItem
-                    key={hackathon.id}
-                    className="basis-full md:basis-1/3 px-3"
-                  >
-                    <div
-                      className="w-80 bg-white rounded-2xl shadow-lg border border-[#e3e8ee] overflow-hidden mx-auto flex flex-col"
-                      style={{ width: "320px" }}
+    <>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative overflow-hidden">
+        {/* Decorative background shapes for Carousel */}
+        <div className="pointer-events-none select-none absolute inset-0 z-0">
+          <div className="absolute top-[12%] left-[10%] w-20 h-20 bg-[#FF9466]/10 rotate-12 rounded-lg"></div>
+          <div className="absolute top-[12%] right-[12%] w-24 h-24 bg-[#2563eb]/20 rounded-full"></div>
+          <div className="absolute bottom-[18%] left-[22%] w-14 h-14 bg-[#FF9466]/20 rotate-45 rounded-lg"></div>
+          <div className="absolute bottom-[8%] right-[20%] w-16 h-16 bg-[#2563eb]/20 rounded-full"></div>
+          <div className="absolute top-[30%] left-[38%] w-10 h-10 bg-[#FF9466]/20 rounded-full"></div>
+          <div className="absolute top-[25%] right-[28%] w-12 h-12 bg-[#FF6F61]/15 rotate-12 rounded-lg"></div>
+        </div>
+        <div className="mb-10 text-center relative ">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#062a47] mb-2">
+            Upcoming Hackathons
+          </h2>
+          <p className="text-[#6B7A8F] text-lg">
+            Don&apos;t miss your chance to participate and innovate!
+          </p>
+        </div>
+        <div className="relative flex flex-col items-center z-10">
+          <div className="w-full flex justify-center">
+            <div className="w-full max-w-5xl">
+              <Carousel opts={{ loop: true }} ref={carouselRef}>
+                <CarouselContent>
+                  {hackathons.map((hackathon) => (
+                    <CarouselItem
+                      key={hackathon.id}
+                      className="basis-full md:basis-1/3 px-3"
                     >
-                      {/* Organization Initial Circle */}
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center text-white text-4xl font-extrabold shadow-lg mx-auto mt-6 mb-2">
-                        {(hackathon.organizationName &&
-                          hackathon.organizationName.charAt(0).toUpperCase()) ||
-                          "O"}
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        <h3 className="text-xl font-bold text-[#062a47] mb-2">
-                          {hackathon.title}
-                        </h3>
-                        <div className="flex items-center text-sm text-[#FF6F61] font-semibold mb-1">
-                          <span className="mr-2">
-                            📅{" "}
-                            {hackathon.startTime
-                              ? (() => {
-                                  const d = new Date(hackathon.startTime);
-                                  const day = String(d.getDate()).padStart(
-                                    2,
-                                    "0"
-                                  );
-                                  const month = String(
-                                    d.getMonth() + 1
-                                  ).padStart(2, "0");
-                                  const year = d.getFullYear();
-                                  return `${day}-${month}-${year}`;
-                                })()
-                              : ""}
-                          </span>
-                          <span>
-                            {hackathon.mode === "online"
-                              ? "🌐 Online"
-                              : hackathon.location
-                              ? `🌍 ${hackathon.location}`
-                              : ""}
-                          </span>
+                      <div
+                        className="w-80 bg-white rounded-2xl shadow-lg border border-[#e3e8ee] overflow-hidden mx-auto flex flex-col"
+                        style={{ width: "320px" }}
+                      >
+                        {/* Organization Initial Circle */}
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF9466] to-[#FF6F61] flex items-center justify-center text-white text-4xl font-extrabold shadow-lg mx-auto mt-6 mb-2">
+                          {(hackathon.organizationName &&
+                            hackathon.organizationName
+                              .charAt(0)
+                              .toUpperCase()) ||
+                            "O"}
                         </div>
-                        <p className="text-[#6B7A8F] text-sm mb-4 flex-1">
-                          {hackathon.description}
-                        </p>
+                        <div className="p-5 flex flex-col flex-1">
+                          <h3 className="text-xl font-bold text-[#062a47] mb-2">
+                            {hackathon.title}
+                          </h3>
+                          <div className="flex items-center text-sm text-[#FF6F61] font-semibold mb-1">
+                            <span className="mr-2">
+                              📅{" "}
+                              {hackathon.startTime
+                                ? (() => {
+                                    const d = new Date(hackathon.startTime);
+                                    const day = String(d.getDate()).padStart(
+                                      2,
+                                      "0"
+                                    );
+                                    const month = String(
+                                      d.getMonth() + 1
+                                    ).padStart(2, "0");
+                                    const year = d.getFullYear();
+                                    return `${day}-${month}-${year}`;
+                                  })()
+                                : ""}
+                            </span>
+                            <span>
+                              {hackathon.mode === "online"
+                                ? "🌐 Online"
+                                : hackathon.location
+                                ? `🌍 ${hackathon.location}`
+                                : ""}
+                            </span>
+                          </div>
+                          <p className="text-[#6B7A8F] text-sm mb-4 flex-1">
+                            {hackathon.description}
+                          </p>
 
-                        <Link
-                          href={`/hackathon/view-all-hackathons/${hackathon.id}`}
-                          className="px-5 py-2 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl hover:scale-105 transition-transform duration-200 shadow"
-                        >
-                          View Details
-                        </Link>
+                          <Link
+                            href={`/hackathon/view-all-hackathons/${hackathon.id}`}
+                            className="px-5 py-2 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl hover:scale-105 transition-transform duration-200 shadow"
+                          >
+                            View Details
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="flex justify-center gap-4 mt-6 h-12 items-center">
-                <CarouselPrevious className="bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition static" />
-                <CarouselNext className="bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition static" />
-              </div>
-            </Carousel>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="flex justify-center gap-4 mt-6 h-12 items-center">
+                  <CarouselPrevious className="bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition static" />
+                  <CarouselNext className="bg-[#FF9466] hover:bg-[#FF6F61] text-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center transition static" />
+                </div>
+              </Carousel>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+        <div className="w-full flex justify-center mt-4 mb-8">
+          <Link
+            href="/hackathon/view-all-hackathons"
+            className="px-6 py-2 bg-gradient-to-r from-[#FF9466] to-[#FF6F61] text-white font-bold rounded-xl transition-all duration-300 ease-in-out shadow hover:from-[#e67a50] hover:to-[#e65b4d]"
+          >
+            Explore More Hackathons
+          </Link>
+        </div>
+      </section>
+    </>
   );
 };
 
