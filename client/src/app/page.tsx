@@ -8,6 +8,8 @@ import Features from "@/components/landing-page-components/Features";
 import CallToAction from "@/components/landing-page-components/CallToAction";
 import UpcomingHackathonsCarousel from "@/components/landing-page-components/UpcomingHackathonsCarousel";
 import FAQ from "@/components/landing-page-components/FAQ";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const Home = () => {
   const searchParams = useSearchParams();
@@ -20,11 +22,13 @@ const Home = () => {
   }, [toastMessage]);
   return (
     <>
+      <Header />
       <HeroSection />
       <Features />
       <UpcomingHackathonsCarousel />
       <FAQ />
       <CallToAction />
+      <Footer />
     </>
   );
 };

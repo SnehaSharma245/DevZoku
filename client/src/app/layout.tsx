@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth/AuthProvider";
 import { Toaster } from "sonner";
-import ClientWrapper from "./ClientWrapper";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
         <AuthProvider>
           {" "}
           <Toaster />
-          <ClientWrapper>{children}</ClientWrapper>
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#F8FBFD] via-[#FAFCFD] to-[#FFFFFF] relative overflow-hidden">
+            <main className="flex-1 mb-3 relative z-10">{children}</main>
+          </div>
         </AuthProvider>
       </body>
     </html>
