@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import { Card, CardContent } from "@/components";
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FaLinkedin, FaGlobe, FaInstagram } from "react-icons/fa";
 import {

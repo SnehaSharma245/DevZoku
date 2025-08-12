@@ -8,14 +8,7 @@ import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-import { set } from "react-hook-form";
-import {
-  FaGithub,
-  FaLinkedin,
-  FaGlobe,
-  FaDev,
-  FaInstagram,
-} from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaGlobe, FaDev } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -280,7 +273,7 @@ function DeveloperDashboard() {
                 {profile.projects.map((project, idx) => (
                   <div
                     key={idx}
-                    className="border rounded-xl p-6 flex flex-col gap-2 bg-gradient-to-r from-[#eaf6fb] to-[#fff] shadow"
+                    className="border rounded-xl p-6 flex flex-col gap-2 bg-gradient-to-br from-white via-white to-[#fff9f5] shadow"
                   >
                     <div className="font-semibold text-lg text-[#062a47]">
                       {project.title}
@@ -292,7 +285,7 @@ function DeveloperDashboard() {
                       {project.techStack.map((tech) => (
                         <Badge
                           key={tech}
-                          className="bg-gradient-to-r from-[#2563eb] to-[#f75a2f] text-white shadow"
+                          className="bg-gradient-to-r from-[#FFB899] to-[#FF6F61] text-white shadow"
                         >
                           {tech}
                         </Badge>

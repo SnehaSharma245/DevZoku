@@ -12,9 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import Link from "next/link";
 import type { Hackathon } from "@/types/hackathon.types";
-import type { Phases } from "@/types/hackathon.types";
 import MarkingWinnerPopup from "@/components/popups/MarkingWinnerPopup";
 
 interface Team {

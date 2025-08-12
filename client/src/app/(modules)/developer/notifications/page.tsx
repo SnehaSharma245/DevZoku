@@ -7,7 +7,6 @@ import { Bell, Trash2 } from "lucide-react";
 import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`);
 
 interface Notification {
   id: string;

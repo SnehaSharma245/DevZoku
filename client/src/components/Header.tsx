@@ -11,28 +11,21 @@ import {
 } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
 import {
-  Home,
-  Info,
-  BookOpen,
   LogIn,
-  UserPlus,
   Bell,
   Users,
   Plus,
   Rocket,
   Building2,
   User,
-  LayoutDashboard,
   BadgeCheck,
   Github,
   Linkedin,
   Globe,
   Twitter,
-  Hash,
   Layers,
   LogOut,
 } from "lucide-react";
-import { set } from "react-hook-form";
 import LoginPopup from "@/components/popups/Login";
 
 const Header = () => {
@@ -45,10 +38,6 @@ const Header = () => {
       ? user?.firstName?.[0]
       : user?.profile?.organizationName?.[0]
     )?.toUpperCase() || "D";
-
-  useEffect(() => {
-    setRedBadge(true);
-  }, []);
 
   return (
     <>

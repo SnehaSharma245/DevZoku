@@ -4,10 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import { withAuth } from "@/utils/withAuth";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Users, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface TeamBrief {
