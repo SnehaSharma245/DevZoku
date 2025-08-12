@@ -135,14 +135,6 @@ function EditTeamPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
   if (!team) {
     return (
       <div className="min-h-screen flex items-center justify-center">

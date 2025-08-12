@@ -94,14 +94,6 @@ function ManageProjectsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen text-[#062a47]">
-        Loading projects...
-      </div>
-    );
-  }
-
   return (
     <>
       <AddProjectDialog

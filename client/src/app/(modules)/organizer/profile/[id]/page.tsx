@@ -110,14 +110,6 @@ export default function OrganizerProfilePage() {
     return null;
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading your dashboard...
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 mt-4">
       <div className="max-w-2xl w-full mx-auto">
