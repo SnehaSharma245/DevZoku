@@ -14,27 +14,27 @@ function Footer() {
     {
       name: "GitHub",
       icon: <Github className="w-4 h-4" />,
-      href: "https://github.com/SnehaSharma245",
+      href: "https://github.com/celersneha",
     },
     {
       name: "LinkedIn",
       icon: <Linkedin className="w-4 h-4" />,
-      href: "https://www.linkedin.com/in/ss0807/",
+      href: "https://www.linkedin.com/in/celersneha/",
     },
     {
       name: "Twitter",
       icon: <Twitter className="w-4 h-4" />,
-      href: "https://twitter.com/SnehaDevs",
+      href: "https://twitter.com/celersneha",
     },
     {
       name: "Buy me a coffee",
       icon: <Coffee className="w-4 h-4" />,
-      href: "https://buymeacoffee.com/snehadevs",
+      href: "https://buymeacoffee.com/celersneha",
     },
     {
       name: "Email",
       icon: <Mail className="w-4 h-4" />,
-      href: "mailto:snehav2109@gmail.com",
+      href: "mailto:celersneha@gmail.com",
     },
   ];
 
