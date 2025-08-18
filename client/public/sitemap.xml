@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Home page - highest priority -->
+  <url>
+    <loc>https://www.devzoku.app/</loc>
+    <lastmod>2024-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Developer page -->
+  <url>
+    <loc>https://www.devzoku.app/developer</loc>
+    <lastmod>2024-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Organizer page -->
+  <url>
+    <loc>https://www.devzoku.app/organizer</loc>
+    <lastmod>2024-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Profile page for celersneha -->
+  <url>
+    <loc>https://www.devzoku.app/hackathon</loc>
+    <lastmod>2024-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Contact page -->
+  <url>
+    <loc>https://www.devzoku.app/team</loc>
+    <lastmod>2024-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  
+</urlset>
