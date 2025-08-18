@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.devzoku.app"),
+  metadataBase: new URL("https://devzoku.app"),
   title: {
     default: "DevZoku - Hackathon Collaboration Platform | celersneha",
     template: "%s | DevZoku",
@@ -68,14 +68,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://www.devzoku.app",
+    url: "https://devzoku.app",
     siteName: "DevZoku - Hackathon Collaboration Platform",
     title: "DevZoku - Hackathon Collaboration Platform | celersneha",
     description:
       "DevZoku: Hackathon collaboration platform for connecting, collaborating, and growing with fellow developers. Find teammates, join hackathons, and build amazing projects together. Created by celersneha (Sneha Sharma).",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "DevZoku - Hackathon Collaboration Platform",
@@ -89,10 +89,10 @@ export const metadata: Metadata = {
     title: "DevZoku - Hackathon Collaboration Platform | celersneha",
     description:
       "Premier hackathon collaboration platform for developers. Find teammates, join hackathons, and build amazing projects together.",
-    images: ["/og-image.jpg"],
+    images: ["/og-image.png"],
   },
   alternates: {
-    canonical: "https://www.devzoku.app",
+    canonical: "https://devzoku.app",
   },
   category: "technology",
 };
@@ -102,16 +102,16 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "WebApplication",
-      "@id": "https://www.devzoku.app/#webapp",
+      "@id": "https://devzoku.app/#webapp",
       name: "DevZoku",
-      url: "https://www.devzoku.app",
+      url: "https://devzoku.app",
       description:
         "Hackathon collaboration platform for developers to find teammates and join coding competitions",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web Browser",
       creator: {
         "@type": "Person",
-        "@id": "https://www.devzoku.app/#creator",
+        "@id": "https://devzoku.app/#creator",
         name: "Sneha Sharma",
         alternateName: "celersneha",
         url: "https://www.snehasharma.me",
@@ -137,30 +137,30 @@ const jsonLd = {
     },
     {
       "@type": "WebSite",
-      "@id": "https://www.devzoku.app/#website",
-      url: "https://www.devzoku.app",
+      "@id": "https://devzoku.app/#website",
+      url: "https://devzoku.app",
       name: "DevZoku - Hackathon Collaboration Platform",
       description:
         "Platform for developers to collaborate on hackathons and coding competitions",
       publisher: {
-        "@id": "https://www.devzoku.app/#creator",
+        "@id": "https://devzoku.app/#creator",
       },
       potentialAction: {
         "@type": "SearchAction",
-        target: "https://www.devzoku.app/search?q={search_term_string}",
+        target: "https://devzoku.app/search?q={search_term_string}",
         "query-input": "required name=search_term_string",
       },
     },
     {
       "@type": "Organization",
-      "@id": "https://www.devzoku.app/#organization",
+      "@id": "https://devzoku.app/#organization",
       name: "DevZoku",
-      url: "https://www.devzoku.app",
-      logo: "https://www.devzoku.app/devzoku_logos/favicon.ico",
+      url: "https://devzoku.app",
+      logo: "https://devzoku.app/devzoku_logos/favicon.ico",
       description:
         "Hackathon collaboration platform connecting developers worldwide",
       founder: {
-        "@id": "https://www.devzoku.app/#creator",
+        "@id": "https://devzoku.app/#creator",
       },
       sameAs: [
         "https://github.com/celersneha/devzoku",
@@ -200,7 +200,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <link rel="canonical" href="https://www.devzoku.app" />
+        <link rel="canonical" href="https://devzoku.app" />
 
         <meta name="geo.region" content="IN" />
         <meta name="geo.placename" content="India" />
